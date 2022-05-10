@@ -1,0 +1,12 @@
+[Unit]
+Description=Hello World
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/pi/flask_application/venv/bin/python3 /home/pi/App/hello_world.py --serve-in-foreground
+Restart=on-abort
+
+
+[Install]
+WantedBy=multi-user.target
