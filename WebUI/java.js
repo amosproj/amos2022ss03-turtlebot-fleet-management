@@ -10,7 +10,7 @@ createApp({
     },
     methods: {
         sendReqToFleetManagement(endpoint) {
-            axios.get('/api/station/' + this.stationID + '/' + endpoint)
+            axios.post('/api/station/' + this.stationID + '/' + endpoint)
                 .then(function (response) {
                     console.log(response);
                 })
