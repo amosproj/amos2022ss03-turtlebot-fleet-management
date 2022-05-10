@@ -1,0 +1,16 @@
+This is a very simple and trashy REST API doc for the Web UI
+
+Base URL: /api/
+
+GET /station/[id]/status
+Return status message for current station
+Response body: {message: "Text"}
+
+POST /station/[id]/req
+Request AGV to this station
+
+POST /station/[id]/move
+Move AGV from station
+
+POST /station/[id]/sendTo/[id2]
+Send AGV from current station (id) to id2
