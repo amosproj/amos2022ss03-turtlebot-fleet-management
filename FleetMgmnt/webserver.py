@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 
 app = Flask(__name__)
 
@@ -8,5 +8,11 @@ def start():
 
 
 @app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+def serve_index():
+    return send_from_directory('./WebUI', 'index.html')
+
+
+@app.route("/<path:filename>")
+def serve_file(filename):
+    return send_from_directory('./WebUI', filename)
+
