@@ -4,20 +4,24 @@ const { createApp } = Vue
 createApp({
     data() {
         return {
-            message: 'Hello Vue!'
+            message: 'Hello Vue!',
+            stationID: 1
         }
     },
+    methods: {
+        sendReqToFleetManagement(endpoint) {
+            axios.get('/api/station/' + this.stationID + '/' + endpoint)
+                .then(function (response) {
+                    console.log(response);
+                })
+                .catch(function (error) {
+                    console.log(error);
+                })
+                .then(function () {
+                });
+        },
+        requestAGV() {this.sendReqToFleetManagement('req')},
+        moveAGV() {this.sendReqToFleetManagement('move')},
+        sendAGVTo(station) {this.sendReqToFleetManagement('sendTo/' + station)},
+    }
 }).mount('#app')
-
-axios.get('/hans')
-    .then(function (response) {
-        // handle success
-        console.log(response);
-    })
-    .catch(function (error) {
-        // handle error
-        console.log(error);
-    })
-    .then(function () {
-        // always executed
-    });
