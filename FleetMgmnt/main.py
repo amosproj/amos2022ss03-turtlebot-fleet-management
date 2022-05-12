@@ -3,10 +3,12 @@ import time
 
 # Internal dependencies
 import webserver
+import mqtt
 
 
 def main():
     launch_thread(webserver.start, ())
+    launch_thread(mqtt.connect(), ())
     launch_thread(placeholder, ())  # Example
 
 
