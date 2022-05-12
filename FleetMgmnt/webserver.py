@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 
 def start():
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=8080)
 
 
 @app.route("/")
@@ -15,4 +15,3 @@ def serve_index():
 @app.route("/<path:filename>")
 def serve_file(filename):
     return send_from_directory('./WebUI', filename)
-
