@@ -120,6 +120,9 @@ class Message(JsonSerializable):
         self.manufacturer = manufacturer
         self.serialNumber = serialnumber
 
+    def get_header_id(self):
+        return self.headerId
+
 
 class ConnectionMessage(Message, JsonSerializable):
     def __init__(self, headerid: int, timestamp: str, version: str, manufacturer: str, serialnumber: str,
