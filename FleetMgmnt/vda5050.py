@@ -1,19 +1,10 @@
 # VDA5050 Lib
+import dis
 import json
 from enum import Enum
 from typing import List, Union, Any
-
-INTERFACE_NAME = 'AMOS'
-PROTOCOL_VERSION = '1'
-MANUFACTURER = 'TurtleBot'
-HEADER_ID = {
-    'CONNECTION': 0,
-    'FACTSHEET': 0,
-    'INSTANT_ACTION': 0,
-    'ORDER': 0,
-    'STATE': 0,
-    'VISUALIZATION': 0
-}
+from threading import Thread
+from threading import Lock
 
 
 class Topic(str, Enum):
@@ -23,6 +14,27 @@ class Topic(str, Enum):
     ORDER = 'order'
     STATE = 'state'
     VISUALIZATION = 'visualization'
+
+
+INTERFACE_NAME = 'AMOS'
+PROTOCOL_VERSION = '1'
+MANUFACTURER = 'TurtleBot'
+HEADER_ID = {
+    Topic.CONNECTION: 0,
+    Topic.FACTSHEET: 0,
+    Topic.INSTANT_ACTIONS: 0,
+    Topic.ORDER: 0,
+    Topic.STATE: 0,
+    Topic.VISUALIZATION: 0
+}
+HEADER_ID_LOCK = {
+    Topic.CONNECTION: Lock(),
+    Topic.FACTSHEET: Lock(),
+    Topic.INSTANT_ACTIONS: Lock(),
+    Topic.ORDER: Lock(),
+    Topic.STATE: Lock(),
+    Topic.VISUALIZATION: Lock()
+}
 
 
 class ConnectionState(str, Enum):
@@ -146,6 +158,14 @@ def get_mqtt_topic(serial_number: str, topic: Topic):
     return INTERFACE_NAME + '/v' + PROTOCOL_VERSION + '/' + MANUFACTURER + '/' + serial_number + '/' + topic.value
 
 
+def get_header_id(topic: Topic):
+    HEADER_ID_LOCK[topic].acquire()
+    HEADER_ID[topic] += 1
+    id = HEADER_ID[topic]
+    HEADER_ID_LOCK[topic].release()
+    return id
+
+
 # Below this comment is playground code that should be removed before release
 
 cm = ConnectionMessage(23, 'dsf', 'hgj', 'sdf', 'sdfs', ConnectionState.ONLINE)
@@ -154,3 +174,6 @@ node = Node('dsf', 23, True, list())
 print(node.json(True))
 
 print(get_mqtt_topic('0', Topic.CONNECTION))
+print(get_header_id(Topic.CONNECTION))
+print(get_header_id(Topic.ORDER))
+print(get_header_id(Topic.CONNECTION))
