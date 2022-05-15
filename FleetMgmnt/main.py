@@ -7,7 +7,7 @@ import webserver
 
 def main():
     launch_thread(webserver.start, ())
-    launch_thread(placeholder, ())  # Example
+    launch_thread(placeholder, ())
 
 
 def placeholder():
