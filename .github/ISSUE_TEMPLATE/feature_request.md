@@ -12,6 +12,12 @@ assignees: ''
 2. I want / need {}
 3. So that {}
 
+## Progress updates
+* What i have done so far
+* Step 1
+* Step 2
+* ...
+
 ## Acceptance criteria
 * Criterion 1
 * Criterion 2
