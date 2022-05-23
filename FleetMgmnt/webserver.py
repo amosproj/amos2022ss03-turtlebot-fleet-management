@@ -20,6 +20,13 @@ def graph_image():
     return Response(img.getvalue(), mimetype='image/png')
 
 
+@app.route("/graph.json")
+def graph_json():
+    graph = turtlegraph.Graph()
+    graph.vmap_lines_to_graph("demo.vmap")
+    return Response(graph.create_json(), mimetype='application/json')
+
+
 @app.route("/")
 def serve_index():
     return send_from_directory('./WebUI', 'index.html')

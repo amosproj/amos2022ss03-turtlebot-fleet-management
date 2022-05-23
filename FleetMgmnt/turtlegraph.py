@@ -1,4 +1,5 @@
 import io
+import json
 import math
 
 from matplotlib import pyplot as plt
@@ -8,11 +9,19 @@ import vmap_importer
 
 
 class Node:
-    def __init__(self, nid: int, x: float, y: float,  description: str = None):
+    def __init__(self, nid: int, x: float, y: float):
         self.nid = nid
         self.x = x
         self.y = y
-        self.description = description
+
+    def to_dict(self):
+        return {k: v for k, v in self.__dict__.items() if v is not None}
+
+    def json(self, pretty: bool = False) -> str:
+        if pretty:
+            return json.dumps(self.to_dict(), default=lambda o: o.to_dict(), indent=4)
+        else:
+            return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
 
 
 class Edge:
@@ -20,6 +29,11 @@ class Edge:
         self.eid = eid
         self.start = start
         self.end = end
+        self.length = length
+
+    def json(self):
+        return json.dumps({'eid': self.eid, 'start': self.start.nid, 'end': self.end.nid,
+                           'length': round(self.length * 100)})
 
 
 class Graph:
@@ -34,14 +48,14 @@ class Graph:
         print(len(points))
         print(len(lines))
         for i, point in enumerate(points):
-            self.new_node(point.x, point.y, point.name)
+            self.new_node(point.x, point.y)
         for line in lines:
             start = self.find_node_by_coords(line.start.x, line.start.y)
             end = self.find_node_by_coords(line.end.x, line.end.y)
             self.new_edge(start, end, math.dist(line.start.get_coords(), line.end.get_coords()))
 
-    def new_node(self, x: float, y: float, description: str):
-        node = Node(self.node_id, x, y, description)
+    def new_node(self, x: float, y: float):
+        node = Node(self.node_id, x, y)
         self.node_id += 1
         self.nodes.append(node)
         return node
@@ -80,3 +94,11 @@ class Graph:
         plt.savefig(plt_io, format='png', dpi=300)
         return plt_io
 
+    def create_json(self):
+        n = list()
+        for node in self.nodes:
+            n.append(json.loads(node.json()))
+        e = list()
+        for edge in self.edges:
+            e.append(json.loads(edge.json()))
+        return json.dumps({'nodes': n, 'edges': e}, indent=4)
