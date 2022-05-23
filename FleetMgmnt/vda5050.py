@@ -125,12 +125,12 @@ class Edge(JsonSerializable):
 
 
 class Message(JsonSerializable):
-    def __init__(self, headerid: int, timestamp: str, version: str, manufacturer: str, serialnumber: str):
-        self.headerId = headerid
+    def __init__(self, header_id: int, timestamp: str, version: str, manufacturer: str, serial_number: str):
+        self.headerId = header_id
         self.timestamp = timestamp
         self.version = version
         self.manufacturer = manufacturer
-        self.serialNumber = serialnumber
+        self.serialNumber = serial_number
 
     def get_header_id(self):
         return self.headerId
@@ -153,69 +153,79 @@ class OrderMessage(Message, JsonSerializable):
         self.edges = edges
         self.zoneSetId = zone_set_id
 
+
 class InstantAction(Message, JsonSerializable):
-    def __init__(self,headerid: int,  timestamp: str,  version: str, manufacturer: str,serialnumber: str,
-                actions: List[Action] ):
-        Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)
+    def __init__(self, header_id: int, timestamp: str, version: str, manufacturer: str, serialnumber: str,
+                 actions: List[Action]):
+        Message.__init__(self, header_id, timestamp, version, manufacturer, serialnumber)
         self.actions = actions
 
-class nodeState(JsonSerializable):
-    def __init__(self, nodeId: str, sequenceId: int, relesed: bool, nodeDescription: str = None, node_position: NodePosition = None):
-        self.nodeId = nodeId
-        self.sequenceId = sequenceId
-        self.nodeDescription = nodeDescription
-        self.nodePosition = node_position
-        self.relesed = relesed
 
-class edgeState(JsonSerializable):
-    def __init__(self, edgeId: str, sequenceId: int, relesed: bool, edgeDescription: str = None, 
+class NodeState(JsonSerializable):
+    def __init__(self, node_id: str, sequence_id: int, released: bool, node_description: str = None,
+                 node_position: NodePosition = None):
+        self.nodeId = node_id
+        self.sequenceId = sequence_id
+        self.nodeDescription = node_description
+        self.nodePosition = node_position
+        self.released = released
+
+
+class EdgeState(JsonSerializable):
+    def __init__(self, edge_id: str, sequence_id: int, released: bool, edge_description: str = None,
                  trajectory: dict = None):
-        self.edgeId = edgeId
-        self.sequenceId = sequenceId
-        self.edgeDescription = edgeDescription
-        self.relesed = relesed
+        self.edgeId = edge_id
+        self.sequenceId = sequence_id
+        self.edgeDescription = edge_description
+        self.released = released
         self.trajectory = trajectory
-        
-class agvPosition(JsonSerializable):
-    def __init__(self,positioninitialized: bool, x: float, y: float, theta: float, mapid: str, mapdescription: str = None,
-                  localizationscore: float = None , deviationrange: float = None,):
-        self.positionInitialized = positioninitialized
-        self.localizationScore = localizationscore
-        self.deviationRange = deviationrange
+
+
+class AgvPosition(JsonSerializable):
+    def __init__(self, position_initialized: bool, x: float, y: float, theta: float, map_id: str,
+                 map_description: str = None, localization_score: float = None, deviation_range: float = None, ):
+        self.positionInitialized = position_initialized
+        self.localizationScore = localization_score
+        self.deviationRange = deviation_range
         self.x = x
         self.y = y
         self.theta = theta
-        self.mapId = mapid
-        self.mapDescription = mapdescription
+        self.mapId = map_id
+        self.mapDescription = map_description
 
-class velocity(JsonSerializable):
+
+class Velocity(JsonSerializable):
     def __init__(self, vx: float = None, vy: float = None, omega: float = None):
         self.vx = vx
         self.vy = vy
         self.omega = omega
 
-class boundingBoxReference(JsonSerializable):
+
+class BoundingBoxReference(JsonSerializable):
     def __init__(self, x: float, y: float, z: float, theta: float = None):
         self.x = x
         self.y = y
         self.z = z
         self.theta = theta
-        
-class loadDimensions(JsonSerializable):
+
+
+class LoadDimensions(JsonSerializable):
     def __init__(self, length: float, width: float, height: float = None):
         self.length = length
         self.width = width
         self.height = height
 
-class load(JsonSerializable):
-    def __init__(self, loadid: str = None, loadtype: str = None, loadposition: str = None, boundingboxref: boundingBoxReference = None ,
-                 loaddimension: loadDimensions = None , Weight: float = None ):
-        self.loadId = loadid
-        self.loadType = loadtype
-        self.loadPosition = loadposition
-        self.boundingBoxReference = boundingboxref
-        self.loadDimensions = loaddimension 
-        self.weight = Weight
+
+class Load(JsonSerializable):
+    def __init__(self, load_id: str = None, load_type: str = None, load_position: str = None,
+                 bounding_box_ref: BoundingBoxReference = None, load_dimension: LoadDimensions = None,
+                 weight: float = None):
+        self.loadId = load_id
+        self.loadType = load_type
+        self.loadPosition = load_position
+        self.boundingBoxReference = bounding_box_ref
+        self.loadDimensions = load_dimension
+        self.weight = weight
 
 
 class ActionStatus(str, Enum):
@@ -227,107 +237,120 @@ class ActionStatus(str, Enum):
     FAILED = 'FAILED'
 
 
-class actionState(JsonSerializable):
-    def __init__(self, actionid: str, actionstatus: ActionStatus, resultdescription: str = None,
-                  actiontype: str = None, actiondescription: str = None):
-        self.actionId = actionid 
-        self.actionType = actiontype
-        self.actionDescription = actiondescription
-        self.actionStatus = ActionStatus 
-        self.resultDescription = resultdescription
+class ActionState(JsonSerializable):
+    def __init__(self, action_id: str, action_status: ActionStatus, result_description: str = None,
+                 action_type: str = None, action_description: str = None):
+        self.actionId = action_id
+        self.actionType = action_type
+        self.actionDescription = action_description
+        self.actionStatus = action_status
+        self.resultDescription = result_description
 
-class batteryState(JsonSerializable):
+
+class BatteryState(JsonSerializable):
     def __init__(self, batterycharge: float, charging: bool, reach: int = None,
-                 batteryvoltage: float = None, batteryhealth: float = None):
+                 battery_voltage: float = None, battery_health: float = None):
         self.batteryCharge = batterycharge
-        self.batteryVoltage = batteryvoltage
-        self.batteryHealth = batteryhealth
+        self.batteryVoltage = battery_voltage
+        self.batteryHealth = battery_health
         self.charging = charging
         self.reach = reach
 
-class errorReference(JsonSerializable):
-    def __init__(self, referencekey: str, referencevalue: str):
-        self.referenceKey = referencekey
-        self.referenceValue = referencevalue
+
+class ErrorReference(JsonSerializable):
+    def __init__(self, reference_key: str, reference_value: str):
+        self.referenceKey = reference_key
+        self.referenceValue = reference_value
+
 
 class ErrorLevel(str, Enum):
     WARNING = 'WARNING'
     FATAL = 'FATAL'
 
-class error(JsonSerializable):
-    def __init__(self, errortype: str,errorlevel: ErrorLevel , errorreference: List[errorReference] = None ,
-                 errordescription: str = None):
-        self.errorType = errortype
-        self.errorReferences =  errorreference
-        self.errorDescription = errordescription
-        self.errorLevel = errorlevel
+
+class Error(JsonSerializable):
+    def __init__(self, error_type: str, error_level: ErrorLevel, error_reference: List[ErrorReference] = None,
+                 error_description: str = None):
+        self.errorType = error_type
+        self.errorReferences = error_reference
+        self.errorDescription = error_description
+        self.errorLevel = error_level
+
 
 class InfoLevel(str, Enum):
     DEBUG = 'DEBUG'
     INFO = 'INFO'
 
-class infoReference(JsonSerializable):
-    def __init__(self, referencekey: str, referencevalue: str):
-        self.referenceKey = referencekey
-        self.referenceValue = referencevalue
 
-class info(JsonSerializable):
-    def __init__(self, infotype: str,infolevel: InfoLevel,
-                 inforeference: List[infoReference] = None , infodescription: str = None):
-        self.infoType = infotype
-        self.infoReferences = inforeference
-        self.infoDescription = infodescription
-        self.infoLevel = infolevel
+class InfoReference(JsonSerializable):
+    def __init__(self, reference_key: str, reference_value: str):
+        self.referenceKey = reference_key
+        self.referenceValue = reference_value
 
-class eStop(str, Enum):
+
+class Info(JsonSerializable):
+    def __init__(self, info_type: str, info_level: InfoLevel,
+                 info_reference: List[InfoReference] = None, info_description: str = None):
+        self.infoType = info_type
+        self.infoReferences = info_reference
+        self.infoDescription = info_description
+        self.infoLevel = info_level
+
+
+class EStop(str, Enum):
     AUTOACK = 'AUTOACK'
     MANUAL = 'MANUAL'
     REMOTE = 'REMOTE'
     NONE = 'NONE'
 
-class safetyState(JsonSerializable):
-    def __init__(self, estop: eStop, fieldviolation: bool):
-        self.eStop = estop
-        self.fieldViolation = fieldviolation
 
-class OperatingMode(str,Enum):
+class SafetyState(JsonSerializable):
+    def __init__(self, e_stop: EStop, field_violation: bool):
+        self.eStop = e_stop
+        self.fieldViolation = field_violation
+
+
+class OperatingMode(str, Enum):
     AUTOMATIC = 'AUTOMATIC'
     SEMIAUTOMATIC = 'SEMIAUTOMATIC'
     MANUAL = 'MANUAL'
     SERVICE = 'SERVICE'
     TEACHIN = 'TEACHIN'
-    
+
+
 class StateMessage(Message, JsonSerializable):
-    def __init__(self, headerid: int, timestamp: str, version: str, manufacturer: str, serialnumber: str,
-                 order_id: str, order_update_id: int, zone_set_id: str, last_Node_id: str, last_Node_sequence_id: int,
-                 action_states: List[actionState],safety_state: safetyState , battery_state: batteryState, operation_Mode: OperatingMode , errors: List[error],
-                 node_states: List[nodeState], edge_state: List[edgeState], driving: bool, avg_position: agvPosition = None, velocity: velocity = None ,
-                 loads: List[load] = None, paused: bool = None, new_base_request: bool = None, distance_Since_LastNode: float = None,
-                 information: List[info] = None):
-        Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)
+    def __init__(self, header_id: int, timestamp: str, version: str, manufacturer: str, serial_number: str,
+                 order_id: str, order_update_id: int, zone_set_id: str, last_node_id: str, last_node_sequence_id: int,
+                 action_states: List[ActionState], safety_state: SafetyState, battery_state: BatteryState,
+                 operation_mode: OperatingMode, errors: List[Error],
+                 node_states: List[NodeState], edge_state: List[EdgeState], driving: bool,
+                 avg_position: AgvPosition = None, velocity: Velocity = None,
+                 loads: List[Load] = None, paused: bool = None, new_base_request: bool = None,
+                 distance_since_last_node: float = None,
+                 information: List[Info] = None):
+        Message.__init__(self, header_id, timestamp, version, manufacturer, serial_number)
         self.orderId = order_id
         self.orderUpdateId = order_update_id
         self.zoneSetId = zone_set_id
-        self.lastNodeId = last_Node_id
-        self.lastNodeSequenceId = last_Node_sequence_id
-        self.nodeStates = node_states 
-        self.edgeStates = edge_state 
+        self.lastNodeId = last_node_id
+        self.lastNodeSequenceId = last_node_sequence_id
+        self.nodeStates = node_states
+        self.edgeStates = edge_state
         self.agvPosition = avg_position
-        self.velocity = velocity 
-        self.loads = loads 
-        self.driving =  driving
-        self.paused = paused 
+        self.velocity = velocity
+        self.loads = loads
+        self.driving = driving
+        self.paused = paused
         self.newBaseRequest = new_base_request
-        self.distanceSinceLastNode = distance_Since_LastNode
-        self.actionStates = action_states 
+        self.distanceSinceLastNode = distance_since_last_node
+        self.actionStates = action_states
         self.batteryState = battery_state
-        self.operatingMode = operation_Mode
+        self.operatingMode = operation_mode
         self.errors = errors
-        self.information = information 
+        self.information = information
         self.safetyState = safety_state
-        
-      
-    
+
+
 def get_mqtt_topic(serial_number: str, topic: Topic):
     return INTERFACE_NAME + '/v' + PROTOCOL_VERSION + '/' + MANUFACTURER + '/' + serial_number + '/' + topic.value
 
@@ -335,19 +358,19 @@ def get_mqtt_topic(serial_number: str, topic: Topic):
 def get_header_id(topic: Topic):
     HEADER_ID_LOCK[topic].acquire()
     HEADER_ID[topic] += 1
-    id = HEADER_ID[topic]
+    hid = HEADER_ID[topic]
     HEADER_ID_LOCK[topic].release()
-    return id
+    return hid
 
 
 # Below this comment is playground code that should be removed before release
 
-cm = ConnectionMessage(23, 'dsf', 'hgj', 'sdf', 'sdfs', ConnectionState.ONLINE)
+# cm = ConnectionMessage(23, 'dsf', 'hgj', 'sdf', 'sdfs', ConnectionState.ONLINE)
 
-node = Node('dsf', 23, True, list())
-print(node.json(True))
+# node = Node('dsf', 23, True, list())
+# print(node.json(True))
 
-print(get_mqtt_topic('0', Topic.CONNECTION))
-print(get_header_id(Topic.CONNECTION))
-print(get_header_id(Topic.ORDER))
-print(get_header_id(Topic.CONNECTION))
+# print(get_mqtt_topic('0', Topic.CONNECTION))
+# print(get_header_id(Topic.CONNECTION))
+# print(get_header_id(Topic.ORDER))
+# print(get_header_id(Topic.CONNECTION))
