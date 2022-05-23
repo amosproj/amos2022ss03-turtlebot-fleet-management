@@ -73,11 +73,24 @@ class Graph:
                 return node
         raise Exception("Node not found, FATAL")
 
+    def bfs(self, start: Node):
+        q = [start]
+        visited = [start]
+        while len(q) > 0:
+            cur = q.pop()
+            cur_edges = self.get_node_edges(cur)
+            for edge in cur_edges:
+                if edge.end not in visited:
+                    q.append(edge.end)
+                    visited.append(edge.end)
+        return visited
+
     def is_strongly_connected(self):
-        # Todo
+        num_of_nodes = len(self.nodes)
         for node in self.nodes:
-            edges_visited = [node]
-        return False
+            if num_of_nodes != len(self.bfs(node)):
+                return False
+        return True
 
     def get_node_edges(self, node: Node):
         node_edges = list()
