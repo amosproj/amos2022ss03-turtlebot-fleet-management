@@ -53,6 +53,7 @@ class Graph:
             start = self.find_node_by_coords(line.start.x, line.start.y)
             end = self.find_node_by_coords(line.end.x, line.end.y)
             self.new_edge(start, end, math.dist(line.start.get_coords(), line.end.get_coords()))
+            self.new_edge(end, start, math.dist(line.start.get_coords(), line.end.get_coords()))
 
     def new_node(self, x: float, y: float):
         node = Node(self.node_id, x, y)
@@ -90,7 +91,7 @@ class Graph:
         for edge in self.edges:
             plt.plot([edge.start.x, edge.end.x], [edge.start.y, edge.end.y], linestyle='dashed', marker='s')
         for node in self.nodes:
-            plt.annotate(node.description, (node.x, node.y))
+            plt.annotate(str(node.nid), (node.x, node.y))
         plt.savefig(plt_io, format='png', dpi=300)
         return plt_io
 
