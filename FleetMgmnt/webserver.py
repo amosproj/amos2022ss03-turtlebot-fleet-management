@@ -12,6 +12,26 @@ def start():
     app.run(host='0.0.0.0', port=8080)
 
 
+@app.get("/api/station/<station_id>/status")
+def station_status(station_id):
+    return "Test"
+
+
+@app.post("/api/station/<station_id>/req")
+def station_req(station_id):
+    return "Test"
+
+
+@app.post("/api/station/<station_id>/move")
+def station_move(station_id):
+    return "Test"
+
+
+@app.post("/api/station/<station_id>/sendTo/<target_station_id>")
+def station_send_to(station_id, target_station_id):
+    return str(station_id) + " " + str(target_station_id)
+
+
 @app.route("/graph")
 def graph_image():
     graph = turtlegraph.Graph()
