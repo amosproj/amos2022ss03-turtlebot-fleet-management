@@ -1,8 +1,7 @@
 import math
-import matplotlib.pyplot as plt
+from typing import List
 
-points = list()
-lines = list()
+import matplotlib.pyplot as plt
 
 
 class Point:
@@ -51,16 +50,20 @@ class Line:
         return line1, line2
 
 
+points: List[Point] = list()
+lines: List[Line] = list()
+
+
 def import_vmap(filename: str):
     f = open(filename, "r")
     vmap_lines = f.readlines()
 
     for vmap_line in vmap_lines:
-        if vmap_line.startswith('#'):
+        if vmap_line.startswith("#"):
             continue
-        if vmap_line.startswith('POSE'):
+        if vmap_line.startswith("POSE"):
             break
-        if vmap_line.startswith('LANE'):
+        if vmap_line.startswith("LANE"):
             coords_old = vmap_line.split()
             coords = [0, round(float(coords_old[1]), 3), round(float(coords_old[2]), 3),
                       round(float(coords_old[3]), 3), round(float(coords_old[4]), 3)]
@@ -108,16 +111,14 @@ def remove_duplicate_lines():
 
 def create_plot():
     for line in lines:
-        plt.plot([line.start.x, line.end.x], [line.start.y, line.end.y], linestyle='dashed', marker='s')
+        plt.plot([line.start.x, line.end.x], [line.start.y, line.end.y], linestyle="dashed", marker="s")
     for point in points:
         plt.annotate(point.name, point.get_coords())
     # plt.axis([4, 5, 2.4, 3])
     # plt.axis([4, 4.1, -5, -4.75])
     # plt.axis([-0.2, 0.2, -5.5, -4])
     # plt.show(dpi=3000, bbox_inches="tight")
-    plt.savefig('imported_vmap.png', dpi=3000, bbox_inches="tight")
-
+    plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
 
 # import_vmap("demo.vmap")
 # create_plot()
-

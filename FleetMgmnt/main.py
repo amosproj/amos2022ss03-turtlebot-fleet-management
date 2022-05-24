@@ -22,7 +22,5 @@ def launch_thread(target_function, args):
     thread.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

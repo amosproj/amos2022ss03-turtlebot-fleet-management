@@ -8,17 +8,17 @@ from threading import Lock
 
 
 class Topic(str, Enum):
-    CONNECTION = 'connection'
-    FACTSHEET = 'factsheet'
-    INSTANT_ACTIONS = 'instantActions'
-    ORDER = 'order'
-    STATE = 'state'
-    VISUALIZATION = 'visualization'
+    CONNECTION = "connection"
+    FACTSHEET = "factsheet"
+    INSTANT_ACTIONS = "instantActions"
+    ORDER = "order"
+    STATE = "state"
+    VISUALIZATION = "visualization"
 
 
-INTERFACE_NAME = 'AMOS'
-PROTOCOL_VERSION = '1'
-MANUFACTURER = 'TurtleBot'
+INTERFACE_NAME = "AMOS"
+PROTOCOL_VERSION = "1"
+MANUFACTURER = "TurtleBot"
 HEADER_ID = {
     Topic.CONNECTION: 0,
     Topic.FACTSHEET: 0,
@@ -38,15 +38,15 @@ HEADER_ID_LOCK = {
 
 
 class ConnectionState(str, Enum):
-    ONLINE = 'ONLINE'
-    OFFLINE = 'OFFLINE'
-    CONNECTIONBROKEN = 'CONNECTIONBROKEN'
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+    CONNECTIONBROKEN = "CONNECTIONBROKEN"
 
 
 class BlockingType(str, Enum):
-    NONE = 'NONE'
-    SOFT = 'SOFT'
-    HARD = 'HARD'
+    NONE = "NONE"
+    SOFT = "SOFT"
+    HARD = "HARD"
 
 
 class JsonSerializable:
@@ -103,7 +103,7 @@ class Edge(JsonSerializable):
     def __init__(self, edge_id: str, sequence_id: int, released: bool, start_node_id: str, end_node_id: str,
                  actions: List[Action], edge_description: str = None, max_speed: float = None,
                  max_height: float = None, min_height: float = None, orientation: float = None,
-                 orientation_type: str = 'TANGENTIAL', direction: str = None, rotation_allowed: bool = None,
+                 orientation_type: str = "TANGENTIAL", direction: str = None, rotation_allowed: bool = None,
                  max_rotation_speed: float = None, length: float = None, trajectory: dict = None):
         self.edgeId = edge_id
         self.sequenceId = sequence_id
@@ -229,12 +229,12 @@ class Load(JsonSerializable):
 
 
 class ActionStatus(str, Enum):
-    WAITING = 'WAITING'
-    INITIALIZING = 'INITIALIZING'
-    RUNNING = 'RUNNING'
-    PAUSED = 'PAUSED'
-    FINISHED = 'FINISHED'
-    FAILED = 'FAILED'
+    WAITING = "WAITING"
+    INITIALIZING = "INITIALIZING"
+    RUNNING = "RUNNING"
+    PAUSED = "PAUSED"
+    FINISHED = "FINISHED"
+    FAILED = "FAILED"
 
 
 class ActionState(JsonSerializable):
@@ -264,8 +264,8 @@ class ErrorReference(JsonSerializable):
 
 
 class ErrorLevel(str, Enum):
-    WARNING = 'WARNING'
-    FATAL = 'FATAL'
+    WARNING = "WARNING"
+    FATAL = "FATAL"
 
 
 class Error(JsonSerializable):
@@ -278,8 +278,8 @@ class Error(JsonSerializable):
 
 
 class InfoLevel(str, Enum):
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
+    DEBUG = "DEBUG"
+    INFO = "INFO"
 
 
 class InfoReference(JsonSerializable):
@@ -298,10 +298,10 @@ class Info(JsonSerializable):
 
 
 class EStop(str, Enum):
-    AUTOACK = 'AUTOACK'
-    MANUAL = 'MANUAL'
-    REMOTE = 'REMOTE'
-    NONE = 'NONE'
+    AUTOACK = "AUTOACK"
+    MANUAL = "MANUAL"
+    REMOTE = "REMOTE"
+    NONE = "NONE"
 
 
 class SafetyState(JsonSerializable):
@@ -311,11 +311,11 @@ class SafetyState(JsonSerializable):
 
 
 class OperatingMode(str, Enum):
-    AUTOMATIC = 'AUTOMATIC'
-    SEMIAUTOMATIC = 'SEMIAUTOMATIC'
-    MANUAL = 'MANUAL'
-    SERVICE = 'SERVICE'
-    TEACHIN = 'TEACHIN'
+    AUTOMATIC = "AUTOMATIC"
+    SEMIAUTOMATIC = "SEMIAUTOMATIC"
+    MANUAL = "MANUAL"
+    SERVICE = "SERVICE"
+    TEACHIN = "TEACHIN"
 
 
 class StateMessage(Message, JsonSerializable):
@@ -352,7 +352,7 @@ class StateMessage(Message, JsonSerializable):
 
 
 def get_mqtt_topic(serial_number: str, topic: Topic):
-    return INTERFACE_NAME + '/v' + PROTOCOL_VERSION + '/' + MANUFACTURER + '/' + serial_number + '/' + topic.value
+    return INTERFACE_NAME + "/v" + PROTOCOL_VERSION + "/" + MANUFACTURER + "/" + serial_number + "/" + topic.value
 
 
 def get_header_id(topic: Topic):
@@ -362,15 +362,14 @@ def get_header_id(topic: Topic):
     HEADER_ID_LOCK[topic].release()
     return hid
 
-
 # Below this comment is playground code that should be removed before release
 
-# cm = ConnectionMessage(23, 'dsf', 'hgj', 'sdf', 'sdfs', ConnectionState.ONLINE)
+# cm = ConnectionMessage(23, "dsf", "hgj", "sdf", "sdfs", ConnectionState.ONLINE)
 
-# node = Node('dsf', 23, True, list())
+# node = Node("dsf", 23, True, list())
 # print(node.json(True))
 
-# print(get_mqtt_topic('0', Topic.CONNECTION))
+# print(get_mqtt_topic("0", Topic.CONNECTION))
 # print(get_header_id(Topic.CONNECTION))
 # print(get_header_id(Topic.ORDER))
 # print(get_header_id(Topic.CONNECTION))

@@ -32,8 +32,8 @@ class Edge:
         self.length = length
 
     def json(self):
-        return json.dumps({'eid': self.eid, 'start': self.start.nid, 'end': self.end.nid,
-                           'length': round(self.length * 100)})
+        return json.dumps({"eid": self.eid, "start": self.start.nid, "end": self.end.nid,
+                           "length": round(self.length * 100)})
 
 
 class Graph:
@@ -102,10 +102,10 @@ class Graph:
     def create_image(self):
         plt_io = io.BytesIO()
         for edge in self.edges:
-            plt.plot([edge.start.x, edge.end.x], [edge.start.y, edge.end.y], linestyle='dashed', marker='s')
+            plt.plot([edge.start.x, edge.end.x], [edge.start.y, edge.end.y], linestyle="dashed", marker="s")
         for node in self.nodes:
             plt.annotate(str(node.nid), (node.x, node.y))
-        plt.savefig(plt_io, format='png', dpi=300)
+        plt.savefig(plt_io, format="png", dpi=300)
         return plt_io
 
     def create_json(self):
@@ -115,4 +115,4 @@ class Graph:
         e = list()
         for edge in self.edges:
             e.append(json.loads(edge.json()))
-        return json.dumps({'nodes': n, 'edges': e}, indent=4)
+        return json.dumps({"nodes": n, "edges": e}, indent=4)
