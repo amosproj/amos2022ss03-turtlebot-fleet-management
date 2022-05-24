@@ -1,10 +1,7 @@
-# VDA5050 Lib
-import dis
 import json
 from enum import Enum
-from typing import List, Union, Any
-from threading import Thread
 from threading import Lock
+from typing import Any, List, Union
 
 
 class Topic(str, Enum):

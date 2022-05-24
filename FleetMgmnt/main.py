@@ -1,7 +1,5 @@
 import threading
 import time
-
-# Internal dependencies
 import webserver
 import mqtt
 

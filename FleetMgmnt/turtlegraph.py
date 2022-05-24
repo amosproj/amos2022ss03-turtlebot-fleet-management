@@ -1,11 +1,8 @@
 import io
 import json
 import math
-
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
 import vmap_importer
+from matplotlib import pyplot as plt
 
 
 class Node:
