@@ -1,6 +1,7 @@
 import io
 import json
 import math
+from typing import List
 
 import vmap_importer
 from matplotlib import pyplot as plt
@@ -129,3 +130,6 @@ class Graph:
         for edge in self.edges:
             e.append(json.loads(edge.json()))
         return json.dumps({"nodes": n, "edges": e}, indent=4)
+
+    def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
+        pass
