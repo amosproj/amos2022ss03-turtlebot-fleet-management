@@ -65,8 +65,13 @@ def import_vmap(filename: str):
             break
         if vmap_line.startswith("LANE"):
             coords_old = vmap_line.split()
-            coords = [0, round(float(coords_old[1]), 3), round(float(coords_old[2]), 3),
-                      round(float(coords_old[3]), 3), round(float(coords_old[4]), 3)]
+            coords = [
+                0,
+                round(float(coords_old[1]), 3),
+                round(float(coords_old[2]), 3),
+                round(float(coords_old[3]), 3),
+                round(float(coords_old[4]), 3),
+            ]
             p1 = Point.get_point(float(coords[1]), float(coords[2]))
             p2 = Point.get_point(float(coords[3]), float(coords[4]))
             line = Line(p1, p2)
@@ -83,7 +88,9 @@ def merge_lines():
         line = queue.pop(0)
         for point in points:
             if line.point_on_line(point):
-                print("Line " + line.start.name + " " + line.end.name + " will be split")
+                print(
+                    "Line " + line.start.name + " " + line.end.name + " will be split"
+                )
                 line1, line2 = line.split_line(point)
                 queue.append(line1)
                 queue.append(line2)
@@ -98,10 +105,18 @@ def remove_duplicate_lines():
             for line2 in lines:
                 if line1 is line2:
                     continue
-                if (line1.start is line2.start and line1.end is line2.end) or \
-                        (line1.end is line2.start and line1.start is line2.end) or \
-                        (line1.start is line2.end and line1.end is line2.start):
-                    print("Found a duplicate line " + line1.start.name + " " + line1.end.name + ", removing...")
+                if (
+                    (line1.start is line2.start and line1.end is line2.end)
+                    or (line1.end is line2.start and line1.start is line2.end)
+                    or (line1.start is line2.end and line1.end is line2.start)
+                ):
+                    print(
+                        "Found a duplicate line "
+                        + line1.start.name
+                        + " "
+                        + line1.end.name
+                        + ", removing..."
+                    )
                     lines.remove(line2)
                     changes = True
                     break
@@ -111,7 +126,12 @@ def remove_duplicate_lines():
 
 def create_plot():
     for line in lines:
-        plt.plot([line.start.x, line.end.x], [line.start.y, line.end.y], linestyle="dashed", marker="s")
+        plt.plot(
+            [line.start.x, line.end.x],
+            [line.start.y, line.end.y],
+            linestyle="dashed",
+            marker="s",
+        )
     for point in points:
         plt.annotate(point.name, point.get_coords())
     # plt.axis([4, 5, 2.4, 3])
@@ -119,6 +139,7 @@ def create_plot():
     # plt.axis([-0.2, 0.2, -5.5, -4])
     # plt.show(dpi=3000, bbox_inches="tight")
     plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
+
 
 # import_vmap("demo.vmap")
 # create_plot()
