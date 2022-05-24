@@ -1,7 +1,6 @@
 import turtlegraph
 from flask import Flask, send_from_directory, Response
 
-
 app = Flask(__name__)
 
 
