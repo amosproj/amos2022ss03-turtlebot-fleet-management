@@ -1,12 +1,13 @@
 import threading
 import time
 
-# Internal dependencies
+import mqtt
 import webserver
 
 
 def main():
     launch_thread(webserver.start, ())
+    launch_thread(mqtt.connect(), ())
     launch_thread(placeholder, ())  # Example
 
 
@@ -20,7 +21,5 @@ def launch_thread(target_function, args):
     thread.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
