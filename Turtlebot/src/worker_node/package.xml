@@ -6,6 +6,11 @@
   <description>This package navigates the robot around the course accoring to the recieved messages in the mqtt connection node</description>
   <maintainer email="meike.bloecher@fau.de">meike</maintainer>
   <license>MIT</license>
+  
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
