@@ -1,3 +1,4 @@
+import math
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
@@ -55,7 +56,6 @@ class Worker(Node):
         timer_period = 0.5
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
-        
 
     def timer_callback(self):
         #msg_twist = Twist()
@@ -73,9 +73,19 @@ class Worker(Node):
         #self.pub_mqtt.publish(msg) #define msg to be published
         self.i += 1
 
-    def calculate_direction(self):
-         #calculates direction the robot needs to go to to reach desired graph node, gets robot position, orientation, destination in graph
-        pass
+    def calculate_direction(self, pos: tuple, dest: tuple):
+        """
+        Calculates direction the robot needs to go, to reach the desired graph node.
+        Gets robot position, destination in graph (and current orientation).
+
+        :param pos: tuple of numeric values representing the x- and y- coordinate of the current turtlebot position
+        :param dest: tuple of numeric values representing the x- and y- coordinate of the destination
+        :return: float in ]-180;180] representing the direction in which the destination lies. 0 would be north
+        """
+        dx = dest[0] - pos[0]
+        dy = dest[1] - pos[1]
+        direction = math.degrees(math.atan2(dx, dy))  #
+        return direction
 
     def controller(self):
         #needs line measurement topic
@@ -92,7 +102,6 @@ def main(args=None):
     worker = Worker()
 
     rclpy.spin(worker)
-
 
 
 if __name__ == '__main__':
