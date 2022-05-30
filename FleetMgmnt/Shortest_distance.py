@@ -1,55 +1,98 @@
 import turtlegraph
 import math
 import sys
+import copy
 
 
 class ShortestPath:
     def __init__(self,graph: turtlegraph.Graph,sourcenode : turtlegraph.Node ):
         self.Graph = graph
         self.SourceNode = sourcenode
-        self.visited_and_distance = [[None,sys.maxsize]]
+        self.visited_and_distance = [[None,sys.maxsize,[turtlegraph.Edge]]]
         self.unvisited_nodes = self.Graph.nodes
         self.visitedNode = []
         self.number_of_vertices = len(self.Graph.nodes)
     def Process_ShortestPath(self):
         for i in range(self.number_of_vertices - 1):
-            self.visited_and_distance.append([None, sys.maxsize])
+            self.visited_and_distance.append([None, sys.maxsize,[turtlegraph.Edge]])
 
-        self.visited_and_distance[0] = [self.SourceNode,0]
+        self.visited_and_distance[0] = [self.SourceNode,0,[]]
         self.visitedNode.append(self.SourceNode)
         NeighPath = self.NeighbourNodePaths(self.visited_and_distance[0][0])
-        visit = self.FindShortPath(NeighPath)
-        NeighPath.remove(visit)
-        self.visited_and_distance[1] = [visit[0], self.visited_and_distance[0][1]+visit[1]]
-        self.visitedNode.append(visit[0])
-        NeighPath1 = self.NeighbourNodePaths(self.visited_and_distance[1][0])
 
-        for paths in NeighPath1:
-            for node in self.visitedNode:
-                if paths[0] == node:
-                    NeighPath1.remove(paths)
+        for k in range(0,self.number_of_vertices-1):
 
-        temp = self.FindShortPath(NeighPath1)
-        temp1 = [temp[0], self.visited_and_distance[1][1]+temp[1]]
+            NeighPath1 = self.NeighbourNodePaths(self.visited_and_distance[k][0])
+            for i in range(0, len(NeighPath1)):
+                for Nodes in self.visitedNode:
+                    if NeighPath1[i][0] == Nodes:
+                        NeighPath1[i][0] = None
+                        NeighPath1[i][1] = sys.maxsize
 
-        visit = self.cmp_FindShortPath(NeighPath,temp1)
-        if visit != temp1:
-            self.visited_and_distance[2] = [visit[0], self.visited_and_distance[0][1] + visit[1]]
-        else:
-            self.visited_and_distance[2] = [visit[0], visit[1]]
-        self.visitedNode.append(visit[0])
+            for paths in NeighPath1:
+                if paths[0] != None:
+                    His = []
+                    His.append(self.visited_and_distance[k][0])
+                    temp = [paths[0], self.visited_and_distance[k][1] + paths[1]]
+                    NeighPath.append(temp)
+
+            temp = self.FindShortPath(NeighPath1)
+            His = [self.visited_and_distance[k][0]]
+            temp1 = [temp[0], self.visited_and_distance[k][1] + temp[1]]
+
+            NeighPath_temp = copy.copy(NeighPath)
+            bool_mvk = False
+
+            while bool_mvk == False:
+                visit = self.cmp_FindShortPath(NeighPath_temp, temp1)
+                for nodes in self.visitedNode:
+                    if visit[0] == nodes:
+                        NeighPath_temp.remove(visit)
+                        bool_mvk = False
+                        break
+                    else:
+                        bool_mvk = True
+
+            if len(NeighPath_temp) > 0:
+                visit = self.cmp_FindShortPath(NeighPath_temp, temp1)
+
+
+            if visit != temp1:
+                self.visited_and_distance[k+1] = [visit[0], visit[1]]
+                NeighPath.append(temp1)
+                NeighPath.remove(visit)
+            else:
+                self.visited_and_distance[k+1] = [visit[0], visit[1]]
+                NeighPath.remove(visit)
+
+            self.visitedNode.append(visit[0])
+
+            b_set = set(tuple(x) for x in NeighPath)
+            NeighPath = [list(x) for x in b_set]
 
         return self.visited_and_distance
+
 
     def NeighbourNodePaths(self,Node: turtlegraph.Node):
         Ret = []
         Nodelis = self.Attched_Nodes(Node)
         for Node_obj in Nodelis:
-            Ret.append([Node_obj,Distance_Between_Nodes(Node,Node_obj)])
+            Ret.append([Node_obj,Distance_Between_Nodes(Node,Node_obj),self.FindEdgewithNodes(Node,Node_obj)])
         return Ret
 
+    def FindEdgewithNodes(self,Node1: turtlegraph.Node,Node2: turtlegraph.Node):
+        for edg in self.Graph.edges:
+            if (edg.start == Node1) and (edg.end == Node2) :
+                Edge = edg
+        return Edge
+
     def cmp_FindShortPath(self,neighpathlist,vistedpath):
-        minpath = min(neighpathlist, key=lambda x: x[1])
+        if len(neighpathlist) > 1:
+            minpath = min(neighpathlist, key=lambda x: x[1])
+        elif len(neighpathlist) == 0:
+            minpath = [sys.maxsize,sys.maxsize]
+        else:
+            minpath = neighpathlist[0]
 
         if minpath[1] < vistedpath[1]:
             return minpath
@@ -73,7 +116,6 @@ class ShortestPath:
         return new_list
 
     def Nearest_Node_for_A_Node(self,Node: turtlegraph.Node,Nodelist: list[turtlegraph.Node]):
-        Temp = []
         Distance_dic = {}
         Distances = []
         for nodes in Nodelist:
@@ -108,12 +150,10 @@ shortest_00 = ShortestPath(graph,graph.nodes[0])
 
 temp = shortest_00.Process_ShortestPath()
 
-print(temp[0][0].nid,temp[0][1])
-print(temp[1][0].nid,temp[1][1])
-print(temp[2][0].nid,temp[2][1])
 
 
-print(temp)
+
+
 
 
 
