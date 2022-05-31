@@ -39,13 +39,14 @@ class Worker(Node):
         #self.vel_lin = Vector3()
         #self.vel_angle = Vector3()
         self.orderID = ""
+        self.orderupdateID = ""
         self.orderUpdateId = 0
         self.nodes = []
         self.edges = []
 
         #subcribe to energy level
-        self.mqqt_sub = self.create_subscription(String, "/back", self.call_mqtt,10)
-        self.order_sub = self.create_subscription(Order, "/Order", self.call_order,10)
+        self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
+        self.order_sub = self.create_subscription(Order, "/Order", self.call_order, 10)
         self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
         self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
 
@@ -76,15 +77,17 @@ class Worker(Node):
     def calculate_direction(self, pos: tuple, dest: tuple):
         """
         Calculates direction the robot needs to go, to reach the desired graph node.
-        Gets robot position, destination in graph (and current orientation).
 
         :param pos: tuple of numeric values representing the x- and y- coordinate of the current turtlebot position
         :param dest: tuple of numeric values representing the x- and y- coordinate of the destination
-        :return: float in ]-180;180] representing the direction in which the destination lies. 0 would be north
+        :return: int in ]-180000;180000] representing the direction in which the destination lies in milli-degrees
         """
         dx = dest[0] - pos[0]
         dy = dest[1] - pos[1]
-        direction = math.degrees(math.atan2(dx, dy))  #
+        direction = math.degrees(math.atan2(dy, dx)) * 1000
+        # Direction in milli-degrees in order to fit the heading values coming from the SICK-LidarLoc software
+        # TODO Find out what a heading of 0 deg means in the SICK-LidarLoc software
+        # In this first implementation 0 deg would mean East.
         return direction
 
     def controller(self):
