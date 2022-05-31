@@ -89,9 +89,6 @@ def merge_lines():
         line = queue.pop(0)
         for point in points:
             if line.point_on_line(point):
-                print(
-                    "Line " + line.start.name + " " + line.end.name + " will be split"
-                )
                 line1, line2 = line.split_line(point)
                 queue.append(line1)
                 queue.append(line2)
@@ -111,13 +108,6 @@ def remove_duplicate_lines():
                     or (line1.end is line2.start and line1.start is line2.end)
                     or (line1.start is line2.end and line1.end is line2.start)
                 ):
-                    print(
-                        "Found a duplicate line "
-                        + line1.start.name
-                        + " "
-                        + line1.end.name
-                        + ", removing..."
-                    )
                     lines.remove(line2)
                     changes = True
                     break
