@@ -79,6 +79,7 @@ def import_vmap(filename: str):
 
     merge_lines()
     remove_duplicate_lines()
+    f.close()
     return points, lines
 
 
