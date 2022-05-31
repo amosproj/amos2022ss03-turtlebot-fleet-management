@@ -50,8 +50,6 @@ class Graph:
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
-        print(len(points))
-        print(len(lines))
         for i, point in enumerate(points):
             self.new_node(point.x, point.y)
         for line in lines:
