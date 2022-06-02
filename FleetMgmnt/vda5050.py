@@ -201,7 +201,7 @@ class OrderMessage(Message, JsonSerializable):
         order_id: str,
         order_update_id: int,
         nodes: List[Node],
-        edges,
+        edges: List[Edge],
         zone_set_id: str = None,
     ):
         Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)

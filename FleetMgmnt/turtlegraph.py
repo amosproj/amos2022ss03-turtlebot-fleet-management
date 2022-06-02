@@ -5,6 +5,7 @@ from typing import List
 
 import vmap_importer
 import graph_search as gs
+import vda5050
 from matplotlib import pyplot as plt
 
 
@@ -135,11 +136,40 @@ class Graph:
         return self.graph_search.get_shortest_route(start, target)
 
 
-if __name__ == '__main__':
-    # Small test if get_shortest_route works
-    g = Graph()
-    g.vmap_lines_to_graph("demo.vmap")
-    nodes, edges = g.get_shortest_route(g.nodes[2], g.nodes[8])
+def create_vda5050_order(nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
+    vda5050_nodes = []
+    for seq_id, n in enumerate(nodes):
+        vda5050_nodes.append(vda5050.Node(
+            node_id=str(n.nid),
+            sequence_id=seq_id,
+            released=False,
+            actions=[],
+            node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
+        ))
 
-    for edge in edges:
-        print(edge.start.nid, '->', edge.end.nid)
+    vda5050_edges = []
+    for seq_id, e in enumerate(edges):
+        vda5050_edges.append(vda5050.Edge(
+            edge_id=str(e.eid),
+            sequence_id=seq_id,
+            released=False,
+            start_node_id=str(e.start.nid),
+            end_node_id=str(e.end.nid),
+            actions=[],
+            length=e.length
+        ))
+
+    order = vda5050.OrderMessage(
+        headerid=0,
+        timestamp='',
+        version='',
+        manufacturer='',
+        serialnumber='',  # All more general information, probably should not be set here
+        order_id='0',
+        order_update_id=0,  # Also, can't be set here
+        nodes=vda5050_nodes,
+        edges=vda5050_edges
+    )
+
+    return order
+
