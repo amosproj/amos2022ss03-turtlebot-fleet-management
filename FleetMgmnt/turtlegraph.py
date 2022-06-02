@@ -4,6 +4,7 @@ import math
 from typing import List
 
 import vmap_importer
+import graph_search as gs
 from matplotlib import pyplot as plt
 
 
@@ -47,6 +48,7 @@ class Graph:
         self.edges = list()
         self.node_id = 0
         self.edge_id = 0
+        self.graph_search = gs.GraphSearch(self)
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -130,4 +132,14 @@ class Graph:
         return json.dumps({"nodes": n, "edges": e}, indent=4)
 
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
-        pass
+        return self.graph_search.get_shortest_route(start, target)
+
+
+if __name__ == '__main__':
+    # Small test if get_shortest_route works
+    g = Graph()
+    g.vmap_lines_to_graph("demo.vmap")
+    nodes, edges = g.get_shortest_route(g.nodes[2], g.nodes[8])
+
+    for edge in edges:
+        print(edge.start.nid, '->', edge.end.nid)
