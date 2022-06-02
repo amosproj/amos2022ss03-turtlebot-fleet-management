@@ -114,11 +114,20 @@ class Graph:
             plt.plot(
                 [edge.start.x, edge.end.x],
                 [edge.start.y, edge.end.y],
-                linestyle="dashed",
-                marker="s",
+                color="gray"
             )
-        for node in self.nodes:
-            plt.annotate(str(node.nid), (node.x, node.y))
+            plt.plot(
+                edge.start.x, edge.start.y,
+                marker='.',
+                color="gray"
+            )
+            plt.plot(
+                edge.end.x, edge.end.y,
+                marker='.',
+                color="gray"
+            )
+        # for node in self.nodes:
+        #     plt.annotate(str(node.nid), (node.x, node.y))
         plt.savefig(plt_io, format="png", dpi=300)
         return plt_io
 

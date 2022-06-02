@@ -1,5 +1,7 @@
-import turtlegraph
 from flask import Flask, Response, send_from_directory
+
+import turtlegraph
+import main
 
 app = Flask(__name__)
 
@@ -30,17 +32,13 @@ def station_send_to(station_id, target_station_id):
 
 @app.route("/graph")
 def graph_image():
-    graph = turtlegraph.Graph()
-    graph.vmap_lines_to_graph("demo.vmap")
-    img = graph.create_image()
+    img = main.graph.create_image()
     return Response(img.getvalue(), mimetype="image/png")
 
 
 @app.route("/graph.json")
 def graph_json():
-    graph = turtlegraph.Graph()
-    graph.vmap_lines_to_graph("demo.vmap")
-    return Response(graph.create_json(), mimetype="application/json")
+    return Response(main.graph.create_json(), mimetype="application/json")
 
 
 @app.route("/")
