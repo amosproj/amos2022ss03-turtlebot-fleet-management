@@ -5,7 +5,11 @@ createApp({
     data() {
         return {
             message: 'Hello Vue!',
-            stationID: 1
+            stationID: 1,
+            robotSerial: "1",
+            fromNode: "12",
+            targetNode: "5",
+            pathUrl: null
         }
     },
     methods: {
@@ -23,8 +27,20 @@ createApp({
         requestAGV() {this.sendReqToFleetManagement('req')},
         moveAGV() {this.sendReqToFleetManagement('move')},
         sendAGVTo(station) {this.sendReqToFleetManagement('sendTo/' + station)},
+        sendOrder() {
+            axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromNode + '/' + this.targetNode)
+                .then(function (response) {
+                    console.log(response)
+                })
+                .catch(function (error) {
+                    console.log(error)
+                })
+                .then(function () {
+                });
+        },
     },
     mounted() {
+        /*
         const canvas = document.querySelector('#canvas');
 
         if (!canvas.getContext) {
@@ -49,29 +65,10 @@ createApp({
                         ctx.stroke();
                     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             })
                 .catch(function (error) {
                     console.log(error)
             })
-
+        */
     }
 }).mount('#app')

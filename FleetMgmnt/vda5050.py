@@ -455,7 +455,7 @@ class StateMessage(Message, JsonSerializable):
         node_states: List[NodeState],
         edge_state: List[EdgeState],
         driving: bool,
-        avg_position: AgvPosition = None,
+        agv_position: AgvPosition = None,
         velocity: Velocity = None,
         loads: List[Load] = None,
         paused: bool = None,
@@ -473,7 +473,7 @@ class StateMessage(Message, JsonSerializable):
         self.lastNodeSequenceId = last_node_sequence_id
         self.nodeStates = node_states
         self.edgeStates = edge_state
-        self.agvPosition = avg_position
+        self.agvPosition = agv_position
         self.velocity = velocity
         self.loads = loads
         self.driving = driving

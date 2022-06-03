@@ -12,7 +12,7 @@ graph.vmap_lines_to_graph(vmap_file)
 
 def main():
     launch_thread(webserver.start, ())
-    # launch_thread(mqtt.connect(), ())
+    launch_thread(mqtt.connect(), ())
     launch_thread(placeholder, ())  # Example
 
 

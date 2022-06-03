@@ -77,6 +77,12 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
+    def find_node_by_id(self, nid: int):
+        for node in self.nodes:
+            if node.nid == nid:
+                return node
+        raise Exception("Node not found, FATAL")
+
     def find_node_by_coords(self, x: float, y: float):
         for node in self.nodes:
             if node.x == x and node.y == y:
@@ -110,6 +116,7 @@ class Graph:
         return node_edges
 
     def create_image(self):
+        plt.clf()
         plt_io = io.BytesIO()
         for edge in self.edges:
             plt.plot(
@@ -127,8 +134,8 @@ class Graph:
                 marker='.',
                 color="gray"
             )
-        # for node in self.nodes:
-        #     plt.annotate(str(node.nid), (node.x, node.y))
+        for node in self.nodes:
+            plt.annotate(str(node.nid), (node.x, node.y))
         plt.savefig(plt_io, format="png", dpi=300)
         return plt_io
 
@@ -151,7 +158,7 @@ def create_vda5050_order(nodes: List[Node], edges: List[Edge]) -> vda5050.OrderM
         vda5050_nodes.append(vda5050.Node(
             node_id=str(n.nid),
             sequence_id=seq_id,
-            released=False,
+            released=True,
             actions=[],
             node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
         ))
@@ -161,7 +168,7 @@ def create_vda5050_order(nodes: List[Node], edges: List[Edge]) -> vda5050.OrderM
         vda5050_edges.append(vda5050.Edge(
             edge_id=str(e.eid),
             sequence_id=seq_id,
-            released=False,
+            released=True,
             start_node_id=str(e.start.nid),
             end_node_id=str(e.end.nid),
             actions=[],
