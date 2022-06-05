@@ -9,7 +9,10 @@ createApp({
             robotSerial: "1",
             fromNode: "12",
             targetNode: "5",
-            pathUrl: null
+            pathUrl: null,
+            stations: [],
+            fromStation: null,
+            toStation: null
         }
     },
     methods: {
@@ -28,7 +31,7 @@ createApp({
         moveAGV() {this.sendReqToFleetManagement('move')},
         sendAGVTo(station) {this.sendReqToFleetManagement('sendTo/' + station)},
         sendOrder() {
-            axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromNode + '/' + this.targetNode)
+            axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
                 .then(function (response) {
                     console.log(response)
                 })
@@ -40,6 +43,17 @@ createApp({
         },
     },
     mounted() {
+        let that = this
+        axios.get('/api/graph/stations')
+                .then(function (response) {
+                    that.stations = response.data
+                    console.log(response)
+                })
+                .catch(function (error) {
+                    console.log(error)
+                })
+                .then(function () {
+                });
         /*
         const canvas = document.querySelector('#canvas');
 

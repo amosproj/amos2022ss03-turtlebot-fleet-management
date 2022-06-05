@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, Response, send_from_directory
 
 import turtlegraph
@@ -40,6 +42,11 @@ def graph_image():
 @app.route("/graph.json")
 def graph_json():
     return Response(main.graph.create_json(), mimetype="application/json")
+
+
+@app.route("/api/graph/stations")
+def graph_stations():
+    return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")

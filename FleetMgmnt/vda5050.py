@@ -92,7 +92,7 @@ class NodePosition(JsonSerializable):
     ):
         self.x = x
         self.y = y
-        self.mapId = (map_id,)
+        self.mapId = map_id
         self.mapDescription = map_description
         self.theta = theta
         self.allowedDeviationXy = allowed_deviation_xy
@@ -149,7 +149,7 @@ class Edge(JsonSerializable):
         self.maxHeight = max_height
         self.minHeight = min_height
         self.orientation = orientation
-        self.orientationType = orientation_type
+        # self.orientationType = orientation_type
         self.direction = direction
         self.rotationAllowed = rotation_allowed
         self.maxRotationSpeed = max_rotation_speed

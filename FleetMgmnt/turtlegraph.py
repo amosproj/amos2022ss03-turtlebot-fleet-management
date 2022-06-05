@@ -119,6 +119,13 @@ class Graph:
                 node_edges.append(e)
         return node_edges
 
+    def get_stations(self):
+        stations = list()
+        for n in self.nodes:
+            if n.name is not None:
+                stations.append(n)
+        return stations
+
     def create_image(self):
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()

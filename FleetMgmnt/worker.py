@@ -68,3 +68,10 @@ def get_path_image(serial, source_node, target_node):
     fig1.savefig(plt_io, format="png", dpi=300)
     return Response(plt_io.getvalue(), mimetype="image/png")
 
+
+def get_stations():
+    stations = list()
+    for station in main.graph.get_stations():
+        stations.append({"nid": station.nid, "name": station.name})
+    return stations
+
