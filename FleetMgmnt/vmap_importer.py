@@ -5,10 +5,13 @@ import matplotlib.pyplot as plt
 
 
 class Point:
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, name: str = None):
         self.x = x
         self.y = y
-        self.name = str(len(points))
+        if name is None:
+            self.name = str(len(points))
+        else:
+            self.name = name
 
     def get_coords(self):
         return self.x, self.y
@@ -17,11 +20,13 @@ class Point:
         return self.x == p.x and self.y == p.y
 
     @staticmethod
-    def get_point(x: float, y: float):
+    def get_point(x: float, y: float, name: str = None):
         for p in points:
-            if p.x == x and p.y == y:
+            if math.dist((p.x, p.y), (x, y)) < 0.1:
+                if name is not None:
+                    p.name = name
                 return p
-        new_point = Point(x, y)
+        new_point = Point(x, y, name)
         points.append(new_point)
         return new_point
 
@@ -79,6 +84,9 @@ def import_vmap(filename: str):
             p2 = Point.get_point(float(coords[3]), float(coords[4]))
             line = Line(p1, p2)
             lines.append(line)
+        if vmap_line.startswith("CODE"):
+            code_loc = vmap_line.split()
+            Point.get_point(float(code_loc[2]), float(code_loc[3]), code_loc[1])
 
     merge_lines()
     remove_duplicate_lines()

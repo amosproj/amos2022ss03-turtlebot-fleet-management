@@ -10,10 +10,11 @@ from matplotlib import pyplot as plt
 
 
 class Node:
-    def __init__(self, nid: int, x: float, y: float):
+    def __init__(self, nid: int, x: float, y: float, name: str = None):
         self.nid = nid
         self.x = x
         self.y = y
+        self.name = name
 
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}
@@ -54,7 +55,10 @@ class Graph:
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
         for i, point in enumerate(points):
-            self.new_node(point.x, point.y)
+            if point.name.isdigit():
+                self.new_node(point.x, point.y)
+            else:
+                self.new_node(point.x, point.y, point.name)
         for line in lines:
             start = self.find_node_by_coords(line.start.x, line.start.y)
             end = self.find_node_by_coords(line.end.x, line.end.y)
@@ -65,8 +69,8 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
-    def new_node(self, x: float, y: float):
-        node = Node(self.node_id, x, y)
+    def new_node(self, x: float, y: float, name: str = None):
+        node = Node(self.node_id, x, y, name)
         self.node_id += 1
         self.nodes.append(node)
         return node
@@ -135,7 +139,13 @@ class Graph:
                 color="gray"
             )
         for node in self.nodes:
-            plt.annotate(str(node.nid), (node.x, node.y))
+            if node.name is not None:
+                plt.plot(
+                    node.x, node.y,
+                    marker='D',
+                    color="red"
+                )
+                plt.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
         plt.savefig(plt_io, format="png", dpi=300)
         return plt_io
 
