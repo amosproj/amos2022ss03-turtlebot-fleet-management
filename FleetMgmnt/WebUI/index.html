@@ -46,29 +46,40 @@
 
   <main>
     <div id="app">
-      <h1 class="text-center">Station #1</h1>
+      <h1 class="text-center">Map</h1>
 
-      <div class="mb-5 text-center">
-        <a @click="requestAGV" class="btn btn-primary btn-lg px-4 mr-4 mb-3">Request AGV</a>
-        <a @click="moveAGV" class="btn btn-primary btn-lg px-4 mr-4 mb-3">Move AGV</a>
+      <div class="row">
+        <img src="graph" height="400" class="mx-auto d-block">
       </div>
 
-      <hr class="col-3 col-md-2 mb-5">
 
-      <h3 class="text-center">Send AGV to</h3>
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="exampleFormControlInput1">Robot Serial</label>
+            <input type="text" class="form-control" id="exampleFormControlInput1" v-model="robotSerial">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="exampleFormControlInput2">From Node</label>
+            <input type="text" class="form-control" id="exampleFormControlInput2" v-model="fromNode">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="exampleFormControlInput3">To Node</label>
+            <input type="text" class="form-control" id="exampleFormControlInput3" v-model="targetNode">
+          </div>
+        </div>
+        <div class="col">
+          <button type="button" class="btn btn-success" @click="sendOrder">Send Order</button>
+        </div>
 
-      <div class="mb-5 text-center">
-        <a @click="sendAGVTo(1)" class="btn btn-primary btn-lg px-4 mr-4 mb-3">Station #1</a>
-        <a @click="sendAGVTo(2)" class="btn btn-primary btn-lg px-4 mr-4 mb-3">Station #2</a>
-        <a @click="sendAGVTo(3)" class="btn btn-primary btn-lg px-4 mr-4 mb-3">Station #3</a>
       </div>
 
-      <hr class="col-3 col-md-2 mb-5">
-
-      <h3 class="text-center">Status Message</h3>
-
-      <div class="mb-5 text-center">
-        <p>Sänk ju for trawelling wis Deutsche Bahn</p>
+      <div class="row" v-if="pathUrl === null">
+        <img :src="'/api/agv/' + robotSerial + '/pathDisplay/' + fromNode + '/' + targetNode" height="400" class="mx-auto d-block">
       </div>
 
     </div>

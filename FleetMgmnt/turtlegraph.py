@@ -4,6 +4,8 @@ import math
 from typing import List
 
 import vmap_importer
+import graph_search as gs
+import vda5050
 from matplotlib import pyplot as plt
 
 
@@ -47,11 +49,10 @@ class Graph:
         self.edges = list()
         self.node_id = 0
         self.edge_id = 0
+        self.graph_search = gs.GraphSearch(self)
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
-        print(len(points))
-        print(len(lines))
         for i, point in enumerate(points):
             self.new_node(point.x, point.y)
         for line in lines:
@@ -75,6 +76,12 @@ class Graph:
         self.edge_id += 1
         self.edges.append(n_edge)
         return n_edge
+
+    def find_node_by_id(self, nid: int):
+        for node in self.nodes:
+            if node.nid == nid:
+                return node
+        raise Exception("Node not found, FATAL")
 
     def find_node_by_coords(self, x: float, y: float):
         for node in self.nodes:
@@ -109,13 +116,23 @@ class Graph:
         return node_edges
 
     def create_image(self):
+        plt.clf()
         plt_io = io.BytesIO()
         for edge in self.edges:
             plt.plot(
                 [edge.start.x, edge.end.x],
                 [edge.start.y, edge.end.y],
-                linestyle="dashed",
-                marker="s",
+                color="gray"
+            )
+            plt.plot(
+                edge.start.x, edge.start.y,
+                marker='.',
+                color="gray"
+            )
+            plt.plot(
+                edge.end.x, edge.end.y,
+                marker='.',
+                color="gray"
             )
         for node in self.nodes:
             plt.annotate(str(node.nid), (node.x, node.y))
@@ -132,4 +149,43 @@ class Graph:
         return json.dumps({"nodes": n, "edges": e}, indent=4)
 
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
-        pass
+        return self.graph_search.get_shortest_route(start, target)
+
+
+def create_vda5050_order(nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
+    vda5050_nodes = []
+    for seq_id, n in enumerate(nodes):
+        vda5050_nodes.append(vda5050.Node(
+            node_id=str(n.nid),
+            sequence_id=seq_id,
+            released=True,
+            actions=[],
+            node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
+        ))
+
+    vda5050_edges = []
+    for seq_id, e in enumerate(edges):
+        vda5050_edges.append(vda5050.Edge(
+            edge_id=str(e.eid),
+            sequence_id=seq_id,
+            released=True,
+            start_node_id=str(e.start.nid),
+            end_node_id=str(e.end.nid),
+            actions=[],
+            length=e.length
+        ))
+
+    order = vda5050.OrderMessage(
+        headerid=0,
+        timestamp='',
+        version='',
+        manufacturer='',
+        serialnumber='',  # All more general information, probably should not be set here
+        order_id='0',
+        order_update_id=0,  # Also, can't be set here
+        nodes=vda5050_nodes,
+        edges=vda5050_edges
+    )
+
+    return order
+

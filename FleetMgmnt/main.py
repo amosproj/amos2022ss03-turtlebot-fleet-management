@@ -2,7 +2,12 @@ import threading
 import time
 
 import mqtt
+import turtlegraph
 import webserver
+
+vmap_file = "demo.vmap"
+graph = turtlegraph.Graph()
+graph.vmap_lines_to_graph(vmap_file)
 
 
 def main():
