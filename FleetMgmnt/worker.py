@@ -22,20 +22,20 @@ def send_robot_to_node(serial, source_node, target_node):
 
 
 def get_path_image(serial, source_node, target_node):
+    fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
-    plt.clf()
     for edge in main.graph.edges:
-        plt.plot(
+        ax1.plot(
             [edge.start.x, edge.end.x],
             [edge.start.y, edge.end.y],
             color="gray"
         )
-        plt.plot(
+        ax1.plot(
             edge.start.x, edge.start.y,
             marker='.',
             color="gray"
         )
-        plt.plot(
+        ax1.plot(
             edge.end.x, edge.end.y,
             marker='.',
             color="gray"
@@ -46,25 +46,25 @@ def get_path_image(serial, source_node, target_node):
     nodes, edges = main.graph.get_shortest_route(source, target)
 
     for edge in edges:
-        plt.plot(
+        ax1.plot(
             [edge.start.x, edge.end.x],
             [edge.start.y, edge.end.y],
             color="red"
         )
-        plt.plot(
+        ax1.plot(
             edge.start.x, edge.start.y,
             marker='.',
             color="red"
         )
-        plt.plot(
+        ax1.plot(
             edge.end.x, edge.end.y,
             marker='.',
             color="red"
         )
 
     for node in nodes:
-        plt.annotate(str(node.nid), (node.x, node.y))
+        ax1.annotate(str(node.nid), (node.x, node.y))
 
-    plt.savefig(plt_io, format="png", dpi=300)
+    fig1.savefig(plt_io, format="png", dpi=300)
     return Response(plt_io.getvalue(), mimetype="image/png")
 

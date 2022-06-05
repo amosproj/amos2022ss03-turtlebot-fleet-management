@@ -120,33 +120,33 @@ class Graph:
         return node_edges
 
     def create_image(self):
-        plt.clf()
+        fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
         for edge in self.edges:
-            plt.plot(
+            ax1.plot(
                 [edge.start.x, edge.end.x],
                 [edge.start.y, edge.end.y],
                 color="gray"
             )
-            plt.plot(
+            ax1.plot(
                 edge.start.x, edge.start.y,
                 marker='.',
                 color="gray"
             )
-            plt.plot(
+            ax1.plot(
                 edge.end.x, edge.end.y,
                 marker='.',
                 color="gray"
             )
         for node in self.nodes:
             if node.name is not None:
-                plt.plot(
+                ax1.plot(
                     node.x, node.y,
                     marker='D',
                     color="red"
                 )
-                plt.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
-        plt.savefig(plt_io, format="png", dpi=300)
+                ax1.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
+        fig1.savefig(plt_io, format="png", dpi=300)
         return plt_io
 
     def create_json(self):
