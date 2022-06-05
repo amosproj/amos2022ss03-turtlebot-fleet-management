@@ -31,17 +31,20 @@ class Line:
         self.start = start
         self.end = end
 
-    def point_on_line(self, p: Point) -> bool:
+    def point_on_line(self, p: Point, prevent_endless: bool) -> bool:
         if self.start.is_equal(p) or self.end.is_equal(p):
             return False
         line_length = math.dist((self.start.x, self.start.y), (self.end.x, self.end.y))
         start_to_p = math.dist((self.start.x, self.start.y), (p.x, p.y))
         end_to_p = math.dist((self.end.x, self.end.y), (p.x, p.y))
         dist_diff = abs(line_length - start_to_p - end_to_p)
-        return dist_diff < 0.01
+        if prevent_endless:
+            return dist_diff < 0.001
+        else:
+            return dist_diff < 0.01
 
     def split_line(self, p: Point):
-        assert self.point_on_line(p)
+        assert self.point_on_line(p, False) or self.point_on_line(p, True)
         line1 = Line(self.start, p)
         line2 = Line(p, self.end)
         lines.append(line1)
@@ -84,11 +87,16 @@ def import_vmap(filename: str):
 
 
 def merge_lines():
+    count = 0
     queue = lines.copy()
     while len(queue) > 0:
+        count += 1
+        if count > 2000:
+            break
         line = queue.pop(0)
+        # print("Handling line " + str(line) + " with queue size " + str(len(queue)))
         for point in points:
-            if line.point_on_line(point):
+            if line.point_on_line(point, count > 200):
                 line1, line2 = line.split_line(point)
                 queue.append(line1)
                 queue.append(line2)
