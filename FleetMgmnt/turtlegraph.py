@@ -6,6 +6,7 @@ from typing import List
 import vmap_importer
 import graph_search as gs
 import vda5050
+from agv import AGV
 from matplotlib import pyplot as plt
 
 
@@ -48,8 +49,10 @@ class Graph:
     def __init__(self):
         self.nodes = list()
         self.edges = list()
+        self.agvs = list()
         self.node_id = 0
         self.edge_id = 0
+        self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
 
     def vmap_lines_to_graph(self, file: str):
@@ -70,16 +73,22 @@ class Graph:
             )
 
     def new_node(self, x: float, y: float, name: str = None):
-        node = Node(self.node_id, x, y, name)
+        n_node = Node(self.node_id, x, y, name)
         self.node_id += 1
-        self.nodes.append(node)
-        return node
+        self.nodes.append(n_node)
+        return n_node
 
     def new_edge(self, start: Node, end: Node, length: float):
         n_edge = Edge(self.edge_id, start, end, length)
         self.edge_id += 1
         self.edges.append(n_edge)
         return n_edge
+
+    def new_agv(self, x=None, y=None, heading=None):
+        n_agv = AGV(self.agv_id, x, y, heading)
+        self.agv_id += 1
+        self.agvs.append(n_agv)
+        return n_agv
 
     def find_node_by_id(self, nid: int):
         for node in self.nodes:
@@ -92,6 +101,12 @@ class Graph:
             if node.x == x and node.y == y:
                 return node
         raise Exception("Node not found, FATAL")
+
+    def get_agv_by_id(self, aid: int):
+        for agv in self.agvs:
+            if agv.aid == aid:
+                return agv
+        raise Exception("AGV not found, FATAL")
 
     def bfs(self, start: Node):
         q = [start]
@@ -153,6 +168,13 @@ class Graph:
                     color="red"
                 )
                 ax1.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
+        for agv in self.agvs:
+            if agv.x is not None and agv.y is not None:
+                ax1.plot(
+                    agv.x, agv.y,
+                    marker='s',
+                    color='blue'
+                )
         fig1.savefig(plt_io, format="png", dpi=300)
         return plt_io
 
