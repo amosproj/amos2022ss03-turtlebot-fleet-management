@@ -65,7 +65,7 @@ class Worker(Node):
         # MQTT
         self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
         self.order_sub = self.create_subscription(Order, "/order", self.call_order, 10)
-	    # Sick location estimation and virtual line measurement
+	# Sick location estimation and virtual line measurement
         self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
         self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
         # Kuboki
@@ -135,8 +135,10 @@ class Worker(Node):
         msg_twist = Twist()
         pose = self.normalize_pose(self.pose[2]) 
 
-        lower_angle = ((angle + pose) % 360) * 0.95 
-        upper_angle = ((angle + pose) % 360) * 1.05
+        lower_angle = ((angle + pose) % 360) - 5 
+        #if lower_angle < 0:
+        #    lower_angle = 360 + lower_angle 
+        upper_angle = (((angle + pose) % 360) + 5) % 360
         self.get_logger().info('enter loop')
         self.get_logger().info('pose "%f"' %pose)
         self.get_logger().info('angle "%f"' %angle)
@@ -147,24 +149,24 @@ class Worker(Node):
         while(pose > upper_angle or pose < lower_angle):
             pose = self.normalize_pose(self.pose[2])
             self.get_logger().info('currently "%d"' %pose)
-            msg_twist.angular.z = 0.5
+            msg_twist.angular.z = 0.2
             self.pub_vel.publish(msg_twist)
-            time.sleep(0.3)
+            time.sleep(0.1)
         self.get_logger().info('leave')
         msg_twist.angular.z = 0.0
         self.pub_vel.publish(msg_twist)
 
     def follow_line(self, goal):
         msg_twist = Twist()
-        lower_goal_x = goal.node_position.x * 0.8
-        lower_goal_y = goal.node_position.y * 0.8
-        upper_goal_x = goal.node_position.x * 1.2
-        upper_goal_y = goal.node_position.y * 1.2
+        lower_goal_x = goal.node_position.x * 0.7
+        lower_goal_y = goal.node_position.y * 0.7
+        upper_goal_x = goal.node_position.x * 1.3
+        upper_goal_y = goal.node_position.y * 1.3
         self.get_logger().info('enter loop')
         while True:
             # calculate x and y d from goal
-            dx = abs(goal.node_position.x - self.pose[0])
-            dy = abs(goal.node_position.y - self.pose[1])
+            dx = abs(self.pose[0] - goal.node_position.x) #abs(goal.node_position.x - self.pose[0])
+            dy = abs(self.pose[1] - goal.node_position.y) #abs(goal.node_position.y - self.pose[1])
             # check if goal reached
             if(dx < 0.25 and dy < 0.25):
                break 
@@ -184,7 +186,7 @@ class Worker(Node):
             #        TODO relative turn
             #    elif self.lanes[0] < -15:
             #        ...
-            time.sleep(0.5)
+            time.sleep(0.3)
         self.get_logger().info('leave')
         msg_twist.linear.x = 0.0
         self.pub_vel.publish(msg_twist)
@@ -193,7 +195,9 @@ class Worker(Node):
         # onshot only
         self.timer2.cancel()
         while True:
+            #self.get_logger().info('take new order')
             for order in self.orders_nodes or []:
+                self.get_logger().info('Got to next node')
                 for node in order or []:
                     # TODO make it work with arbitrary coord systems
                     dx = node.node_position.x - self.pose[0]
@@ -202,26 +206,29 @@ class Worker(Node):
                     self.get_logger().info('dy "%s"' %dy)
                     #map negative oriantation values to 360° scheme
                     pose = self.normalize_pose(self.pose[2])
-                    direction = abs(math.degrees(math.atan2(dy, dx)) - pose)
+                    direction = math.degrees(math.atan2(dy, dx))
                     self.get_logger().info('d "%d"' %direction)
                     # TODO take care of negative angles
-                    if direction < 135 and direction >= 45:
+                    #if direction < 135 and direction >= 45:
                         # turn right 90 deg
-                        self.get_logger().info('Rotating right')
-                        self.rotate_self(90)
-                    elif direction >= 135 and direction < 215:
+                        #self.get_logger().info('Rotating right')
+                        #self.rotate_self(90)
+                    #elif direction >= 135 and direction < 215:
                         # turn 180 deg
-                        self.get_logger().info('Turning around')
-                        self.rotate_self(180)
-                    elif direction >= 215 and direction < 305:
+                        #self.get_logger().info('Turning around')
+                        #self.rotate_self(180)
+                    #elif direction >= 215 and direction < 305:
                         # turn left 270 deg
-                        self.get_logger().info('Rotating left')
-                        self.rotate_self(270)
-                    elif direction >= 305 or direction < 45:
+                        #self.get_logger().info('Rotating left')
+                        #self.rotate_self(270)
+                    #elif direction >= 305 or direction < 45:
                         # drive straight
-                        self.get_logger().info('Straight')
+                        #self.get_logger().info('Straight')
+                    self.rotate_self(direction - pose)
                     self.get_logger().info('Following line')
                     self.follow_line(node)
+                return
+
 
 def main(args=None):
     rclpy.init(args=args)
