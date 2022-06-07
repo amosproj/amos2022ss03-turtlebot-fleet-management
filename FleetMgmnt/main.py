@@ -5,7 +5,7 @@ import mqtt
 import turtlegraph
 import webserver
 
-vmap_file = "room_04.150.vmap"
+vmap_file = "room_04.150_simplified.vmap"
 graph = turtlegraph.Graph()
 graph.vmap_lines_to_graph(vmap_file)
 
