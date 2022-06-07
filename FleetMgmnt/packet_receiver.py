@@ -1,147 +1,158 @@
 import vda5050
 import json
 
-def key_for_value(d, Key):
+
+def key_for_value(d, key):
     """Return a key in `d` having a value of `value`."""
     for k, v in d.items():
-        if k == Key:
+        if k == key:
             return v
 
 
-def packet_receiver_for_connection(json_string : str):
+def packet_receiver_for_connection(json_string: str):
     connection_dict = json.loads(json_string)
-    headerId_value = key_for_value(connection_dict,"headerId")
-    timestamp_value = key_for_value(connection_dict,"timestamp")
-    version_value = key_for_value(connection_dict,"version")
-    manufacturer_value = key_for_value(connection_dict,"manufacturer")
-    serialNo_value = key_for_value(connection_dict,"serialNumber")
-    Conn_state_value = key_for_value(connection_dict,"connectionState")
+    header_id_value = key_for_value(connection_dict, "headerId")
+    timestamp_value = key_for_value(connection_dict, "timestamp")
+    version_value = key_for_value(connection_dict, "version")
+    manufacturer_value = key_for_value(connection_dict, "manufacturer")
+    serial_number_value = key_for_value(connection_dict, "serialNumber")
+    conn_state_value = key_for_value(connection_dict, "connectionState")
 
-    connection = vda5050.ConnectionMessage(headerId_value,timestamp_value,version_value,manufacturer_value,serialNo_value,vda5050.ConnectionState(Conn_state_value))
+    connection = vda5050.ConnectionMessage(header_id_value, timestamp_value, version_value, manufacturer_value,
+                                           serial_number_value, vda5050.ConnectionState(conn_state_value))
     return connection
 
-def packet_receiver_for_state(json_string : str):
+
+def packet_receiver_for_state(json_string: str):
     state_dict = json.loads(json_string)
-    headerId_value = key_for_value(state_dict,"headerId")
-    timestamp_value = key_for_value(state_dict,"timestamp")
-    version_value = key_for_value(state_dict,"version")
-    manufacturer_value = key_for_value(state_dict,"manufacturer")
-    serialNo_value = key_for_value(state_dict,"serialNumber")
-    orderId_value = key_for_value(state_dict,"orderId")
-    orderUpdateId_value = key_for_value(state_dict,"orderUpdateId")
-    zoneSetId_value = key_for_value(state_dict,"zoneSetId")
-    lastNodeId_value = key_for_value(state_dict,"lastNodeId")
-    lastNodeSequenceId_value = key_for_value(state_dict,"lastNodeSequenceId")
-    driving_value = key_for_value(state_dict,"driving")
-    paused_value = key_for_value(state_dict,"paused")
-    newBaseRequest_value = key_for_value(state_dict,"newBaseRequest")
-    distanceSinceLastNode_value = key_for_value(state_dict,"distanceSinceLastNode")
-    operatingMode_value = key_for_value(state_dict,"operatingMode")
+    header_id_value = key_for_value(state_dict, "headerId")
+    timestamp_value = key_for_value(state_dict, "timestamp")
+    version_value = key_for_value(state_dict, "version")
+    manufacturer_value = key_for_value(state_dict, "manufacturer")
+    serial_no_value = key_for_value(state_dict, "serialNumber")
+    order_id_value = key_for_value(state_dict, "orderId")
+    order_update_id_value = key_for_value(state_dict, "orderUpdateId")
+    zone_set_id_value = key_for_value(state_dict, "zoneSetId")
+    last_node_id_value = key_for_value(state_dict, "lastNodeId")
+    last_node_sequence_id_value = key_for_value(state_dict, "lastNodeSequenceId")
+    driving_value = key_for_value(state_dict, "driving")
+    paused_value = key_for_value(state_dict, "paused")
+    new_base_request_value = key_for_value(state_dict, "newBaseRequest")
+    distance_since_last_node_value = key_for_value(state_dict, "distanceSinceLastNode")
+    operating_mode_value = key_for_value(state_dict, "operatingMode")
 
-    nodestate_list_value = key_for_value(state_dict,"nodeStates")
-    nodeStates_value = packet_receiver_for_nodestates(nodestate_list_value)
+    node_state_list_value = key_for_value(state_dict, "nodeStates")
+    node_states_value = packet_receiver_for_node_states(node_state_list_value)
 
-    edgestate_list_value = key_for_value(state_dict, "edgeStates")
-    edgeStates_value = packet_receiver_for_edgestates(edgestate_list_value)
+    edge_state_list_value = key_for_value(state_dict, "edgeStates")
+    edge_states_value = packet_receiver_for_edge_states(edge_state_list_value)
 
-    avgposition_str = key_for_value(state_dict, "agvPosition")
-    avgPosition_value = packet_receiver_for_agvposition(avgposition_str)
+    avg_position_str = key_for_value(state_dict, "agvPosition")
+    avg_position_value = packet_receiver_for_agv_position(avg_position_str)
 
     velocity_str = key_for_value(state_dict, "velocity")
     velocity_value = packet_receiver_for_velocity(velocity_str)
 
-    batteryState_str = key_for_value(state_dict,"batteryState")
-    batteryState_value = packet_receiver_for_batteryState(batteryState_str)
+    battery_state_str = key_for_value(state_dict, "batteryState")
+    battery_state_value = packet_receiver_for_battery_state(battery_state_str)
 
-    return vda5050.StateMessage(headerId_value,timestamp_value,version_value,
-                                manufacturer_value,serialNo_value,orderId_value,orderUpdateId_value,zoneSetId_value,
-                                lastNodeId_value,lastNodeSequenceId_value,action_states=None,safety_state=None,battery_state=batteryState_value,
-                                operation_mode=operatingMode_value,errors=None,node_states=nodeStates_value,
-                                edge_state=edgeStates_value,driving=driving_value,
-                                avg_position=avgPosition_value,velocity=velocity_value,
-                                paused=paused_value,new_base_request=newBaseRequest_value,distance_since_last_node=distanceSinceLastNode_value)
-
-
-def packet_receiver_for_batteryState(json_batterystate : str):
-    batteryCharge_value = key_for_value(json_batterystate,"batteryCharge")
-    batteryVoltage_value = key_for_value(json_batterystate,"batteryVoltage")
-    batteryHealth_value= key_for_value(json_batterystate,"batteryHealth")
-    charging_value = key_for_value(json_batterystate, "charging")
-    reach_value = key_for_value(json_batterystate, "reach")
-
-    return vda5050.BatteryState(batteryCharge_value,charging_value,reach_value,batteryVoltage_value,batteryHealth_value)
+    return vda5050.StateMessage(header_id_value, timestamp_value, version_value, manufacturer_value, serial_no_value,
+                                order_id_value, order_update_id_value, zone_set_id_value, last_node_id_value,
+                                last_node_sequence_id_value, action_states=None, safety_state=None,
+                                battery_state=battery_state_value, operation_mode=operating_mode_value, errors=None,
+                                node_states=node_states_value, edge_state=edge_states_value, driving=driving_value,
+                                agv_position=avg_position_value, velocity=velocity_value, paused=paused_value,
+                                new_base_request=new_base_request_value,
+                                distance_since_last_node=distance_since_last_node_value)
 
 
+def packet_receiver_for_battery_state(json_battery_state: str):
+    battery_charge_value = key_for_value(json_battery_state, "batteryCharge")
+    battery_voltage_value = key_for_value(json_battery_state, "batteryVoltage")
+    battery_health_value = key_for_value(json_battery_state, "batteryHealth")
+    charging_value = key_for_value(json_battery_state, "charging")
+    reach_value = key_for_value(json_battery_state, "reach")
 
-def packet_receiver_for_velocity(json_velocity : str):
-    vx_value = key_for_value(json_velocity,"vx")
-    vy_value = key_for_value(json_velocity,"vy")
-    omega_value= key_for_value(json_velocity,"omega")
-
-    return vda5050.Velocity(vx_value,vy_value,omega_value)
-
-
-def packet_receiver_for_agvposition(json_avgposition : str):
-    x_value = key_for_value(json_avgposition,"x")
-    y_value = key_for_value(json_avgposition,"y")
-    theta_value= key_for_value(json_avgposition,"theta")
-    mapId_value= key_for_value(json_avgposition,"mapId")
-    mapDes_value= key_for_value(json_avgposition,"mapDescription")
-    posIn_value= key_for_value(json_avgposition,"positionInitialized")
-    locscore_value= key_for_value(json_avgposition,"localizationScore")
-    deviationRange_value= key_for_value(json_avgposition,"deviationRange")
-
-    return vda5050.AgvPosition(posIn_value,x_value,y_value,theta_value,mapId_value,mapDes_value,locscore_value,deviationRange_value)
+    return vda5050.BatteryState(battery_charge_value, charging_value, reach_value, battery_voltage_value,
+                                battery_health_value)
 
 
-def packet_receiver_for_edgestates(json_list):
-    edgestates = []
+def packet_receiver_for_velocity(json_velocity: str):
+    vx_value = key_for_value(json_velocity, "vx")
+    vy_value = key_for_value(json_velocity, "vy")
+    omega_value = key_for_value(json_velocity, "omega")
+
+    return vda5050.Velocity(vx_value, vy_value, omega_value)
+
+
+def packet_receiver_for_agv_position(json_avg_position: str):
+    x_value = key_for_value(json_avg_position, "x")
+    y_value = key_for_value(json_avg_position, "y")
+    theta_value = key_for_value(json_avg_position, "theta")
+    map_id_value = key_for_value(json_avg_position, "mapId")
+    map_desc_value = key_for_value(json_avg_position, "mapDescription")
+    pos_init_value = key_for_value(json_avg_position, "positionInitialized")
+    locscore_value = key_for_value(json_avg_position, "localizationScore")
+    deviation_range_value = key_for_value(json_avg_position, "deviationRange")
+
+    return vda5050.AgvPosition(pos_init_value, x_value, y_value, theta_value, map_id_value, map_desc_value,
+                               locscore_value, deviation_range_value)
+
+
+def packet_receiver_for_edge_states(json_list):
+    edge_states = []
     for edges in json_list:
-        edgeId_value = key_for_value(edges,"edgeId")
-        sequenceId_value = key_for_value(edges,"sequenceId")
-        edgeDescription_value = key_for_value(edges,"edgeDescription")
+        edge_id_value = key_for_value(edges, "edgeId")
+        sequence_id_value = key_for_value(edges, "sequenceId")
+        edge_description_value = key_for_value(edges, "edgeDescription")
         released_value = key_for_value(edges, "released")
-        trajectory_str = key_for_value(edges,"trajectory")
+        trajectory_str = key_for_value(edges, "trajectory")
         trajectory_value = packet_receiver_for_trajectory(trajectory_str)
-        edgestates_temp = vda5050.EdgeState(edgeId_value,sequenceId_value,released_value,edgeDescription_value,trajectory_value)
-        edgestates.append(edgestates_temp)
-    return edgestates
+        edge_states_temp = vda5050.EdgeState(edge_id_value, sequence_id_value, released_value, edge_description_value,
+                                             trajectory_value)
+        edge_states.append(edge_states_temp)
+    return edge_states
 
-def packet_receiver_for_trajectory(json_trajectory : str):
+
+def packet_receiver_for_trajectory(json_trajectory: str):
     degree_value = key_for_value(json_trajectory, "degree")
-    knotVector_value = key_for_value(json_trajectory, "knotVector")
-    controlPoints_str = key_for_value(json_trajectory, "controlPoints")
-    controlPoints_value = packet_receiver_for_controlpoints(controlPoints_str)
-    return None
-
-def packet_receiver_for_controlpoints(json_list_controlpoints):
-    for points in json_list_controlpoints:
-        x_value = key_for_value(points,"x")
-        y_value = key_for_value(points,"y")
-        weight_value = key_for_value(points,"weight")
+    knot_vector_value = key_for_value(json_trajectory, "knotVector")
+    control_points_str = key_for_value(json_trajectory, "controlPoints")
+    controlPoints_value = packet_receiver_for_control_points(control_points_str)
     return None
 
 
-def packet_receiver_for_nodestates(json_list):
-    nodestates = []
+def packet_receiver_for_control_points(json_list_control_points):
+    for points in json_list_control_points:
+        x_value = key_for_value(points, "x")
+        y_value = key_for_value(points, "y")
+        weight_value = key_for_value(points, "weight")
+    return None
+
+
+def packet_receiver_for_node_states(json_list):
+    node_states = []
     for nodes in json_list:
-        nodeId_value = key_for_value(nodes,"nodeId")
-        sequenceId_value = key_for_value(nodes,"sequenceId")
-        nodeDescription_value = key_for_value(nodes,"nodeDescription")
-        nodeposition_str = key_for_value(nodes,"nodePosition")
-        nodePosition_value = packet_receiver_for_nodeposition(nodeposition_str)
-        released_value = key_for_value(nodes,"released")
-        nodestates_temp = vda5050.NodeState(nodeId_value,sequenceId_value,released_value,nodeDescription_value,nodePosition_value)
-        nodestates.append(nodestates_temp)
+        node_id_value = key_for_value(nodes, "nodeId")
+        sequence_id_value = key_for_value(nodes, "sequenceId")
+        node_description_value = key_for_value(nodes, "nodeDescription")
+        node_position_str = key_for_value(nodes, "nodePosition")
+        node_position_value = packet_receiver_for_node_position(node_position_str)
+        released_value = key_for_value(nodes, "released")
+        node_states_temp = vda5050.NodeState(node_id_value, sequence_id_value, released_value, node_description_value,
+                                             node_position_value)
+        node_states.append(node_states_temp)
 
-    return  nodestates
-def packet_receiver_for_nodeposition(json_nodeposition : str):
-    x_value= key_for_value(json_nodeposition,"x")
-    y_value= key_for_value(json_nodeposition,"y")
-    theta_value = key_for_value(json_nodeposition,"theta")
-    mapId_value = key_for_value(json_nodeposition,"mapId")
-    nodeposition = vda5050.NodePosition(x_value,y_value,mapId_value,theta=theta_value)
-    return nodeposition
+    return node_states
+
+
+def packet_receiver_for_node_position(json_node_position: str):
+    x_value = key_for_value(json_node_position, "x")
+    y_value = key_for_value(json_node_position, "y")
+    theta_value = key_for_value(json_node_position, "theta")
+    map_id_value = key_for_value(json_node_position, "mapId")
+    node_position = vda5050.NodePosition(x_value, y_value, map_id_value, theta=theta_value)
+    return node_position
 
 
 # Below comments are for test purpose : Removed before the Release
