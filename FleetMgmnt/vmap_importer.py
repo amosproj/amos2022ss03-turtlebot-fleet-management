@@ -131,7 +131,7 @@ def remove_duplicate_lines():
                 break
 
 
-def create_plot():
+def create_plot(show: bool = False):
     for line in lines:
         plt.plot(
             [line.start.x, line.end.x],
@@ -144,9 +144,13 @@ def create_plot():
     # plt.axis([4, 5, 2.4, 3])
     # plt.axis([4, 4.1, -5, -4.75])
     # plt.axis([-0.2, 0.2, -5.5, -4])
-    # plt.show(dpi=3000, bbox_inches="tight")
-    plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
+    if show:
+        plt.show(dpi=3000, bbox_inches="tight")
+    else:
+        plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
 
 
-# import_vmap("demo.vmap")
-# create_plot()
+if __name__ == '__main__':
+    # import_vmap("room_04.150.vmap")
+    import_vmap("demo.vmap")
+    create_plot()
