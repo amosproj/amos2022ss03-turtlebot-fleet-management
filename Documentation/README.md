@@ -1,3 +1,6 @@
+## Documentation
+https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/blob/docu/Deliverables/sprint-06/documentation.pdf
+
 ## Build documentation
 https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki#builddeploy-documentation
 
