@@ -1,5 +1,10 @@
-import turtlegraph
+import json
+
 from flask import Flask, Response, send_from_directory
+
+import turtlegraph
+import worker
+import main
 
 app = Flask(__name__)
 
@@ -30,17 +35,30 @@ def station_send_to(station_id, target_station_id):
 
 @app.route("/graph")
 def graph_image():
-    graph = turtlegraph.Graph()
-    graph.vmap_lines_to_graph("demo.vmap")
-    img = graph.create_image()
+    img = main.graph.create_image()
     return Response(img.getvalue(), mimetype="image/png")
 
 
 @app.route("/graph.json")
 def graph_json():
-    graph = turtlegraph.Graph()
-    graph.vmap_lines_to_graph("demo.vmap")
-    return Response(graph.create_json(), mimetype="application/json")
+    return Response(main.graph.create_json(), mimetype="application/json")
+
+
+@app.route("/api/graph/stations")
+def graph_stations():
+    return Response(json.dumps(worker.get_stations()), mimetype="application/json")
+
+
+@app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
+def robot_send_to(robot_serial, source_node_id, target_node_id):
+    return worker.send_robot_to_node(robot_serial, source_node_id, target_node_id)
+    # return str(robot_serial) + " " + str(target_node_id)
+
+
+@app.get("/api/agv/<robot_serial>/pathDisplay/<source_node_id>/<target_node_id>")
+def robot_send_to_path(robot_serial, source_node_id, target_node_id):
+    return worker.get_path_image(robot_serial, source_node_id, target_node_id)
+    # return str(robot_serial) + " " + str(target_node_id)
 
 
 @app.route("/")
