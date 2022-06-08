@@ -1,12 +1,18 @@
 import threading
 import time
 
-# Internal dependencies
+import mqtt
+import turtlegraph
 import webserver
+
+vmap_file = "room_04.150_simplified.vmap"
+graph = turtlegraph.Graph()
+graph.vmap_lines_to_graph(vmap_file)
 
 
 def main():
     launch_thread(webserver.start, ())
+    launch_thread(mqtt.connect(), ())
     launch_thread(placeholder, ())  # Example
 
 
@@ -20,7 +26,5 @@ def launch_thread(target_function, args):
     thread.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

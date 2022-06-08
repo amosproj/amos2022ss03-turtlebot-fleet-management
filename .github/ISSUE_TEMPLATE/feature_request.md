@@ -18,9 +18,13 @@ assignees: ''
 * ...
 
 ## Definition of done (DoD)
-* Added only after week 5
-* The same for all features
-* Here goes the project specific part
+* Linter & Checker were performed and passed
+* Code Review has been completed
+* Code was merged in sprint release candidate
+* Updates are written in issue comments
+* Feature builds and tests successfully
+* Acceptance by product owner
+* User Story & Acceptance Criteria fulfilled
 
 ## DoD general criteria
 * Feature has been fully implemented
