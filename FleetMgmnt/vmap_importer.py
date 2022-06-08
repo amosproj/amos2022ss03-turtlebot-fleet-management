@@ -5,10 +5,13 @@ import matplotlib.pyplot as plt
 
 
 class Point:
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, name: str = None):
         self.x = x
         self.y = y
-        self.name = str(len(points))
+        if name is None:
+            self.name = str(len(points))
+        else:
+            self.name = name
 
     def get_coords(self):
         return self.x, self.y
@@ -17,11 +20,13 @@ class Point:
         return self.x == p.x and self.y == p.y
 
     @staticmethod
-    def get_point(x: float, y: float):
+    def get_point(x: float, y: float, name: str = None):
         for p in points:
-            if p.x == x and p.y == y:
+            if math.dist((p.x, p.y), (x, y)) < 0.1:
+                if name is not None:
+                    p.name = name
                 return p
-        new_point = Point(x, y)
+        new_point = Point(x, y, name)
         points.append(new_point)
         return new_point
 
@@ -31,17 +36,20 @@ class Line:
         self.start = start
         self.end = end
 
-    def point_on_line(self, p: Point) -> bool:
+    def point_on_line(self, p: Point, prevent_endless: bool) -> bool:
         if self.start.is_equal(p) or self.end.is_equal(p):
             return False
         line_length = math.dist((self.start.x, self.start.y), (self.end.x, self.end.y))
         start_to_p = math.dist((self.start.x, self.start.y), (p.x, p.y))
         end_to_p = math.dist((self.end.x, self.end.y), (p.x, p.y))
         dist_diff = abs(line_length - start_to_p - end_to_p)
-        return dist_diff < 0.01
+        if prevent_endless:
+            return dist_diff < 0.001
+        else:
+            return dist_diff < 0.01
 
     def split_line(self, p: Point):
-        assert self.point_on_line(p)
+        assert self.point_on_line(p, False) or self.point_on_line(p, True)
         line1 = Line(self.start, p)
         line2 = Line(p, self.end)
         lines.append(line1)
@@ -76,21 +84,27 @@ def import_vmap(filename: str):
             p2 = Point.get_point(float(coords[3]), float(coords[4]))
             line = Line(p1, p2)
             lines.append(line)
+        if vmap_line.startswith("CODE"):
+            code_loc = vmap_line.split()
+            Point.get_point(float(code_loc[2]), float(code_loc[3]), code_loc[1])
 
     merge_lines()
     remove_duplicate_lines()
+    f.close()
     return points, lines
 
 
 def merge_lines():
+    count = 0
     queue = lines.copy()
     while len(queue) > 0:
+        count += 1
+        if count > 2000:
+            break
         line = queue.pop(0)
+        # print("Handling line " + str(line) + " with queue size " + str(len(queue)))
         for point in points:
-            if line.point_on_line(point):
-                print(
-                    "Line " + line.start.name + " " + line.end.name + " will be split"
-                )
+            if line.point_on_line(point, count > 200):
                 line1, line2 = line.split_line(point)
                 queue.append(line1)
                 queue.append(line2)
@@ -110,13 +124,6 @@ def remove_duplicate_lines():
                     or (line1.end is line2.start and line1.start is line2.end)
                     or (line1.start is line2.end and line1.end is line2.start)
                 ):
-                    print(
-                        "Found a duplicate line "
-                        + line1.start.name
-                        + " "
-                        + line1.end.name
-                        + ", removing..."
-                    )
                     lines.remove(line2)
                     changes = True
                     break
@@ -124,7 +131,7 @@ def remove_duplicate_lines():
                 break
 
 
-def create_plot():
+def create_plot(show: bool = False):
     for line in lines:
         plt.plot(
             [line.start.x, line.end.x],
@@ -137,9 +144,13 @@ def create_plot():
     # plt.axis([4, 5, 2.4, 3])
     # plt.axis([4, 4.1, -5, -4.75])
     # plt.axis([-0.2, 0.2, -5.5, -4])
-    # plt.show(dpi=3000, bbox_inches="tight")
-    plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
+    if show:
+        plt.show(dpi=3000, bbox_inches="tight")
+    else:
+        plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
 
 
-# import_vmap("demo.vmap")
-# create_plot()
+if __name__ == '__main__':
+    # import_vmap("room_04.150.vmap")
+    import_vmap("demo.vmap")
+    create_plot()

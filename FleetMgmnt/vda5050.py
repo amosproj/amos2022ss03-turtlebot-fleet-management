@@ -92,7 +92,7 @@ class NodePosition(JsonSerializable):
     ):
         self.x = x
         self.y = y
-        self.mapId = (map_id,)
+        self.mapId = map_id
         self.mapDescription = map_description
         self.theta = theta
         self.allowedDeviationXy = allowed_deviation_xy
@@ -149,7 +149,7 @@ class Edge(JsonSerializable):
         self.maxHeight = max_height
         self.minHeight = min_height
         self.orientation = orientation
-        self.orientationType = orientation_type
+        # self.orientationType = orientation_type
         self.direction = direction
         self.rotationAllowed = rotation_allowed
         self.maxRotationSpeed = max_rotation_speed
@@ -201,7 +201,7 @@ class OrderMessage(Message, JsonSerializable):
         order_id: str,
         order_update_id: int,
         nodes: List[Node],
-        edges,
+        edges: List[Edge],
         zone_set_id: str = None,
     ):
         Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)
@@ -455,7 +455,7 @@ class StateMessage(Message, JsonSerializable):
         node_states: List[NodeState],
         edge_state: List[EdgeState],
         driving: bool,
-        avg_position: AgvPosition = None,
+        agv_position: AgvPosition = None,
         velocity: Velocity = None,
         loads: List[Load] = None,
         paused: bool = None,
@@ -473,7 +473,7 @@ class StateMessage(Message, JsonSerializable):
         self.lastNodeSequenceId = last_node_sequence_id
         self.nodeStates = node_states
         self.edgeStates = edge_state
-        self.agvPosition = avg_position
+        self.agvPosition = agv_position
         self.velocity = velocity
         self.loads = loads
         self.driving = driving
