@@ -4,6 +4,9 @@ services:
     build: .
     ports:
       - 8080:8080
+    volumes:
+      - ./maps:/usr/src/app/maps
+      - ./config.json:/usr/src/app/config.json
   mqtt:
     image: eclipse-mosquitto
     ports:
