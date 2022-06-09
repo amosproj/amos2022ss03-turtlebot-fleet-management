@@ -1,0 +1,11 @@
+version: "3"
+services:
+  fms:
+    build: .
+    ports:
+      - 8080:8080
+  mqtt:
+    image: eclipse-mosquitto
+    ports:
+      - 1883:1883
+      - 9001:9001
