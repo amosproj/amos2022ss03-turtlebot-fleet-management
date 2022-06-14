@@ -1,6 +1,4 @@
 const { createApp } = Vue
-
-
 createApp({
     data() {
         return {
@@ -34,12 +32,14 @@ createApp({
             axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
                 .then(function (response) {
                     console.log(response)
+
                 })
                 .catch(function (error) {
                     console.log(error)
                 })
                 .then(function () {
                 });
+        table_update(this.fromStation,this.toStation,this.robotSerial,this.stationID);
         },
     },
     mounted() {
