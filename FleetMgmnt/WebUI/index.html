@@ -53,7 +53,7 @@
             <h1 class="text-center">Map</h1>
 
             <div class="row">
-                <img src="graph" height="400" class="mx-auto d-block">
+                <img src="graph" height="400" class="mx-auto d-block" id="graphmap">
                 <div class="row" v-if="fromStation !== null && toStation !== null">
                 <img :src="'/api/agv/' + robotSerial + '/pathDisplay/' + fromStation + '/' + toStation" height="400"
                      class="mx-auto d-block">

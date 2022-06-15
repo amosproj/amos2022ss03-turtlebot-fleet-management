@@ -6,7 +6,7 @@ import vmap_importer
 
 class TestVmapImporter(unittest.TestCase):
     def test_vmap_importer(self):
-        points, lines = vmap_importer.import_vmap("demo.vmap")
+        points, lines = vmap_importer.import_vmap("maps/demo.vmap")
         self.assertEqual(len(points), 15)
         self.assertEqual(len(lines), 16)
 
