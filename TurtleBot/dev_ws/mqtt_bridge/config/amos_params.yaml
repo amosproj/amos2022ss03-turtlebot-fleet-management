@@ -10,7 +10,7 @@ mqtt_bridge_node:
       private_path: device/001
     # serializer: json:dumps
     # deserializer: json:loads
-    n_bridges: 9
+    n_bridges: 10
     bridge:     
       bridge1: ["mqtt_bridge.bridge:RosToMqttBridge","std_msgs.msg:Bool","/ping","AMOS/ping"]
       bridge2: ["mqtt_bridge.bridge:MqttToRosBridge","std_msgs.msg:Bool","AMOS/ping","/pong"]
@@ -18,6 +18,7 @@ mqtt_bridge_node:
       bridge4: ["mqtt_bridge.bridge:MqttToRosBridge","std_msgs.msg:String","AMOS/echo","/back"]
       bridge5: ["mqtt_bridge.bridge:RosToMqttBridge","std_msgs.msg:String","/private/echo","~/echo"]
       bridge6: ["mqtt_bridge.bridge:MqttToRosBridge","std_msgs.msg:String","~/echo", "/private/back"]
-      bridge7: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:AGVPosition", "/AGVPosition", "AMOS/v1/TurtleBot/1/AGVPosition"]
-      bridge8: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:BatteryState", "/BatteryState", "AMOS/v1/TurtleBot/1/BatteryState"]
-      bridge9: ["mqtt_bridge.bridge:MqttToRosBridge","vda5050_msgs.msg:Order","AMOS/v1/TurtleBot/1/Order","/Order"]
+      bridge7: ["mqtt_bridge.bridge:MqttToRosBridge","vda5050_msgs.msg:Order","AMOS/v1/TurtleBot/1/order","/order"]
+      bridge8: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:OrderInformation", "/state", "AMOS/v1/TurtleBot/1/state"]
+      bridge9: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:Visualization", "/visualization", "AMOS/v1/TurtleBot/1/visualization"]
+      bridge10: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:Connection", "/connection", "AMOS/v1/TurtleBot/1/connection"]
