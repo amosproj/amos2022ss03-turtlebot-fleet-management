@@ -1,0 +1,14 @@
+{
+  "map": "/maps/test.vmap",
+  "mqtt": {
+    "host": "broker.hivemq.com",
+    "port": 1883,
+    "username": null,
+    "password": null
+  },
+  "agvs": [
+    {
+      "serial": "1"
+    }
+  ]
+}

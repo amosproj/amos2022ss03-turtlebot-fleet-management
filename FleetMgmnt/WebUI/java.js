@@ -1,4 +1,4 @@
-const { createApp } = Vue
+const {createApp} = Vue
 
 
 createApp({
@@ -16,6 +16,9 @@ createApp({
         }
     },
     methods: {
+        async refreshMap() {
+            document.getElementById('graphmap').src = 'graph?' + Math.random()
+        },
         sendReqToFleetManagement(endpoint) {
             axios.post('/api/station/' + this.stationID + '/' + endpoint)
                 .then(function (response) {
@@ -27,9 +30,15 @@ createApp({
                 .then(function () {
                 });
         },
-        requestAGV() {this.sendReqToFleetManagement('req')},
-        moveAGV() {this.sendReqToFleetManagement('move')},
-        sendAGVTo(station) {this.sendReqToFleetManagement('sendTo/' + station)},
+        requestAGV() {
+            this.sendReqToFleetManagement('req')
+        },
+        moveAGV() {
+            this.sendReqToFleetManagement('move')
+        },
+        sendAGVTo(station) {
+            this.sendReqToFleetManagement('sendTo/' + station)
+        },
         sendOrder() {
             axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
                 .then(function (response) {
@@ -42,18 +51,21 @@ createApp({
                 });
         },
     },
+    created() {
+        setInterval(this.refreshMap, 1000)
+    },
     mounted() {
         let that = this
         axios.get('/api/graph/stations')
-                .then(function (response) {
-                    that.stations = response.data
-                    console.log(response)
-                })
-                .catch(function (error) {
-                    console.log(error)
-                })
-                .then(function () {
-                });
+            .then(function (response) {
+                that.stations = response.data
+                console.log(response)
+            })
+            .catch(function (error) {
+                console.log(error)
+            })
+            .then(function () {
+            });
         /*
         const canvas = document.querySelector('#canvas');
 
