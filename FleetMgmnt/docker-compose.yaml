@@ -7,6 +7,8 @@ services:
     volumes:
       - ./maps:/usr/src/app/maps
       - ./config.json:/usr/src/app/config.json
+    environment:
+      - FMS_DOCKER=1
   mqtt:
     image: eclipse-mosquitto
     ports:

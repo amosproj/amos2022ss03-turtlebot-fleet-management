@@ -1,5 +1,5 @@
 {
-  "map": "/maps/test.vmap",
+  "map": "room_04.150_new_coord.vmap",
   "mqtt": {
     "host": "broker.hivemq.com",
     "port": 1883,

@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 import packet_receiver as pr
 import main
 
-client: mqtt.Client
+client = mqtt.Client()
 
 
 def on_connect(client, userdata, flags, rc):
@@ -27,11 +27,10 @@ def update_agv_position(serial_number, state_msg):
     main.graph.get_agv_by_id(0).update_position(agv_x, agv_y)
 
 
-def connect():
-    global client
-    client = mqtt.Client()
+def connect(host, port, username, password):
     client.on_connect = on_connect
     client.on_message = on_message
-    # client.username_pw_set("amos", "gdr734dg")
-    client.connect("broker.hivemq.com", 1883, 60)
+    if password is not None:
+        client.username_pw_set(username, password)
+    client.connect(host, int(port), 60)
     client.loop_forever()
