@@ -1,3 +1,5 @@
+import json
+import os
 import threading
 import time
 
@@ -5,14 +7,29 @@ import mqtt
 import turtlegraph
 import webserver
 
-vmap_file = "maps/room_04.150_new_coord.vmap"
+docker = 'FMS_DOCKER' in os.environ
+config = {}
 graph = turtlegraph.Graph()
-graph.vmap_lines_to_graph(vmap_file)
+
+config_path = 'config.json'
+if docker:
+    print('FMS is running in a Docker container. If this is NOT the case, something is wrong.')
+    config_path = '/usr/src/app/config.json'
+
+# Load config file
+with open(config_path) as config_file:
+    config = json.load(config_file)
+
+if docker:
+    graph.vmap_lines_to_graph('/usr/src/app/maps/' + config['map'])
+else:
+    graph.vmap_lines_to_graph('maps/' + config['map'])
 
 
 def main():
     launch_thread(webserver.start, ())
-    launch_thread(mqtt.connect(), ())
+    launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
+                                 config['mqtt']['username'], config['mqtt']['password']))
     launch_thread(placeholder, ())  # Example
 
 
