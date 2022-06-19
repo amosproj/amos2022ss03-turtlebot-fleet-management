@@ -176,6 +176,7 @@ class Graph:
                     color='blue'
                 )
         fig1.savefig(plt_io, format="png", dpi=300)
+        plt.close(fig1)
         return plt_io
 
     def create_json(self):
