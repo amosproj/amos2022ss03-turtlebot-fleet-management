@@ -52,20 +52,14 @@ createApp({
         },
     },
     created() {
-        setInterval(this.refreshMap, 1000)
+        // setInterval(this.refreshMap, 1000)
     },
-    mounted() {
-        let that = this
-        axios.get('/api/graph/stations')
-            .then(function (response) {
-                that.stations = response.data
-                console.log(response)
-            })
-            .catch(function (error) {
-                console.log(error)
-            })
-            .then(function () {
-            });
+    async mounted() {
+        let result = await axios.get('/api/graph/stations')
+        this.stations = result.data
+        this.fromStation = this.stations[0].nid
+        this.toStation = this.stations[1].nid
+
         /*
         const canvas = document.querySelector('#canvas');
 
