@@ -175,7 +175,10 @@ class Graph:
                     marker='s',
                     color='blue'
                 )
-        fig1.savefig(plt_io, format="png", dpi=300)
+
+        ax1.get_xaxis().set_visible(False)
+        ax1.get_yaxis().set_visible(False)
+        fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
         plt.close(fig1)
         return plt_io
 
