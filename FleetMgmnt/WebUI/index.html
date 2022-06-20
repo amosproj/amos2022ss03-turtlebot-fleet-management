@@ -62,33 +62,32 @@
 
 
             <div class="row">
+                <h3>Orders</h3>
                 <table class="table">
                     <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">First</th>
-                        <th scope="col">Last</th>
-                        <th scope="col">Handle</th>
+                        <th scope="col">AGV</th>
+                        <th scope="col">Nodes</th>
+                        <th scope="col">Edges</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>Mark</td>
-                        <td>Otto</td>
-                        <td>@mdo</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">2</th>
-                        <td>Jacob</td>
-                        <td>Thornton</td>
-                        <td>@fat</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">3</th>
-                        <td>Larry</td>
-                        <td>the Bird</td>
-                        <td>@twitter</td>
+                    <tr v-for="order in orders">
+                        <th scope="row">{{ order.orderId }} ({{ order.orderUpdateId }})</th>
+                        <td>{{ order.serialNumber }}</td>
+                        <td>
+                            <ul>
+                                <li v-for="node in order.nodes">Node #{{ node.nodeId }} - released={{ node.released }}
+                                </li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li v-for="edge in order.edges">Edge #{{ edge.edgeId }} - released={{ edge.released }}
+                                </li>
+                            </ul>
+                        </td>
                     </tr>
                     </tbody>
                 </table>

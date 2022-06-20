@@ -1,4 +1,7 @@
 import io
+import json
+import threading
+import time
 
 from flask import Response
 from matplotlib import pyplot as plt
@@ -14,9 +17,10 @@ def send_robot_to_node(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-    order = turtlegraph.create_vda5050_order(nodes, edges)
+    order = main.graph.create_vda5050_order(nodes, edges)
 
-    mqtt.client.publish(vda5050.get_mqtt_topic(serial, vda5050.Topic.ORDER), order.json(), 2)
+    thread = threading.Thread(target=order_executor, args=(order, ))
+    thread.start()
 
     return "Success"
 
@@ -78,3 +82,27 @@ def get_stations():
         stations.append({"nid": station.nid, "name": station.name})
     return stations
 
+
+def get_orders():
+    orders = list()
+    for order in main.graph.orders:
+        orders.append(json.loads(order.json()))
+    return orders
+
+
+def order_executor(order: vda5050.OrderMessage):
+    node_id = 0
+    edge_id = 0
+    while True:
+        if node_id < len(order.nodes):
+            order.nodes[node_id].released = True
+        if edge_id < len(order.edges):
+            order.edges[edge_id].released = True
+        mqtt.client.publish(vda5050.get_mqtt_topic("1", vda5050.Topic.ORDER), order.json(), 2)
+        if order.is_fully_released():
+            break
+        time.sleep(3)
+        order.orderUpdateId += 1
+        node_id += 1
+        edge_id += 1
+    print("Order is fully released")

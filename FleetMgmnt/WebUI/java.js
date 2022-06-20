@@ -12,11 +12,12 @@ createApp({
             pathUrl: null,
             stations: [],
             fromStation: null,
-            toStation: null
+            toStation: null,
+            orders: [],
         }
     },
     methods: {
-        async refreshMap() {
+        refreshMap() {
             document.getElementById('graphmap').src = 'graph?' + Math.random()
         },
         sendReqToFleetManagement(endpoint) {
@@ -50,9 +51,20 @@ createApp({
                 .then(function () {
                 });
         },
+        async updateUIdata() {
+            // This is kind of a quick and dirty function, refreshing everything every second
+            // An update like this is better done via WebSockets
+
+            this.refreshMap()
+
+            const orders_promise = axios.get('/api/orders')
+            const agv_states_promise = null; // ToDo
+
+            this.orders = (await orders_promise).data
+        }
     },
     created() {
-        // setInterval(this.refreshMap, 1000)
+        setInterval(this.updateUIdata, 1000)
     },
     async mounted() {
         let result = await axios.get('/api/graph/stations')
