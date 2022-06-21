@@ -94,6 +94,30 @@
                 </table>
             </div>
 
+        <div class="container">
+            <h3 class="p-3 text-center">Status of Turtle-Bots</h3>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>TurtleBot Id</th>
+                        <th>Status</th>
+                        <th>Battery (%)</th>
+                        <th>Charging Status</th>
+                        <th>Velocity (m/s)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="info in info_table" :key="info.id">
+                        <td>{{info.agv_id}}</td>
+                        <td>{{info.status}}</td>
+                        <td>{{info.battery_level}}</td>
+                        <td>{{info.charging_status}}</td>
+                        <td>{{info.velocity}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
 
             <!-- Modal -->
             <div class="modal fade" id="createOrderModal" tabindex="-1" role="dialog"
@@ -157,7 +181,7 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="java.js"></script>
-<script src="common.js"></script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"
         integrity="sha512-mULnawDVcCnsk9a4aG1QLZZ6rcce/jSzEGqUkeOLy0b6q0+T6syHrxlsAGH7ZVoqC93Pd0lBqd6WguPWih7VHA=="

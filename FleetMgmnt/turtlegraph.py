@@ -84,8 +84,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, x=None, y=None, heading=None):
-        n_agv = AGV(self.agv_id, x, y, heading)
+    def new_agv(self, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
+        n_agv = AGV(self.agv_id, x, y, heading, agv_status, battery_level, charging_status, velocity)
         self.agv_id += 1
         self.agvs.append(n_agv)
         return n_agv
@@ -140,6 +140,13 @@ class Graph:
             if n.name is not None:
                 stations.append(n)
         return stations
+
+    def get_agvs(self):
+        agvs = list()
+        for agv in self.agvs:
+            if agv.aid is not None:
+                agvs.append(agv)
+        return agvs
 
     def create_image(self):
         fig1, ax1 = plt.subplots()

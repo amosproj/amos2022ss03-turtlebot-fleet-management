@@ -1,0 +1,132 @@
+{
+  "headerId": 134,
+  "timestamp": "1991-03-11T11:40:03.12Z",
+  "version": "1.3.2",
+  "manufacturer": "<string>",
+  "serialNumber": "<string>",
+  "orderId": "<string>",
+  "orderUpdateId": 137,
+  "zoneSetId": "<string>",
+  "lastNodeId": "<string>",
+  "lastNodeSequenceId": 150,
+  "driving": true,
+  "paused": true,
+  "newBaseRequest": true,
+  "distanceSinceLastNode": 119,
+  "operatingMode": "AUTOMATIC",
+  "nodeStates": [
+    {
+      "nodeId": "<string>",
+      "sequenceId": 54,
+      "nodeDescription": "<string>",
+      "nodePosition": {
+        "x": 3,
+        "y": 4,
+        "theta": 5,
+        "mapId": "<string>"
+      },
+      "released": true
+    }
+  ],
+  "edgeStates": [
+    {
+      "edgeId": "<string>",
+      "sequenceId": 23,
+      "edgeDescription": "<string>",
+      "released": true,
+      "trajectory": {
+        "degree": 165,
+        "knotVector": [
+          2154
+        ],
+        "controlPoints": [
+          {
+            "x": 3,
+            "y": 4,
+            "weight": 104
+          }
+        ]
+      }
+    }
+  ],
+  "agvPosition": {
+    "x": 3,
+    "y": 4,
+    "theta": 5,
+    "mapId": "<string>",
+    "mapDescription": "<string>",
+    "positionInitialized": true,
+    "localizationScore": 304,
+    "deviationRange": 181
+  },
+  "velocity": {
+    "vx": 36,
+    "vy": 36,
+    "omega": 41
+  },
+  "loads": [
+    {
+      "loadId": "<string>",
+      "loadType": "<string>",
+      "loadPosition": "front",
+      "boundingBoxReference": {
+        "x": 2154,
+        "y": 2154,
+        "z": 2154,
+        "theta": 73
+      },
+      "loadDimensions": {
+        "length": 51,
+        "width": 50,
+        "height": 86
+      },
+      "weight": 43
+    }
+  ],
+  "actionStates": [
+    {
+      "actionId": "blink_123jdaimoim234",
+      "actionType": "<string>",
+      "actionDescription": "<string>",
+      "actionStatus": "WAITING",
+      "resultDescription": "<string>"
+    }
+  ],
+  "batteryState": {
+    "batteryCharge": 98,
+    "batteryVoltage": 15,
+    "batteryHealth": 27,
+    "charging": true,
+    "reach": 54
+  },
+  "errors": [
+    {
+      "errorType": "<string>",
+      "errorReferences": [
+        {
+          "referenceKey": "<string>",
+          "referenceValue": "<string>"
+        }
+      ],
+      "errorDescription": "<string>",
+      "errorLevel": "WARNING"
+    }
+  ],
+  "information": [
+    {
+      "infoType": "<string>",
+      "infoReferences": [
+        {
+          "referenceKey": "<string>",
+          "referenceValue": "<string>"
+        }
+      ],
+      "infoDescription": "<string>",
+      "infoLevel": "INFO"
+    }
+  ],
+  "safetyState": {
+    "eStop": "AUTOACK",
+    "fieldViolation": true
+  }
+}

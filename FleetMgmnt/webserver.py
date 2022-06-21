@@ -48,6 +48,9 @@ def graph_json():
 def graph_stations():
     return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
+@app.route("/api/agv/info")
+def get_agv_info():
+    return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
 def robot_send_to(robot_serial, source_node_id, target_node_id):
