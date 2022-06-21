@@ -48,6 +48,9 @@ def graph_json():
 def graph_stations():
     return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
+@app.route("/api/agv/info")
+def get_agv_info():
+    return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
 
 @app.route("/api/orders")
 def get_orders():

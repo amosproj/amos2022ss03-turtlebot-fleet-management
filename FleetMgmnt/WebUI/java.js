@@ -13,6 +13,7 @@ createApp({
             stations: [],
             fromStation: null,
             toStation: null,
+            info_table: [],
             orders: [],
         }
     },
@@ -72,6 +73,8 @@ createApp({
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
 
+        let info_table_msg = await axios.get('/api/agv/info')
+        this.info_table = info_table_msg.data
         /*
         const canvas = document.querySelector('#canvas');
 
