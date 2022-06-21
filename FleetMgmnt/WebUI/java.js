@@ -12,11 +12,13 @@ createApp({
             pathUrl: null,
             stations: [],
             fromStation: null,
-            toStation: null
+            toStation: null,
+            info_table: [],
+            orders: [],
         }
     },
     methods: {
-        async refreshMap() {
+        refreshMap() {
             document.getElementById('graphmap').src = 'graph?' + Math.random()
         },
         sendReqToFleetManagement(endpoint) {
@@ -50,22 +52,29 @@ createApp({
                 .then(function () {
                 });
         },
+        async updateUIdata() {
+            // This is kind of a quick and dirty function, refreshing everything every second
+            // An update like this is better done via WebSockets
+
+            this.refreshMap()
+
+            const orders_promise = axios.get('/api/orders')
+            const agv_states_promise = null; // ToDo
+
+            this.orders = (await orders_promise).data
+        }
     },
     created() {
-        setInterval(this.refreshMap, 1000)
+        setInterval(this.updateUIdata, 1000)
     },
-    mounted() {
-        let that = this
-        axios.get('/api/graph/stations')
-            .then(function (response) {
-                that.stations = response.data
-                console.log(response)
-            })
-            .catch(function (error) {
-                console.log(error)
-            })
-            .then(function () {
-            });
+    async mounted() {
+        let result = await axios.get('/api/graph/stations')
+        this.stations = result.data
+        this.fromStation = this.stations[0].nid
+        this.toStation = this.stations[1].nid
+
+        let info_table_msg = await axios.get('/api/agv/info')
+        this.info_table = info_table_msg.data
         /*
         const canvas = document.querySelector('#canvas');
 

@@ -54,6 +54,7 @@ class Graph:
         self.edge_id = 0
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
+        self.orders = list()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -84,8 +85,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, x=None, y=None, heading=None):
-        n_agv = AGV(self.agv_id, x, y, heading)
+    def new_agv(self, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
+        n_agv = AGV(self.agv_id, x, y, heading, agv_status, battery_level, charging_status, velocity)
         self.agv_id += 1
         self.agvs.append(n_agv)
         return n_agv
@@ -141,6 +142,13 @@ class Graph:
                 stations.append(n)
         return stations
 
+    def get_agvs(self):
+        agvs = list()
+        for agv in self.agvs:
+            if agv.aid is not None:
+                agvs.append(agv)
+        return agvs
+
     def create_image(self):
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
@@ -175,7 +183,11 @@ class Graph:
                     marker='s',
                     color='blue'
                 )
-        fig1.savefig(plt_io, format="png", dpi=300)
+
+        ax1.get_xaxis().set_visible(False)
+        ax1.get_yaxis().set_visible(False)
+        fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
+        plt.close(fig1)
         return plt_io
 
     def create_json(self):
@@ -190,41 +202,40 @@ class Graph:
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
         return self.graph_search.get_shortest_route(start, target)
 
+    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
+        vda5050_nodes = []
+        for seq_id, n in enumerate(nodes):
+            vda5050_nodes.append(vda5050.Node(
+                node_id=str(n.nid),
+                sequence_id=seq_id,
+                released=False,
+                actions=[],
+                node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
+            ))
 
-def create_vda5050_order(nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
-    vda5050_nodes = []
-    for seq_id, n in enumerate(nodes):
-        vda5050_nodes.append(vda5050.Node(
-            node_id=str(n.nid),
-            sequence_id=seq_id,
-            released=True,
-            actions=[],
-            node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
-        ))
+        vda5050_edges = []
+        for seq_id, e in enumerate(edges):
+            vda5050_edges.append(vda5050.Edge(
+                edge_id=str(e.eid),
+                sequence_id=seq_id,
+                released=False,
+                start_node_id=str(e.start.nid),
+                end_node_id=str(e.end.nid),
+                actions=[],
+                length=e.length
+            ))
 
-    vda5050_edges = []
-    for seq_id, e in enumerate(edges):
-        vda5050_edges.append(vda5050.Edge(
-            edge_id=str(e.eid),
-            sequence_id=seq_id,
-            released=True,
-            start_node_id=str(e.start.nid),
-            end_node_id=str(e.end.nid),
-            actions=[],
-            length=e.length
-        ))
+        order = vda5050.OrderMessage(
+            headerid=0,
+            timestamp='',
+            version='',
+            manufacturer='',
+            serialnumber='',  # All more general information, probably should not be set here
+            order_id='0',
+            order_update_id=0,  # Also, can't be set here
+            nodes=vda5050_nodes,
+            edges=vda5050_edges
+        )
 
-    order = vda5050.OrderMessage(
-        headerid=0,
-        timestamp='',
-        version='',
-        manufacturer='',
-        serialnumber='',  # All more general information, probably should not be set here
-        order_id='0',
-        order_update_id=0,  # Also, can't be set here
-        nodes=vda5050_nodes,
-        edges=vda5050_edges
-    )
-
-    return order
-
+        self.orders.append(order)
+        return order
