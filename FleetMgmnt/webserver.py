@@ -52,6 +52,11 @@ def graph_stations():
 def get_agv_info():
     return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
 
+@app.route("/api/orders")
+def get_orders():
+    return Response(json.dumps(worker.get_orders()), mimetype="application/json")
+
+
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
 def robot_send_to(robot_serial, source_node_id, target_node_id):
     return worker.send_robot_to_node(robot_serial, source_node_id, target_node_id)
