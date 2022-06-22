@@ -211,6 +211,15 @@ class OrderMessage(Message, JsonSerializable):
         self.edges = edges
         self.zoneSetId = zone_set_id
 
+    def is_fully_released(self):
+        for node in self.nodes:
+            if not node.released:
+                return False
+        for edge in self.edges:
+            if not edge.released:
+                return False
+        return True
+
 
 class InstantAction(Message, JsonSerializable):
     def __init__(
