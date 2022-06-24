@@ -1,6 +1,7 @@
 import rclpy
 import time
 import math
+from .map_client import MinimalMapClient
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -22,6 +23,18 @@ class Worker(Node):
         self.get_logger().info('Receiving: "%s"' % msg)
         self.orders_ids.append(msg.order_id)
         self.orders_nodes.append(msg.nodes)
+
+    def call_map(self, msg):
+        self.get_logger().info('Receiving: "%s"' % msg)
+        with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
+            f.write(msg.data)
+        path = "current_room.vmap"
+        self.map_client.send_request(path)
+        while rclpy.ok():
+            rclpy.spin_once(self.map_client)
+            if self.map_client.future.done():
+                self.get_logger().info('Changed Map')
+                break
 
     # Sick
     def call_location(self, msg):
@@ -49,6 +62,9 @@ class Worker(Node):
         # vars
         # MQTT
         self.data = ""
+        self.map_client = MinimalMapClient()
+        #with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
+        #    f.write(msg.data)
 
         # Sick
         self.position_initialized = False
@@ -68,17 +84,16 @@ class Worker(Node):
         self.battery_charge = 0.0
         self.battery_voltage = 0.0
 
-
         # subscribe to
         # MQTT
         self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
         self.order_sub = self.create_subscription(Order, "/order", self.call_order, 10)
+        self.map_sub = self.create_subscription(String, "/map", self.call_map, 10)
 	# Sick location estimation and virtual line measurement
         self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
         self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
         # Kuboki
         self.battery_sub = self.create_subscription(ROSBatteryState, "/mobile_base/sensors/battery_state", self.call_batterystate, 10)
-
 
         # publish to
         # MQTT
@@ -148,7 +163,7 @@ class Worker(Node):
         msg_state.agv_position = msg_agvpos
         msg_state.battery_state = msg_batterystate
         self.pub_state.publish(msg_state)
-        # self.get_logger().info('Publishing: "%s"' %msg_state)
+        #self.get_logger().info('Publishing: "%s"' %msg_state)
 
         # optional
         # msg_vis = Visualization()
@@ -166,16 +181,16 @@ class Worker(Node):
             return 360 - abs(pose)
         return pose
 
-    # rotate turtlebot by given angle
-    def rotate_self(self, angle):
+    # rotate turtlebot to given angle
+    def rotate_self(self, angle, linear_speed=0.0):
         msg_twist = Twist()
-        speed = 0.4
+        angular_speed = 0.4
         # pose normalization
         pose = self.normalize_pose(self.pose[2])
         angle = self.normalize_pose(angle)
         # rotate smaller direction
         if ((angle - pose) + 360) % 360 > 180:
-            speed = -speed
+            angular_speed *= -1
         # add acceptable margin
         lower_angle =  int(angle - 3)
         if lower_angle < 0:
@@ -194,13 +209,14 @@ class Worker(Node):
         while(int(pose) not in angle_list):
             pose = self.normalize_pose(self.pose[2])
             # self.get_logger().info('currently "%d"' %pose)
-            msg_twist.angular.z = speed
+            msg_twist.linear.x = linear_speed
+            msg_twist.angular.z = angular_speed
             self.pub_vel.publish(msg_twist)
             time.sleep(0.2)
         self.get_logger().info('pose "%d"' %pose)
         self.get_logger().info('leave')
-        msg_twist.angular.z = 0.0
-        self.pub_vel.publish(msg_twist)
+        #msg_twist.angular.z = 0.0
+        #self.pub_vel.publish(msg_twist)
 
     # follow line
     def follow_line(self, goal):
@@ -219,7 +235,8 @@ class Worker(Node):
             # self.get_logger().info('py = "%f"' %self.pose[1])
             # self.get_logger().info('dx = "%f"' %dx)
             # self.get_logger().info('dy = "%f"' %dy)
-            msg_twist.linear.x = 0.3
+            linear_speed = 0.3
+            msg_twist.linear.x = linear_speed
             self.pub_vel.publish(msg_twist)
             # use virtual line sensor
             # check if robot was on line in last iteration
@@ -230,21 +247,22 @@ class Worker(Node):
                 self.get_logger().info('lane "%d"' %self.num_lanes)
                 num = 0
                 if self.num_lanes >= 1:
-                    num = self.lanes.index(min(self.lanes))
-                self.get_logger().info('lane_num = "%d"' %num)
+                    #num = [abs(l) for l in self.lanes].index(min([abs(l) for l in self.lanes]))
+                    d_lane = min(self.lanes, key=abs)
+                #self.get_logger().info('lane_num = "%d"' %num)
                 # right margin
-                if self.lanes[num] > 40 and last_lane == True:
+                if d_lane > 40 and last_lane == True:
                     self.get_logger().info('turn left')
-                    self.rotate_self(self.pose[2] + 5)
+                    self.rotate_self((self.pose[2] + 5) % 360, linear_speed)
                 # left margin
-                elif self.lanes[num] < -40 and last_lane == True:
+                elif d_lane < -40 and last_lane == True:
                     self.get_logger().info('turn right')
-                    self.rotate_self(self.pose[2] - 5)
+                    self.rotate_self((self.pose[2] - 5) % 360, linear_speed)
                 last_lane = True
             time.sleep(0.3)
         self.get_logger().info('leave')
-        msg_twist.linear.x = 0.0
-        self.pub_vel.publish(msg_twist)
+        #msg_twist.linear.x = 0.0
+        #self.pub_vel.publish(msg_twist)
 
     def controller_callback(self):
         # onshot only
@@ -252,9 +270,9 @@ class Worker(Node):
         while True:
             finished_orders = []
             for order in self.orders_nodes or []:
-                self.get_logger().info('Go to next node')
-                self.order_id = order.order_id
+                self.get_logger().info('Start order')
                 for node in order or []:
+                    self.get_logger().info('Go to node %s' %node.node_id)
                     # TODO make it work with arbitrary coord systems
                     pose = self.normalize_pose(self.pose[2])
                     # compute driving direction
@@ -268,15 +286,20 @@ class Worker(Node):
                     # rotate in driving direction
                     self.driving = True
                     self.get_logger().info('rotate')
-                    self.rotate_self(direction)
+                    linear_speed = 0.0
+                    if abs((pose - self.normalize_pose(direction) + 180) % 360 - 180) < 30:
+                        linear_speed = 0.2
+                        self.get_logger().info('Small curve, keep driving and no full stop')
+                    self.rotate_self(direction, linear_speed)
                     # follow line until next node
                     self.get_logger().info('Following line')
                     self.follow_line(node)
                     self.driving = False
-                    self.last_node_id = node.node_id
-                    self.last_node_sequence_id = node.last_node_sequence_id
+                    #self.last_node_id = node.node_id
+                    #self.last_node_sequence_id = node.last_node_sequence_id
                 # when one order is finished move it to finished_orders
                 finished_orders.append(order)
+                self.get_logger().info('Finished order')
             # when all orders are finished, remove the finished orders
             for order in finished_orders:
                 self.orders_nodes.remove(order)
