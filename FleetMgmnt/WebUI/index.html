@@ -62,60 +62,66 @@
 
 
             <div class="row">
-                <h3>Orders</h3>
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">AGV</th>
-                        <th scope="col">Nodes</th>
-                        <th scope="col">Edges</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="order in orders">
-                        <th scope="row">{{ order.orderId }} ({{ order.orderUpdateId }})</th>
-                        <td>{{ order.serialNumber }}</td>
-                        <td>
-                            <ul>
-                                <li v-for="node in order.nodes">Node #{{ node.nodeId }} - released={{ node.released }}
-                                </li>
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                <li v-for="edge in order.edges">Edge #{{ edge.edgeId }} - released={{ edge.released }}
-                                </li>
-                            </ul>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="container">
+                    <h3 class="p-3 text-center">Orders</h3>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">AGV</th>
+                            <th scope="col">Nodes</th>
+                            <th scope="col">Edges</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="order in orders">
+                            <th scope="row">{{ order.orderId }} ({{ order.orderUpdateId }})</th>
+                            <td>{{ order.serialNumber }}</td>
+                            <td>
+                                <ul>
+                                    <li v-for="node in order.nodes">Node #{{ node.nodeId }} -
+                                        released={{ node.released }}
+                                    </li>
+                                </ul>
+                            </td>
+                            <td>
+                                <ul>
+                                    <li v-for="edge in order.edges">Edge #{{ edge.edgeId }} -
+                                        released={{ edge.released }}
+                                    </li>
+                                </ul>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-        <div class="container">
-            <h3 class="p-3 text-center">Status of Turtle-Bots</h3>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>TurtleBot Id</th>
-                        <th>Status</th>
-                        <th>Battery (%)</th>
-                        <th>Charging Status</th>
-                        <th>Velocity (m/s)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="info in info_table" :key="info.id">
-                        <td>{{info.agv_id}}</td>
-                        <td>{{info.status}}</td>
-                        <td>{{info.battery_level}}</td>
-                        <td>{{info.charging_status}}</td>
-                        <td>{{info.velocity}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+            <div class="row">
+                <div class="container">
+                    <h3 class="p-3 text-center">AGVs</h3>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th>AGV ID</th>
+                            <th>Status</th>
+                            <th>Battery (%)</th>
+                            <th>Charging Status</th>
+                            <th>Velocity (m/s)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="agv in agvs" :key="agv.id">
+                            <td>{{ agv.agv_id }}</td>
+                            <td>{{ agv.status }}</td>
+                            <td>{{ agv.battery_level }}</td>
+                            <td>{{ agv.charging_status }}</td>
+                            <td>{{ agv.velocity }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
 
             <!-- Modal -->
@@ -140,8 +146,8 @@
                             <div class="form-group">
                                 <label for="exampleFormControlSelect1">From Station</label>
                                 <select class="form-control" id="exampleFormControlSelect1" v-model="fromStation">
-                                    <option v-for="station in stations" :value="station.nid">{{ station.name }} ({{
-                                        station.nid }})
+                                    <option v-for="station in stations" :value="station.nid">{{ station.name }}
+                                        ({{ station.nid }})
                                     </option>
                                 </select>
                             </div>
@@ -149,8 +155,8 @@
                             <div class="form-group">
                                 <label for="exampleFormControlSelect1">To Station</label>
                                 <select class="form-control" id="exampleFormControlSelect2" v-model="toStation">
-                                    <option v-for="station in stations" :value="station.nid">{{ station.name }} ({{
-                                        station.nid }})
+                                    <option v-for="station in stations" :value="station.nid">{{ station.name }}
+                                        ({{ station.nid }})
                                     </option>
                                 </select>
                             </div>

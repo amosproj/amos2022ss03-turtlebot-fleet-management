@@ -13,7 +13,7 @@ createApp({
             stations: [],
             fromStation: null,
             toStation: null,
-            info_table: [],
+            agvs: [],
             orders: [],
         }
     },
@@ -59,9 +59,10 @@ createApp({
             this.refreshMap()
 
             const orders_promise = axios.get('/api/orders')
-            const agv_states_promise = null; // ToDo
+            const agv_states_promise = axios.get('/api/agv/info')
 
             this.orders = (await orders_promise).data
+            this.agvs = (await agv_states_promise).data
         }
     },
     created() {
@@ -73,8 +74,6 @@ createApp({
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
 
-        let info_table_msg = await axios.get('/api/agv/info')
-        this.info_table = info_table_msg.data
         /*
         const canvas = document.querySelector('#canvas');
 
