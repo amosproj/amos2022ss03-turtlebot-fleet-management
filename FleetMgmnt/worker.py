@@ -100,18 +100,43 @@ def get_orders():
 def order_executor(order: vda5050.OrderMessage):
     node_id = 0
     edge_id = 0
+
+    locked_by_us = list()
+    while True:
+        main.graph.lock.acquire()
+        success = True
+        for node in order.nodes:
+            n = main.graph.find_node_by_id(int(node.nodeId))
+            success = n.try_lock()
+            if success:
+                locked_by_us.append(n)
+            else:
+                break
+        main.graph.lock.release()
+        time.sleep(3)
+        if success:
+            print("All locks acquired successfully ")
+            break
+        for node in locked_by_us:
+            node.release()
+        locked_by_us.clear()
+
     while True:
         if node_id < len(order.nodes):
             order.nodes[node_id].released = True
         if edge_id < len(order.edges):
             order.edges[edge_id].released = True
-        mqtt.client.publish(vda5050.get_mqtt_topic("1", vda5050.Topic.ORDER), order.json(), 2)
+        mqtt.client.publish(vda5050.get_mqtt_topic(order.serialNumber, vda5050.Topic.ORDER), order.json(), 2)
         if order.is_fully_released():
             break
-        time.sleep(5)
+        time.sleep(3)
         order.orderUpdateId += 1
         node_id += 1
         edge_id += 1
     print("Order is fully released")
+    main.graph.lock.acquire()
+    for node in order.nodes:
+        main.graph.find_node_by_id(int(node.nodeId)).release()
+    main.graph.lock.release()
     main.graph.orders.remove(order)
     main.graph.completed_orders.append(order)

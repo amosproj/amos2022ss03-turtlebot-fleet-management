@@ -1,6 +1,7 @@
 import io
 import json
 import math
+import threading
 from typing import List
 
 import vmap_importer
@@ -16,6 +17,7 @@ class Node:
         self.x = x
         self.y = y
         self.name = name
+        self.lock = threading.Lock()
 
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}
@@ -25,6 +27,14 @@ class Node:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict(), indent=4)
         else:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
+
+    def try_lock(self) -> bool:
+        print("Trying lock of node " + str(self.nid))
+        return self.lock.acquire(blocking=False)
+
+    def release(self):
+        print("Release lock of node " + str(self.nid))
+        self.lock.release()
 
 
 class Edge:
@@ -56,6 +66,10 @@ class Graph:
         self.graph_search = gs.GraphSearch(self)
         self.orders = list()
         self.completed_orders = list()
+        self.lock = threading.Lock()
+        # Temp
+        self.new_agv()
+        self.new_agv()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -186,6 +200,7 @@ class Graph:
                 )
 
         for order in self.orders:
+            color = self.get_agv_by_id(int(order.serialNumber)).color
             for edge in order.edges:
                 start = self.find_node_by_id(int(edge.startNodeId))
                 end = self.find_node_by_id(int(edge.endNodeId))
@@ -193,13 +208,13 @@ class Graph:
                     ax1.plot(
                         [start.x, end.x],
                         [start.y, end.y],
-                        color="blue",
+                        color=color,
                     )
                 else:
                     ax1.plot(
                         [start.x, end.x],
                         [start.y, end.y],
-                        color="blue",
+                        color=color,
                         linestyle="--",
                         alpha=0.5
                     )
