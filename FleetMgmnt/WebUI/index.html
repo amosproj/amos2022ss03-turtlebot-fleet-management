@@ -144,6 +144,12 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="exampleInputEmail1">AGV serial</label>
+                                <input type="text" class="form-control" id="exampleInputEmail1"
+                                       aria-describedby="emailHelp" v-model="robotSerial">
+                            </div>
+
+                            <div class="form-group">
                                 <label for="exampleFormControlSelect1">From Station</label>
                                 <select class="form-control" id="exampleFormControlSelect1" v-model="fromStation">
                                     <option v-for="station in stations" :value="station.nid">{{ station.name }}

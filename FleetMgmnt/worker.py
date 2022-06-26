@@ -17,7 +17,7 @@ def send_robot_to_node(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-    order = main.graph.create_vda5050_order(nodes, edges)
+    order = main.graph.create_vda5050_order(nodes, edges, serial)
 
     thread = threading.Thread(target=order_executor, args=(order, ))
     thread.start()
@@ -89,6 +89,7 @@ def get_agv_info():
         agv_and_info.append({"agv_id": agv.aid, "status": agv.agv_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
 
+
 def get_orders():
     orders = list()
     for order in main.graph.orders:
@@ -107,8 +108,10 @@ def order_executor(order: vda5050.OrderMessage):
         mqtt.client.publish(vda5050.get_mqtt_topic("1", vda5050.Topic.ORDER), order.json(), 2)
         if order.is_fully_released():
             break
-        time.sleep(3)
+        time.sleep(5)
         order.orderUpdateId += 1
         node_id += 1
         edge_id += 1
     print("Order is fully released")
+    main.graph.orders.remove(order)
+    main.graph.completed_orders.append(order)

@@ -4,13 +4,9 @@ const {createApp} = Vue
 createApp({
     data() {
         return {
-            message: 'Hello Vue!',
-            stationID: 1,
-            robotSerial: "1",
-            fromNode: "12",
-            targetNode: "5",
             pathUrl: null,
             stations: [],
+            robotSerial: "1",
             fromStation: null,
             toStation: null,
             agvs: [],
@@ -21,36 +17,8 @@ createApp({
         refreshMap() {
             document.getElementById('graphmap').src = 'graph?' + Math.random()
         },
-        sendReqToFleetManagement(endpoint) {
-            axios.post('/api/station/' + this.stationID + '/' + endpoint)
-                .then(function (response) {
-                    console.log(response)
-                })
-                .catch(function (error) {
-                    console.log(error)
-                })
-                .then(function () {
-                });
-        },
-        requestAGV() {
-            this.sendReqToFleetManagement('req')
-        },
-        moveAGV() {
-            this.sendReqToFleetManagement('move')
-        },
-        sendAGVTo(station) {
-            this.sendReqToFleetManagement('sendTo/' + station)
-        },
-        sendOrder() {
-            axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
-                .then(function (response) {
-                    console.log(response)
-                })
-                .catch(function (error) {
-                    console.log(error)
-                })
-                .then(function () {
-                });
+        async sendOrder() {
+            await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
         },
         async updateUIdata() {
             // This is kind of a quick and dirty function, refreshing everything every second

@@ -55,6 +55,7 @@ class Graph:
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
         self.orders = list()
+        self.completed_orders = list()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -184,6 +185,26 @@ class Graph:
                     color='blue'
                 )
 
+        for order in self.orders:
+            for edge in order.edges:
+                start = self.find_node_by_id(int(edge.startNodeId))
+                end = self.find_node_by_id(int(edge.endNodeId))
+                if edge.released:
+                    ax1.plot(
+                        [start.x, end.x],
+                        [start.y, end.y],
+                        color="blue",
+                    )
+                else:
+                    ax1.plot(
+                        [start.x, end.x],
+                        [start.y, end.y],
+                        color="blue",
+                        linestyle="--",
+                        alpha=0.5
+                    )
+
+
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
@@ -202,7 +223,7 @@ class Graph:
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
         return self.graph_search.get_shortest_route(start, target)
 
-    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
+    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge], serial: str) -> vda5050.OrderMessage:
         vda5050_nodes = []
         for seq_id, n in enumerate(nodes):
             vda5050_nodes.append(vda5050.Node(
@@ -230,7 +251,7 @@ class Graph:
             timestamp='',
             version='',
             manufacturer='',
-            serialnumber='',  # All more general information, probably should not be set here
+            serialnumber=serial,  # All more general information, probably should not be set here
             order_id='0',
             order_update_id=0,  # Also, can't be set here
             nodes=vda5050_nodes,
