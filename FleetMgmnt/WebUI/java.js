@@ -34,7 +34,7 @@ createApp({
         }
     },
     created() {
-        setInterval(this.updateUIdata, 1000)
+        setInterval(this.updateUIdata, 4000)
     },
     async mounted() {
         let result = await axios.get('/api/graph/stations')
