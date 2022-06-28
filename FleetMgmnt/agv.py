@@ -41,6 +41,3 @@ class AGV:
     def update_driving_status(self, driving_status, heading=None):
         self.driving_status = driving_status
         self.heading = heading
-
-
-
