@@ -97,8 +97,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
-        n_agv = AGV(serial, color, x, y, heading, agv_status, battery_level, charging_status, velocity)
+    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None):
+        n_agv = AGV(serial, color, x, y, heading, agv_status, battery_level, charging_status, velocity, last_node_id, driving_status)
         self.agvs.append(n_agv)
         return n_agv
 

@@ -1,6 +1,6 @@
 
 class AGV:
-    def __init__(self, aid: int, color, x, y, heading, agv_status, battery_level, charging_status, velocity):
+    def __init__(self, aid: int, color, x, y, heading, agv_status, battery_level, charging_status, velocity, last_node_id, driving_status):
         self.aid = aid
         self.x = x
         self.y = y
@@ -10,6 +10,8 @@ class AGV:
         self.charging_status = charging_status
         self.velocity = velocity
         self.color = color
+        self.last_node_id = last_node_id
+        self.driving_status = driving_status
 
     def update_position(self, x, y, heading=None):
         self.x = x
@@ -31,4 +33,14 @@ class AGV:
     def update_velocity(self, velocity, heading=None):
         self.velocity = velocity
         self.heading = heading
+
+    def update_last_nodeid(self, last_node_id, heading=None):
+        self.last_node_id = last_node_id
+        self.heading = heading
+
+    def update_driving_status(self, driving_status, heading=None):
+        self.driving_status = driving_status
+        self.heading = heading
+
+
 
