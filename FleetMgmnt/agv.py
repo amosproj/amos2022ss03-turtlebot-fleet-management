@@ -1,5 +1,6 @@
+
 class AGV:
-    def __init__(self, aid: int, x, y, heading, agv_status, battery_level, charging_status, velocity):
+    def __init__(self, aid: int, color, x, y, heading, agv_status, battery_level, charging_status, velocity):
         self.aid = aid
         self.x = x
         self.y = y
@@ -8,6 +9,7 @@ class AGV:
         self.battery_level = battery_level
         self.charging_status = charging_status
         self.velocity = velocity
+        self.color = color
 
     def update_position(self, x, y, heading=None):
         self.x = x

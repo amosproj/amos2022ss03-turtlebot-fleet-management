@@ -152,5 +152,5 @@ def create_plot(show: bool = False):
 
 if __name__ == '__main__':
     # import_vmap("room_04.150.vmap")
-    import_vmap("maps/demo.vmap")
+    import_vmap("maps/room_04.150_curved.vmap")
     create_plot()

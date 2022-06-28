@@ -1,6 +1,7 @@
 import io
 import json
 import math
+import threading
 from typing import List
 
 import vmap_importer
@@ -16,6 +17,7 @@ class Node:
         self.x = x
         self.y = y
         self.name = name
+        self.lock = threading.Lock()
 
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}
@@ -25,6 +27,14 @@ class Node:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict(), indent=4)
         else:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
+
+    def try_lock(self) -> bool:
+        print("Trying lock of node " + str(self.nid))
+        return self.lock.acquire(blocking=False)
+
+    def release(self):
+        print("Release lock of node " + str(self.nid))
+        self.lock.release()
 
 
 class Edge:
@@ -55,6 +65,8 @@ class Graph:
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
         self.orders = list()
+        self.completed_orders = list()
+        self.lock = threading.Lock()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -85,9 +97,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
-        n_agv = AGV(self.agv_id, x, y, heading, agv_status, battery_level, charging_status, velocity)
-        self.agv_id += 1
+    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
+        n_agv = AGV(serial, color, x, y, heading, agv_status, battery_level, charging_status, velocity)
         self.agvs.append(n_agv)
         return n_agv
 
@@ -184,6 +195,27 @@ class Graph:
                     color='blue'
                 )
 
+        for order in self.orders:
+            color = self.get_agv_by_id(int(order.serialNumber)).color
+            for edge in order.edges:
+                start = self.find_node_by_id(int(edge.startNodeId))
+                end = self.find_node_by_id(int(edge.endNodeId))
+                if edge.released:
+                    ax1.plot(
+                        [start.x, end.x],
+                        [start.y, end.y],
+                        color=color,
+                    )
+                else:
+                    ax1.plot(
+                        [start.x, end.x],
+                        [start.y, end.y],
+                        color=color,
+                        linestyle="--",
+                        alpha=0.5
+                    )
+
+
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
@@ -202,7 +234,7 @@ class Graph:
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
         return self.graph_search.get_shortest_route(start, target)
 
-    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge]) -> vda5050.OrderMessage:
+    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge], serial: str) -> vda5050.OrderMessage:
         vda5050_nodes = []
         for seq_id, n in enumerate(nodes):
             vda5050_nodes.append(vda5050.Node(
@@ -230,7 +262,7 @@ class Graph:
             timestamp='',
             version='',
             manufacturer='',
-            serialnumber='',  # All more general information, probably should not be set here
+            serialnumber=serial,  # All more general information, probably should not be set here
             order_id='0',
             order_update_id=0,  # Also, can't be set here
             nodes=vda5050_nodes,

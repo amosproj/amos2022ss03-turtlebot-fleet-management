@@ -1,9 +1,10 @@
 import math
+import base64
+import json
 
 import paho.mqtt.client as mqtt
 import packet_receiver as pr
 import main
-
 
 client = mqtt.Client()
 
@@ -11,19 +12,21 @@ client = mqtt.Client()
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")
-    main.graph.new_agv()
-
+    # main.graph.new_agv()
 
 
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
-    if msg.topic.split('/')[-1] == "state":  # TODO optimize the check for the topic
+    topic = msg.topic.split('/')[-1]
+    if topic == "state":
         serial_number = msg.topic.split('/')[-2]
         update_agv_position(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_actions_state(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_battery(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_charging_status(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_velocity(serial_number, pr.packet_receiver_for_state(msg.payload))
+    elif topic == "connection":
+        update_connection_state(pr.packet_receiver_for_connection(msg.payload))
     # TODO Handling all the other information and topics
 
 
@@ -65,9 +68,21 @@ def update_agv_velocity(serial_number, state_msg):
     velocity = state_msg.velocity
     vx = velocity.vx
     vy = velocity.vy
-    resultant_velocity = math.sqrt(math.pow(vx, 2)+math.pow(vy, 2))
+    resultant_velocity = math.sqrt(math.pow(vx, 2) + math.pow(vy, 2))
     main.graph.get_agv_by_id(0).update_velocity(resultant_velocity)
 
+
+def update_connection_state(state_msg):
+    if state_msg.connectionState == "ONLINE":
+        config_path = 'config.json'
+        with open(config_path, "r") as config_file:
+            config_json = 'maps/' + json.load(config_file)["map"]
+            with open(config_json, "r") as file:
+                data = file.read()
+                encoded = base64.b64encode(data.encode('ascii')).decode()
+
+                client.publish("AMOS/v1/TurtleBot/1/map", '{"data": "' + encoded + '"}')
+                #print(encoded)
 
 def connect(host, port, username, password):
     client.on_connect = on_connect
