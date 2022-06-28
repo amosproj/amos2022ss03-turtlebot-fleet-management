@@ -8,7 +8,12 @@
   },
   "agvs": [
     {
-      "serial": "1"
+      "serial": "1",
+      "color": "blue"
+    },
+    {
+      "serial": "2",
+      "color": "orange"
     }
   ]
 }

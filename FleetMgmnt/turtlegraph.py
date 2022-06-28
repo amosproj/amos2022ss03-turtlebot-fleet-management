@@ -67,9 +67,6 @@ class Graph:
         self.orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
-        # Temp
-        self.new_agv()
-        self.new_agv()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -100,9 +97,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
-        n_agv = AGV(self.agv_id, x, y, heading, agv_status, battery_level, charging_status, velocity)
-        self.agv_id += 1
+    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None):
+        n_agv = AGV(serial, color, x, y, heading, agv_status, battery_level, charging_status, velocity)
         self.agvs.append(n_agv)
         return n_agv
 

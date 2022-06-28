@@ -12,7 +12,7 @@ client = mqtt.Client()
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")
-    main.graph.new_agv()
+    # main.graph.new_agv()
 
 
 def on_message(client, userdata, msg):
