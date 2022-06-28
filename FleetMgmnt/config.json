@@ -1,5 +1,5 @@
 {
-  "map": "room_04.150_new_coord.vmap",
+  "map": "room_04.150_curved.vmap",
   "mqtt": {
     "host": "broker.hivemq.com",
     "port": 1883,
@@ -8,7 +8,12 @@
   },
   "agvs": [
     {
-      "serial": "1"
+      "serial": "1",
+      "color": "blue"
+    },
+    {
+      "serial": "2",
+      "color": "orange"
     }
   ]
 }

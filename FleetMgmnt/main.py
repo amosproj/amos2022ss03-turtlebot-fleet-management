@@ -25,6 +25,9 @@ if docker:
 else:
     graph.vmap_lines_to_graph('maps/' + config['map'])
 
+for agv in config['agvs']:
+    graph.new_agv(int(agv['serial']), agv['color'])
+
 
 def main():
     launch_thread(webserver.start, ())
