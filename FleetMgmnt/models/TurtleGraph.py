@@ -145,6 +145,8 @@ class Graph:
                     color="red"
                 )
                 ax1.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
+            x, y = node.buffer.exterior.xy
+            ax1.plot(x, y)
         for agv in self.agvs:
             if agv.x is not None and agv.y is not None:
                 ax1.plot(
