@@ -64,7 +64,7 @@ class Graph:
         for node in self.nodes:
             if node.nid == nid:
                 return node
-        raise Exception("Node not found, FATAL")
+        return None
 
     def find_node_by_coords(self, x: float, y: float):
         for node in self.nodes:

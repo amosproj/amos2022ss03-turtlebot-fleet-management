@@ -2,6 +2,7 @@ import math
 import threading
 from enum import Enum
 
+import collavoid
 from models import Node
 import main
 
@@ -33,8 +34,22 @@ class Order:
         self.status = OrderStatus.CREATED
         self.start = start
         self.end = end
+        self.completed = list()
         self.base = list()
         self.horizon, _ = main.graph.get_shortest_route(start, end)
+
+    def update_last_node(self, id: str):
+        last_node = main.graph.find_node_by_id(int(id))
+        if last_node is None or last_node in self.completed:
+            return
+        base_position = self.base.index(last_node)
+        for i in range(base_position + 1):
+            removed = self.base.pop()
+            self.completed.append(removed)
+            # ToDo: Node Releasing
+
+    def get_base_polygon(self):
+        collavoid.get_path_safety_buffer_polygon(self.base)
 
     def extension_required(self, x: float, y: float) -> bool:
         if len(self.base) == 0:
