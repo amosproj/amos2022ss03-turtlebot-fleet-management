@@ -2,6 +2,7 @@
 class AGV:
     def __init__(self, aid: int, color, x, y, heading, agv_status, battery_level, charging_status, velocity, last_node_id, driving_status):
         self.aid = aid
+        self.order = None
         self.x = x
         self.y = y
         self.heading = heading
@@ -35,8 +36,19 @@ class AGV:
         self.heading = heading
 
     def update_last_nodeid(self, last_node_id, heading=None):
+        if last_node_id == '':
+            return
         self.last_node_id = last_node_id
         self.heading = heading
+        if self.order is not None:
+            self.order.update_last_node(last_node_id, (self.x, self.y))
+
+            print(self.order.completed)
+            print(self.order.base)
+            print(self.order.horizon)
+
+            while self.order.extension_required(self.x, self.y):
+                self.order.try_extension(self.x, self.y)
 
     def update_driving_status(self, driving_status, heading=None):
         self.driving_status = driving_status

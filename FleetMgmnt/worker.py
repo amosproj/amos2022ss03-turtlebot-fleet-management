@@ -10,6 +10,7 @@ import collavoid
 import main
 import mqtt
 import vda5050
+from models.Order import Order
 
 
 def send_robot_to_node(serial, source_node, target_node):
@@ -17,10 +18,23 @@ def send_robot_to_node(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-    order = main.graph.create_vda5050_order(nodes, edges, serial)
+    # order3 = main.graph.create_vda5050_order(nodes, edges, serial)
+    agv = main.graph.get_agv_by_id(int(serial))
 
-    thread = threading.Thread(target=order_executor, args=(order, ))
-    thread.start()
+    new_order = Order(source, target)
+    agv.order = new_order
+    print(new_order.completed)
+    print(new_order.base)
+    print(new_order.horizon)
+
+    new_order.try_extension(0, 0)
+
+    print(new_order.completed)
+    print(new_order.base)
+    print(new_order.horizon)
+
+    msg = new_order.create_vda5050_message(agv)
+    mqtt.client.publish(vda5050.get_mqtt_topic(serial, vda5050.Topic.ORDER), msg.json(), 2)
 
     return "Success"
 
@@ -112,7 +126,7 @@ def get_orders():
     return orders
 
 
-def order_executor(order: vda5050.OrderMessage):
+def order_executor(order: Order):
     node_id = 0
     edge_id = 0
 

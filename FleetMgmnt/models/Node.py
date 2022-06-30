@@ -12,7 +12,7 @@ class Node:
         self.x = x
         self.y = y
         self.name = name
-        self.lock = threading.Lock()
+        self.lock = -1
         self.buffer = Point(self.x, self.y).buffer(SAFETY_BUFFER_NODE)
 
     def to_dict(self):
@@ -24,10 +24,13 @@ class Node:
         else:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
 
-    def try_lock(self) -> bool:
+    def try_lock(self, order) -> bool:
         print("Trying lock of node " + str(self.nid))
-        return self.lock.acquire(blocking=False)
+        if self.lock == -1 or self.lock == order.order_id:
+            self.lock = order.order_id
+            return True
+        return False
 
     def release(self):
         print("Release lock of node " + str(self.nid))
-        self.lock.release()
+        self.lock = -1

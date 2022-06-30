@@ -20,13 +20,14 @@ def on_message(client, userdata, msg):
     topic = msg.topic.split('/')[-1]
     if topic == "state":
         serial_number = msg.topic.split('/')[-2]
-        update_agv_position(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_actions_state(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_battery(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_charging_status(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_velocity(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_last_node_id(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_driving_status(serial_number, pr.packet_receiver_for_state(msg.payload))
+        state_message = pr.packet_receiver_for_state(msg.payload)
+        update_agv_position(serial_number, state_message)
+        update_agv_actions_state(serial_number, state_message)
+        update_agv_battery(serial_number, state_message)
+        update_agv_charging_status(serial_number, state_message)
+        update_agv_velocity(serial_number, state_message)
+        update_agv_last_node_id(serial_number, state_message)
+        update_agv_driving_status(serial_number, state_message)
     elif topic == "connection":
         update_connection_state(pr.packet_receiver_for_connection(msg.payload))
     # TODO Handling all the other information and topics

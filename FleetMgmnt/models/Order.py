@@ -5,8 +5,8 @@ from enum import Enum
 import collavoid
 from models import Node
 import main
-
-RELEASE_DISTANCE = 100
+from models.AGV import AGV
+from models.Node import SAFETY_BUFFER_NODE
 
 
 class OrderStatus(Enum):
@@ -38,31 +38,44 @@ class Order:
         self.base = list()
         self.horizon, _ = main.graph.get_shortest_route(start, end)
 
-    def update_last_node(self, id: str):
-        last_node = main.graph.find_node_by_id(int(id))
+    def create_vda5050_message(self, agv: AGV):
+        nodes = self.completed.copy()
+        nodes.extend(self.base)
+        return main.graph.create_vda5050_order(nodes, [], agv.aid)
+
+    def update_last_node(self, nid: str, pos: (float, float)):
+        last_node = main.graph.find_node_by_id(int(nid))
         if last_node is None or last_node in self.completed:
             return
         base_position = self.base.index(last_node)
         for i in range(base_position + 1):
-            removed = self.base.pop()
-            self.completed.append(removed)
-            # ToDo: Node Releasing
+            head = self.base[0]
+            distance = math.dist((head.x, head.y), pos)
+            if distance > SAFETY_BUFFER_NODE * 2:
+                removed = self.base.pop()
+                self.completed.append(removed)
+            else:
+                break
+        # ToDo: Node Releasing
 
     def get_base_polygon(self):
-        collavoid.get_path_safety_buffer_polygon(self.base)
+        return collavoid.get_path_safety_buffer_polygon(self.base)
 
     def extension_required(self, x: float, y: float) -> bool:
-        if len(self.base) == 0:
-            return True
-        last_node = self.base[-1]
-        distance = math.dist((x, y), (last_node.x, last_node.y))
-        return distance < RELEASE_DISTANCE
+        if len(self.horizon) == 0:
+            return False
+        next_node = self.horizon[0]
+        distance = math.dist((x, y), (next_node.x, next_node.y))
+        return distance < 1
 
     def try_extension(self, x: float, y: float) -> bool:
+        if len(self.horizon) == 0:
+            return False
         next_node = self.horizon[0]
-        if not next_node.try_lock():
+        if not next_node.try_lock(self):
             return False
         self.base.append(next_node)
         self.horizon.remove(next_node)
+        return True
 
 

@@ -145,8 +145,9 @@ class Graph:
                     color="red"
                 )
                 ax1.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
-            x, y = node.buffer.exterior.xy
-            ax1.plot(x, y)
+            if node.lock != -1:
+                x, y = node.buffer.exterior.xy
+                ax1.plot(x, y)
         for agv in self.agvs:
             if agv.x is not None and agv.y is not None:
                 ax1.plot(
@@ -200,7 +201,7 @@ class Graph:
             vda5050_nodes.append(vda5050.Node(
                 node_id=str(n.nid),
                 sequence_id=seq_id,
-                released=False,
+                released=True,
                 actions=[],
                 node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
             ))
@@ -210,7 +211,7 @@ class Graph:
             vda5050_edges.append(vda5050.Edge(
                 edge_id=str(e.eid),
                 sequence_id=seq_id,
-                released=False,
+                released=True,
                 start_node_id=str(e.start.nid),
                 end_node_id=str(e.end.nid),
                 actions=[],
