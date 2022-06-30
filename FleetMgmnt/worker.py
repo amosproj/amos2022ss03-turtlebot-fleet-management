@@ -8,7 +8,6 @@ from matplotlib import pyplot as plt
 
 import main
 import mqtt
-import turtlegraph
 import vda5050
 
 

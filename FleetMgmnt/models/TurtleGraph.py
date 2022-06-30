@@ -3,57 +3,14 @@ import json
 import math
 import threading
 from typing import List
-from shapely.geometry import Point
 
 import vmap_importer
 import graph_search as gs
 import vda5050
-from agv import AGV
+from models.Edge import Edge
+from models.Node import Node
+from models.AGV import AGV
 from matplotlib import pyplot as plt
-
-
-class Node:
-    def __init__(self, nid: int, x: float, y: float, name: str = None):
-        self.nid = nid
-        self.x = x
-        self.y = y
-        self.name = name
-        self.lock = threading.Lock()
-
-    def to_dict(self):
-        return {k: v for k, v in self.__dict__.items() if v is not None}
-
-    def json(self, pretty: bool = False) -> str:
-        if pretty:
-            return json.dumps(self.to_dict(), default=lambda o: o.to_dict(), indent=4)
-        else:
-            return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
-
-    def try_lock(self) -> bool:
-        print("Trying lock of node " + str(self.nid))
-        return self.lock.acquire(blocking=False)
-
-    def release(self):
-        print("Release lock of node " + str(self.nid))
-        self.lock.release()
-
-
-class Edge:
-    def __init__(self, eid: int, start: Node, end: Node, length: float):
-        self.eid = eid
-        self.start = start
-        self.end = end
-        self.length = length
-
-    def json(self):
-        return json.dumps(
-            {
-                "eid": self.eid,
-                "start": self.start.nid,
-                "end": self.end.nid,
-                "length": round(self.length * 100),
-            }
-        )
 
 
 class Graph:

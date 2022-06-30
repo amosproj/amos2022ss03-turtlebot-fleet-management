@@ -1,6 +1,6 @@
 import unittest
 
-import turtlegraph
+from models import TurtleGraph
 import vmap_importer
 
 

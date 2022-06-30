@@ -4,12 +4,12 @@ import threading
 import time
 
 import mqtt
-import turtlegraph
+from models import TurtleGraph
 import webserver
 
 docker = 'FMS_DOCKER' in os.environ
 config = {}
-graph = turtlegraph.Graph()
+graph = TurtleGraph.Graph()
 
 config_path = 'config.json'
 if docker:

@@ -1,24 +1,23 @@
-import turtlegraph
+from models import Edge, Node, TurtleGraph
 import math
 import sys
 import copy
-import itertools
 
 
 class ShortestPath:
     """ First implementation of dijkstra algorithm for the search of a shortest path (Not used for now) """
 
-    def __init__(self, graph: turtlegraph.Graph, source_node: turtlegraph.Node):
+    def __init__(self, graph: turtlegraph.Graph, source_node: Node.Node):
         self.graph = graph
         self.source_node = source_node
-        self.visited_and_distance = [[None, sys.maxsize, [turtlegraph.Edge]]]
+        self.visited_and_distance = [[None, sys.maxsize, [Edge.Edge]]]
         self.unvisited_nodes = self.graph.nodes
         self.visited_nodes = []
         self.number_of_vertices = len(self.graph.nodes)
 
     def process_shortest_path(self):
         for i in range(self.number_of_vertices - 1):
-            self.visited_and_distance.append([None, sys.maxsize, [turtlegraph.Edge]])
+            self.visited_and_distance.append([None, sys.maxsize, [Edge.Edge]])
 
         self.visited_and_distance[0] = [self.source_node, 0, []]
         self.visited_nodes.append(self.source_node)
@@ -127,14 +126,14 @@ class ShortestPath:
         return res
 
 
-    def neighbour_node_paths(self, node: turtlegraph.Node):
+    def neighbour_node_paths(self, node: Node.Node):
         ret = []
         nodelis = self.attached_nodes(node)
         for node_obj in nodelis:
             ret.append([node_obj, distance_between_nodes(node, node_obj), [self.find_edge_with_nodes(node, node_obj)]])
         return ret
 
-    def find_edge_with_nodes(self, node1: turtlegraph.Node, node2: turtlegraph.Node):
+    def find_edge_with_nodes(self, node1: Node.Node, node2: Node.Node):
         for edg in self.graph.edges:
             if (edg.start == node1) and (edg.end == node2):
                 found_edge = edg
@@ -157,7 +156,7 @@ class ShortestPath:
         min_path = min(neigh_path_list, key=lambda x: x[1])
         return min_path
 
-    def attached_nodes(self, node: turtlegraph.Node):
+    def attached_nodes(self, node: Node.Node):
         edges = self.graph.get_node_edges(node)
         nodes = []
         for edge in edges:
@@ -167,7 +166,7 @@ class ShortestPath:
         new_list.remove(node)
         return new_list
 
-    def nearest_node_for_a_node(self, node: turtlegraph.Node, node_list: list[turtlegraph.Node]):
+    def nearest_node_for_a_node(self, node: Node.Node, node_list: list[Node.Node]):
         distance_dic = {}
         distances = []
         for nodes in node_list:

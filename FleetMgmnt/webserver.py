@@ -2,7 +2,6 @@ import json
 
 from flask import Flask, Response, send_from_directory
 
-import turtlegraph
 import worker
 import main
 

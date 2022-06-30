@@ -2,7 +2,7 @@ import math
 import threading
 from enum import Enum
 
-import turtlegraph
+from models import Node
 import main
 
 RELEASE_DISTANCE = 100
@@ -25,7 +25,7 @@ class Order:
     order_id_counter = 0
     order_id_lock = threading.Lock()
 
-    def __init__(self, start: turtlegraph.Node, end: turtlegraph.Node):
+    def __init__(self, start: Node.Node, end: Node.Node):
         with Order.order_id_lock:
             self.order_id = Order.order_id_counter
             Order.order_id_counter += 1
