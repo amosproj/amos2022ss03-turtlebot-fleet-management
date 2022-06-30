@@ -3,6 +3,7 @@ import json
 import math
 import threading
 from typing import List
+from shapely.geometry import Point
 
 import vmap_importer
 import graph_search as gs
