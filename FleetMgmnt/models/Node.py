@@ -24,13 +24,12 @@ class Node:
         else:
             return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
 
-    def try_lock(self, order) -> bool:
-        print("Trying lock of node " + str(self.nid))
-        if self.lock == -1 or self.lock == order.order_id:
-            self.lock = order.order_id
+    def try_lock(self, order_id: int) -> bool:
+        if self.lock == -1 or self.lock == order_id:
+            self.lock = order_id
             return True
         return False
 
-    def release(self):
-        print("Release lock of node " + str(self.nid))
-        self.lock = -1
+    def release(self, order_id: int):
+        if self.lock == order_id:
+            self.lock = -1

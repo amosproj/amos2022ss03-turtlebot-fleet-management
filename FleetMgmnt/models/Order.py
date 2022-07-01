@@ -1,6 +1,9 @@
 import math
 import threading
 from enum import Enum
+from typing import List
+
+import shapely.geometry
 
 import collavoid
 from models import Node
@@ -37,6 +40,7 @@ class Order:
         self.completed = list()
         self.base = list()
         self.horizon, _ = main.graph.get_shortest_route(start, end)
+        self.agv = None
 
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
@@ -45,21 +49,48 @@ class Order:
 
     def update_last_node(self, nid: str, pos: (float, float)):
         last_node = main.graph.find_node_by_id(int(nid))
-        if last_node is None or last_node in self.completed:
+        if last_node is None or last_node in self.completed or self.status == OrderStatus.COMPLETED:
             return
-        base_position = self.base.index(last_node)
-        for i in range(base_position + 1):
-            head = self.base[0]
-            distance = math.dist((head.x, head.y), pos)
-            if distance > SAFETY_BUFFER_NODE * 2:
-                removed = self.base.pop()
-                self.completed.append(removed)
-            else:
-                break
-        # ToDo: Node Releasing
+        if last_node == self.end and math.dist((self.end.x, self.end.y), (self.agv.x, self.agv.y)) < 0.3:
+            main.graph.lock.acquire()
+            self.unlock_all()
+            main.graph.lock.release()
+            self.status = OrderStatus.COMPLETED
+            return
 
-    def get_base_polygon(self):
-        return collavoid.get_path_safety_buffer_polygon(self.base)
+        base_position = self.base.index(last_node)
+        for i in reversed(range(base_position + 1)):
+            head = self.base[i]
+            distance = math.dist((head.x, head.y), pos)
+            if distance > 0.4:
+                self.base.remove(head)
+                print("Removing " + str(head.nid))
+                self.completed.append(head)
+            else:
+                print("Not removing " + str(head.nid) + " because dist " + str(distance))
+        main.graph.lock.acquire()
+        self.unlock_all()
+        self.lock_all()
+        main.graph.lock.release()
+
+    # COSP = Current Order Safety Polygon
+    # AGV position + Base
+    def get_cosp(self, virtual_ext = list()):
+        base_copy = self.base.copy()
+        base_copy.extend(virtual_ext)
+        return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
+
+    def unlock_all(self):
+        for node in main.graph.nodes:
+            node.release(self.order_id)
+
+    def lock_all(self):
+        for node in self.base:
+            if not node.try_lock(self.order_id):
+                raise Exception
+        for node in main.graph.find_nodes_for_colocking(self.get_cosp()):
+            if not node.try_lock(self.order_id):
+                raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
         if len(self.horizon) == 0:
@@ -72,10 +103,25 @@ class Order:
         if len(self.horizon) == 0:
             return False
         next_node = self.horizon[0]
-        if not next_node.try_lock(self):
-            return False
-        self.base.append(next_node)
-        self.horizon.remove(next_node)
+        next_nodes = main.graph.next_node_critical_path_membership(next_node, self.order_id)
+
+        virtual_cosp = self.get_cosp(next_nodes)
+
+        main.graph.lock.acquire()
+        success = True
+        for node in main.graph.find_nodes_for_colocking(virtual_cosp):
+            if not node.try_lock(self.order_id):
+                success = False
+                break
+
+        if success:
+            self.base.append(next_node)
+            self.horizon.remove(next_node)
+
+        self.unlock_all()
+        self.lock_all()
+        main.graph.lock.release()
+
         return True
 
 

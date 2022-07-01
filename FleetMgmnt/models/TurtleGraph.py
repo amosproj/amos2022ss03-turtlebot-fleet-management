@@ -4,6 +4,8 @@ import math
 import threading
 from typing import List
 
+import shapely.geometry
+
 import vmap_importer
 import graph_search as gs
 import vda5050
@@ -78,6 +80,17 @@ class Graph:
                 return agv
         raise Exception("AGV not found, FATAL")
 
+    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
+        result = list()
+        for node in self.nodes:
+            if polygon.intersects(node.buffer):
+                result.append(node)
+        return result
+
+    def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
+        # ToDo: Critical path calculation
+        return [node]
+
     def bfs(self, start: Node):
         q = [start]
         visited = [start]
@@ -137,6 +150,7 @@ class Graph:
                 marker='.',
                 color="gray"
             )
+        self.lock.acquire()
         for node in self.nodes:
             if node.name is not None:
                 ax1.plot(
@@ -146,15 +160,22 @@ class Graph:
                 )
                 ax1.annotate(node.name + " (" + str(node.nid) + ")", (node.x, node.y))
             if node.lock != -1:
-                x, y = node.buffer.exterior.xy
-                ax1.plot(x, y)
+                ax1.plot(
+                    node.x, node.y,
+                    marker='.',
+                    color="red"
+                )
+        self.lock.release()
         for agv in self.agvs:
             if agv.x is not None and agv.y is not None:
                 ax1.plot(
                     agv.x, agv.y,
                     marker='s',
-                    color='blue'
+                    color=agv.color
                 )
+            if agv.order is not None:
+                x, y = agv.order.get_cosp().exterior.xy
+                ax1.plot(x, y, color=agv.color)
 
         for order in self.orders:
             color = self.get_agv_by_id(int(order.serialNumber)).color

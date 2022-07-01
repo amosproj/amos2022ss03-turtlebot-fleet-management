@@ -43,10 +43,6 @@ class AGV:
         if self.order is not None:
             self.order.update_last_node(last_node_id, (self.x, self.y))
 
-            print(self.order.completed)
-            print(self.order.base)
-            print(self.order.horizon)
-
             while self.order.extension_required(self.x, self.y):
                 self.order.try_extension(self.x, self.y)
 

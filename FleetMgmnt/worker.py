@@ -23,6 +23,7 @@ def send_robot_to_node(serial, source_node, target_node):
 
     new_order = Order(source, target)
     agv.order = new_order
+    new_order.agv = agv
     print(new_order.completed)
     print(new_order.base)
     print(new_order.horizon)
@@ -63,20 +64,6 @@ def get_path_image(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-    buffer = collavoid.get_path_safety_buffer_polygon(nodes)
-    x, y = buffer.exterior.xy
-    ax1.plot(x, y)
-
-    positive_collide = collavoid.get_nodes_colliding_with_polygon(buffer)
-
-    for node in positive_collide:
-        ax1.plot(
-            node.x, node.y,
-            marker='.',
-            color="orange"
-        )
-        x, y = node.buffer.exterior.xy
-        ax1.plot(x, y, color="orange", alpha=0.1)
 
     for edge in edges:
         ax1.plot(
