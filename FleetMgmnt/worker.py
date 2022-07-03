@@ -90,6 +90,16 @@ def get_agv_info():
     return agv_and_info
 
 
+def get_node_coordinates():
+    nodes = list()
+    for edges in main.graph.edges:
+        temp = list()
+        temp.append({"x": edges.start.x, "y": edges.start.y})
+        temp.append({"x": edges.end.x, "y": edges.end.y})
+        nodes.append(temp)
+    return nodes
+
+
 def get_orders():
     orders = list()
     for order in main.graph.orders:
