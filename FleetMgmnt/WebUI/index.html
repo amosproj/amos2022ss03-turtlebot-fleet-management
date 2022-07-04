@@ -104,8 +104,9 @@
                         <thead>
                         <tr>
                             <th>AGV ID</th>
-                            <th>Status</th>
-                            <th>Battery (%)</th>
+                            <th>Driving Status</th>
+                            <th>Connection Status</th>
+                            <th>Battery Status (%)</th>
                             <th>Charging Status</th>
                             <th>Velocity (m/s)</th>
                         </tr>
@@ -113,7 +114,8 @@
                         <tbody>
                         <tr v-for="agv in agvs" :key="agv.id">
                             <td>{{ agv.agv_id }}</td>
-                            <td>{{ agv.status }}</td>
+                            <td>{{ agv.driving_status }}</td>
+                            <td id="status" >{{ agv.connection_state }}</td>
                             <td>{{ agv.battery_level }}</td>
                             <td>{{ agv.charging_status }}</td>
                             <td>{{ agv.velocity }}</td>

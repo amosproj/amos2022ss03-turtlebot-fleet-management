@@ -29,6 +29,7 @@ def on_message(client, userdata, msg):
         update_agv_driving_status(serial_number, pr.packet_receiver_for_state(msg.payload))
     elif topic == "connection":
         update_connection_state(pr.packet_receiver_for_connection(msg.payload))
+        update_agv_connection_state(pr.packet_receiver_for_connection(msg.payload))
     # TODO Handling all the other information and topics
 
 
@@ -99,13 +100,18 @@ def update_agv_last_node_id(serial_number, state_msg):
 
 def update_agv_driving_status(serial_number, state_msg):
     if state_msg.driving is True and state_msg.paused is False:
-        status = "Driving Mode"
+        status = "Driving"
     elif state_msg.driving is False and state_msg.paused is True:
-        status = "Idle Mode"
+        status = "Paused"
     else:
         status = "No Status"
     main.graph.get_agv_by_id(1).update_driving_status(status)
     # TODO Handling the avg ids for more than one AGV
+
+
+def update_agv_connection_state(connection_msg):
+    connection_state = connection_msg.connectionState
+    main.graph.get_agv_by_id(1).update_connection_status(connection_state)
 
 
 def update_connection_state(state_msg):
