@@ -112,6 +112,7 @@ def update_agv_driving_status(serial_number, state_msg):
 def update_agv_connection_state(connection_msg):
     connection_state = connection_msg.connectionState
     main.graph.get_agv_by_id(1).update_connection_status(connection_state)
+    # TODO Handling the avg ids for more than one AGV
 
 
 def update_connection_state(state_msg):
