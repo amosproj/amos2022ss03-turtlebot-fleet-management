@@ -10,7 +10,7 @@ import collavoid
 import main
 import mqtt
 import vda5050
-from models.Order import Order
+from models.Order import Order, OrderType
 
 
 def send_robot_to_node(serial, source_node, target_node):
@@ -108,9 +108,46 @@ def get_agv_info():
 
 def get_orders():
     orders = list()
-    for order in main.graph.orders:
+    for order in main.graph.current_orders:
         orders.append(json.loads(order.json()))
     return orders
+
+
+def order_distributor():
+    while True:
+        free_agvs = main.graph.get_free_agvs()
+        # Copy the list from the graph in order to be able to change it without effecting the iteration over the objects
+        pending_orders = main.graph.pending_orders.copy()
+        for order in pending_orders:
+            if len(free_agvs) == 0:
+                break
+
+            if order.agv is not None:
+                # An agv is already assigned to the order
+                if order.agv in free_agvs:
+                    agv = order.agv
+                else:
+                    continue
+            else:
+                # Assign the nearest free agv to the order
+                agv = main.graph.get_nearest_free_agv(order.start)
+                order.agv = agv
+
+            nearest_node = main.graph.get_nearest_node_from_agv(agv)
+            if nearest_node == order.start:
+                # AGV is already on or near the start node of the order
+                agv.order = order
+                main.graph.pending_orders.remove(order)
+                main.graph.current_orders.append(order)
+            else:
+                # AGV is not near the start node (another node is nearer) -> Make a relocation order
+                reloc_order = Order(nearest_node, order.start, OrderType.RELOCATION)
+                agv.order = reloc_order
+                main.graph.current_orders.append(reloc_order)
+
+            # TODO start executing the assigned order
+            free_agvs.remove(agv)
+        time.sleep(5)
 
 
 def order_executor(order: Order):
@@ -154,5 +191,5 @@ def order_executor(order: Order):
     for node in order.nodes:
         main.graph.find_node_by_id(int(node.nodeId)).release()
     main.graph.lock.release()
-    main.graph.orders.remove(order)
+    main.graph.current_orders.remove(order)
     main.graph.completed_orders.append(order)

@@ -14,6 +14,10 @@ class AGV:
         self.last_node_id = last_node_id
         self.driving_status = driving_status
 
+    def has_order(self):
+        # Indicates if an AGV is currently executing an order
+        return self.order is not None
+
     def update_position(self, x, y, heading=None):
         self.x = x
         self.y = y

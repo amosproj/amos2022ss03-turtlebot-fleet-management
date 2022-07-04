@@ -29,12 +29,13 @@ class Order:
     order_id_counter = 0
     order_id_lock = threading.Lock()
 
-    def __init__(self, start: Node.Node, end: Node.Node):
+    def __init__(self, start: Node.Node, end: Node.Node, order_type: OrderType = OrderType.NORMAL):
         with Order.order_id_lock:
             self.order_id = Order.order_id_counter
             Order.order_id_counter += 1
         self.order_update_id = 0
         self.status = OrderStatus.CREATED
+        self.order_type = order_type
         self.start = start
         self.end = end
         self.completed = list()
@@ -45,6 +46,7 @@ class Order:
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
         nodes.extend(self.base)
+        # TODO move the complete vda5050 message creation to this method ?
         return main.graph.create_vda5050_order(nodes, [], agv.aid)
 
     def update_last_node(self, nid: str, pos: (float, float)):

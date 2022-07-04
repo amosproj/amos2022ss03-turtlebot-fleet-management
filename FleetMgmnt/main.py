@@ -3,6 +3,7 @@ import os
 import threading
 import time
 
+import worker
 import mqtt
 from models import TurtleGraph
 import webserver
@@ -33,6 +34,7 @@ def main():
     launch_thread(webserver.start, ())
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
                                  config['mqtt']['username'], config['mqtt']['password']))
+    launch_thread(worker.order_distributor(), ())
     launch_thread(placeholder, ())  # Example
 
 

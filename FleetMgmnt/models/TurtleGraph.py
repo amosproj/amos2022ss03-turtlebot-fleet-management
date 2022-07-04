@@ -9,6 +9,8 @@ import shapely.geometry
 import vmap_importer
 import graph_search as gs
 import vda5050
+
+from models.Order import Order
 from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
@@ -24,7 +26,8 @@ class Graph:
         self.edge_id = 0
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
-        self.orders = list()
+        self.pending_orders = list()
+        self.current_orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
 
@@ -44,6 +47,12 @@ class Graph:
             self.new_edge(
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
+
+    def new_order(self, start: Node, end: Node, agv: AGV = None):
+        order = Order(start, end)
+        if agv is not None:
+            order.agv = agv
+        self.pending_orders.append(order)
 
     def new_node(self, x: float, y: float, name: str = None):
         n_node = Node(self.node_id, x, y, name)
@@ -79,6 +88,35 @@ class Graph:
             if agv.aid == aid:
                 return agv
         raise Exception("AGV not found, FATAL")
+
+    def get_free_agvs(self) -> List[AGV]:
+        # Returns a list of all agvs, which are currently not executing an order
+        free_agvs = []
+        for agv in self.agvs:
+            if not agv.has_order():
+                free_agvs.append(agv)
+        return free_agvs
+
+    def get_nearest_free_agv(self, node: Node) -> AGV:
+        min_dist = math.inf
+        nearest_agv = None
+        for agv in self.get_free_agvs():
+            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_agv = agv
+        return nearest_agv
+
+    def get_nearest_node_from_agv(self, agv: AGV) -> Node:
+        min_dist = math.inf
+        nearest_node = None
+        # Is there a more efficient way than iterating over all the nodes?
+        for node in self.nodes:
+            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_node = node
+        return nearest_node
 
     def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
         result = list()
@@ -177,7 +215,7 @@ class Graph:
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
 
-        for order in self.orders:
+        for order in self.current_orders:
             color = self.get_agv_by_id(int(order.serialNumber)).color
             for edge in order.edges:
                 start = self.find_node_by_id(int(edge.startNodeId))
@@ -251,5 +289,5 @@ class Graph:
             edges=vda5050_edges
         )
 
-        self.orders.append(order)
+        self.current_orders.append(order)
         return order
