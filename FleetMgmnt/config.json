@@ -1,7 +1,7 @@
 {
   "map": "room_04.150_curved.vmap",
   "mqtt": {
-    "host": "broker.emqx.io",
+    "host": "broker.hivemq.com",
     "port": 1883,
     "username": null,
     "password": null

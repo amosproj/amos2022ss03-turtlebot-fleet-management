@@ -34,13 +34,15 @@ createApp({
         }
     },
     created() {
-        setInterval(this.updateUIdata, 2500)
+
     },
     async mounted() {
         let result = await axios.get('/api/graph/stations')
         this.stations = result.data
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
+
+        setInterval(this.updateUIdata, 4000)
 
         /*
         const canvas = document.querySelector('#canvas');

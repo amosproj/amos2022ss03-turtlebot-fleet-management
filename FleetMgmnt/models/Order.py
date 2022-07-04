@@ -6,11 +6,15 @@ from typing import List
 import shapely.geometry
 
 import collavoid
+import vda5050
 from models import Node
 import main
 from models.AGV import AGV
 from models.Node import SAFETY_BUFFER_NODE
 
+
+order_id_counter = 0
+order_id_lock = threading.Lock()
 
 class OrderStatus(Enum):
     CREATED = 0
@@ -26,13 +30,12 @@ class OrderType(Enum):
 
 
 class Order:
-    order_id_counter = 0
-    order_id_lock = threading.Lock()
 
     def __init__(self, start: Node.Node, end: Node.Node):
-        with Order.order_id_lock:
-            self.order_id = Order.order_id_counter
-            Order.order_id_counter += 1
+        global order_id_counter
+        with order_id_lock:
+            self.order_id = order_id_counter
+            order_id_counter += 1
         self.order_update_id = 0
         self.status = OrderStatus.CREATED
         self.start = start
@@ -45,9 +48,14 @@ class Order:
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
         nodes.extend(self.base)
-        return main.graph.create_vda5050_order(nodes, [], agv.aid)
+        print(self.order_id)
+        # print(self.order_update_id)
+        self.order_update_id += 1
+        return main.graph.create_vda5050_order(nodes, [], str(agv.aid), self.order_id, self.order_update_id, self.horizon)
 
     def update_last_node(self, nid: str, pos: (float, float)):
+        print("Last node " + str(nid))
+
         last_node = main.graph.find_node_by_id(int(nid))
         if last_node is None or last_node in self.completed or self.status == OrderStatus.COMPLETED:
             return
@@ -121,6 +129,9 @@ class Order:
         self.unlock_all()
         self.lock_all()
         main.graph.lock.release()
+
+        main.mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
+                                 self.create_vda5050_message(self.agv).json(), 2)
 
         return True
 

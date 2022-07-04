@@ -35,7 +35,7 @@ def send_robot_to_node(serial, source_node, target_node):
     print(new_order.horizon)
 
     msg = new_order.create_vda5050_message(agv)
-    mqtt.client.publish(vda5050.get_mqtt_topic(serial, vda5050.Topic.ORDER), msg.json(), 2)
+    mqtt.client.publish(vda5050.get_mqtt_topic(str(serial), vda5050.Topic.ORDER), msg.json(), 2)
 
     return "Success"
 
