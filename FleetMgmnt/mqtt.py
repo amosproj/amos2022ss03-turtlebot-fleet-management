@@ -21,7 +21,6 @@ def on_message(client, userdata, msg):
     if topic == "state":
         serial_number = msg.topic.split('/')[-2]
         update_agv_position(serial_number, pr.packet_receiver_for_state(msg.payload))
-        update_agv_actions_state(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_battery(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_charging_status(serial_number, pr.packet_receiver_for_state(msg.payload))
         update_agv_velocity(serial_number, pr.packet_receiver_for_state(msg.payload))
@@ -40,18 +39,6 @@ def update_agv_position(serial_number, state_msg):
     agv_y = pos.y
     # TODO adjust indexing the agv, when we handle more than one
     main.graph.get_agv_by_id(serial_number).update_position(agv_x, agv_y)
-
-
-def update_agv_actions_state(serial_number, state_msg):
-    action_state = state_msg.actionStates
-    actions = list()
-    if action_state is not None:
-        for action in action_state:
-            actions.append(action.actionStatus)
-        main.graph.get_agv_by_id(serial_number).update_status(actions)
-    else:
-        main.graph.get_agv_by_id(serial_number).update_status(action_state)
-    # TODO Handling the avg ids for more than one AGV
 
 
 def update_agv_battery(serial_number, state_msg):

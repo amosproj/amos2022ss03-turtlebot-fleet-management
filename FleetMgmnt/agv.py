@@ -18,10 +18,6 @@ class AGV:
         self.y = y
         self.heading = heading
 
-    def update_status(self, status, heading=None):
-        self.agv_status = status
-        self.heading = heading
-
     def update_battery_level(self, battery, heading=None):
         self.battery_level = battery
         self.heading = heading
