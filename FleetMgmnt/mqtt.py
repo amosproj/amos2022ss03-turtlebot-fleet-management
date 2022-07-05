@@ -103,18 +103,6 @@ def update_agv_connection_state(serial_number, connection_msg):
     # TODO Handling the avg ids for more than one AGV
 
 
-def update_connection_state(state_msg):
-    if state_msg.connectionState == "ONLINE":
-        config_path = 'config.json'
-        with open(config_path, "r") as config_file:
-            config_json = 'maps/' + json.load(config_file)["map"]
-            with open(config_json, "r") as file:
-                data = file.read()
-                encoded = base64.b64encode(data.encode('ascii')).decode()
-
-                client.publish("AMOS/v1/TurtleBot/1/map", '{"data": "' + encoded + '"}')
-                #print(encoded)
-
 def connect(host, port, username, password):
     client.on_connect = on_connect
     client.on_message = on_message

@@ -98,8 +98,7 @@ class Graph:
         # Returns a list of all agvs, which are currently not executing an order
         free_agvs = []
         for agv in self.agvs:
-            # TODO also check if agv is connected already !!!
-            if not agv.has_order():
+            if agv.connection_status == 'ONLINE' and not agv.has_order():
                 free_agvs.append(agv)
         return free_agvs
 
