@@ -135,4 +135,8 @@ class Order:
 
         return True
 
+    def get_nodes_to_drive(self):
+        # Should return all nodes that are not passed yet.
+        all_nodes = self.base + self.horizon
+        return list(set(all_nodes) - set(self.completed))
 

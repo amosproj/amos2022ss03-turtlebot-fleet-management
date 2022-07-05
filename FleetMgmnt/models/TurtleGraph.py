@@ -80,6 +80,12 @@ class Graph:
                 return agv
         raise Exception("AGV not found, FATAL")
 
+    def get_order_by_id(self, order_id: int):
+        for order in self.orders + self.completed_orders:
+            if order.order_id == order_id:
+                return order
+        raise Exception("Order not found, FATAL")
+
     def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
         result = list()
         for node in self.nodes:
@@ -88,8 +94,15 @@ class Graph:
         return result
 
     def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
-        # ToDo: Critical path calculation
-        return [node]
+        order_nodes = self.get_order_by_id(order_id)
+        critical_path = set()
+        for order in self.orders:
+            if order.order_id == order_id:
+                continue
+            intersect = set(order_nodes).intersection(set(order.get_nodes_to_drive()))
+            if node in intersect:
+                critical_path += intersect
+        return list(critical_path)
 
     def bfs(self, start: Node):
         q = [start]
@@ -196,7 +209,6 @@ class Graph:
                         linestyle="--",
                         alpha=0.5
                     )
-
 
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
