@@ -31,6 +31,18 @@ createApp({
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
+            this.updateConnectionStatus();
+        },
+        async updateConnectionStatus(){
+             var status_element = document.getElementById("status");
+             if (status_element.innerText === "ONLINE"){
+                status_element.classList.add("online");
+             } else if(status_element.innerText === "OFFLINE"){
+                status_element.classList.add("offline");
+             }else{
+                status_element.classList.add("niether");
+         }
+
         }
     },
     created() {

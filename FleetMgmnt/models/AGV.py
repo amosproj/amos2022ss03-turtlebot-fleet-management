@@ -1,18 +1,18 @@
 
 class AGV:
-    def __init__(self, aid: int, color, x, y, heading, agv_status, battery_level, charging_status, velocity, last_node_id, driving_status):
+    def __init__(self, aid: int, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status):
         self.aid = aid
         self.order = None
         self.x = x
         self.y = y
         self.heading = heading
-        self.agv_status = agv_status
         self.battery_level = battery_level
         self.charging_status = charging_status
         self.velocity = velocity
         self.color = color
         self.last_node_id = last_node_id
         self.driving_status = driving_status
+        self.connection_status = connection_status
 
     def has_order(self):
         # Indicates if an AGV is currently executing an order
@@ -21,10 +21,6 @@ class AGV:
     def update_position(self, x, y, heading=None):
         self.x = x
         self.y = y
-        self.heading = heading
-
-    def update_status(self, status, heading=None):
-        self.agv_status = status
         self.heading = heading
 
     def update_battery_level(self, battery, heading=None):
@@ -52,4 +48,8 @@ class AGV:
 
     def update_driving_status(self, driving_status, heading=None):
         self.driving_status = driving_status
+        self.heading = heading
+
+    def update_connection_status(self, connection_status, heading=None):
+        self.connection_status = connection_status
         self.heading = heading

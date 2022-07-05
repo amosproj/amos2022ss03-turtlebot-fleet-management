@@ -102,7 +102,7 @@ def get_stations():
 def get_agv_info():
     agv_and_info = list()
     for agv in main.graph.get_agvs():
-        agv_and_info.append({"agv_id": agv.aid, "status": agv.agv_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
+        agv_and_info.append({"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
 
 
