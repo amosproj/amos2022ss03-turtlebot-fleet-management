@@ -136,18 +136,24 @@ def order_distributor():
             nearest_node = main.graph.get_nearest_node_from_agv(agv)
             if nearest_node == order.start:
                 # AGV is already on or near the start node of the order
-                agv.order = order
                 main.graph.pending_orders.remove(order)
                 main.graph.current_orders.append(order)
+                executing_order = order
             else:
                 # AGV is not near the start node (another node is nearer) -> Make a relocation order
                 reloc_order = Order(nearest_node, order.start, OrderType.RELOCATION)
-                agv.order = reloc_order
                 main.graph.current_orders.append(reloc_order)
+                executing_order = reloc_order
 
-            # TODO start executing the assigned order
+            agv.order = executing_order
+            # Send order_message to turtlebot
+            msg = executing_order.create_vda5050_message(agv)
+            # Agv-id same as Serial-Number ??
+            mqtt.client.publish(vda5050.get_mqtt_topic(agv.aid, vda5050.Topic.ORDER), msg.json(), 2)
+
             free_agvs.remove(agv)
-        time.sleep(5)
+        # Wait for 10 seconds until checking again for free robots / available orders
+        time.sleep(10)
 
 
 def order_executor(order: Order):

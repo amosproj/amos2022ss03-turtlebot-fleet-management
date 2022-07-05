@@ -48,11 +48,16 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
-    def new_order(self, start: Node, end: Node, agv: AGV = None):
+    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
+        start = self.find_node_by_id(int(start_node_id))
+        end = self.find_node_by_id(int(end_node_id))
         order = Order(start, end)
-        if agv is not None:
+        if agv_id is not None:
+            # If an agv is already assigned to the order, set this field in order
+            agv = self.get_agv_by_id(int(agv_id))
             order.agv = agv
         self.pending_orders.append(order)
+        return "Success"
 
     def new_node(self, x: float, y: float, name: str = None):
         n_node = Node(self.node_id, x, y, name)
@@ -75,7 +80,7 @@ class Graph:
         for node in self.nodes:
             if node.nid == nid:
                 return node
-        return None
+        raise Exception("Node not found, FATAL")
 
     def find_node_by_coords(self, x: float, y: float):
         for node in self.nodes:
@@ -93,6 +98,7 @@ class Graph:
         # Returns a list of all agvs, which are currently not executing an order
         free_agvs = []
         for agv in self.agvs:
+            # TODO also check if agv is connected already !!!
             if not agv.has_order():
                 free_agvs.append(agv)
         return free_agvs

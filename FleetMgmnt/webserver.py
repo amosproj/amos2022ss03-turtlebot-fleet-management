@@ -58,8 +58,8 @@ def get_orders():
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
 def robot_send_to(robot_serial, source_node_id, target_node_id):
-    return worker.send_robot_to_node(robot_serial, source_node_id, target_node_id)
-    # return str(robot_serial) + " " + str(target_node_id)
+    # return worker.send_robot_to_node(robot_serial, source_node_id, target_node_id)
+    return main.graph.append_new_order(source_node_id, target_node_id, robot_serial)
 
 
 @app.get("/api/agv/<robot_serial>/pathDisplay/<source_node_id>/<target_node_id>")
