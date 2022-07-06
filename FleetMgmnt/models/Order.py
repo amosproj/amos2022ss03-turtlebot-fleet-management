@@ -38,6 +38,7 @@ class Order:
             order_id_counter += 1
         self.order_update_id = 0
         self.status = OrderStatus.CREATED
+        self.order_type = order_type
         self.start = start
         self.end = end
         self.completed = list()
@@ -52,7 +53,7 @@ class Order:
         # print(self.order_update_id)
         self.order_update_id += 1
         return main.graph.create_vda5050_order(nodes, [], str(agv.aid), self.order_id, self.order_update_id, self.horizon)
-
+        # TODO move the complete vda5050 message creation to this method ?
     def update_last_node(self, nid: str, pos: (float, float)):
         print("Last node " + str(nid))
 

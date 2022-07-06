@@ -9,6 +9,8 @@ import shapely.geometry
 import vmap_importer
 import graph_search as gs
 import vda5050
+
+from models.Order import Order
 from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
@@ -24,7 +26,8 @@ class Graph:
         self.edge_id = 0
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
-        self.orders = list()
+        self.pending_orders = list()
+        self.current_orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
 
@@ -45,6 +48,17 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
+    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
+        start = self.find_node_by_id(int(start_node_id))
+        end = self.find_node_by_id(int(end_node_id))
+        order = Order(start, end)
+        if agv_id is not None:
+            # If an agv is already assigned to the order, set this field in order
+            agv = self.get_agv_by_id(int(agv_id))
+            order.agv = agv
+        self.pending_orders.append(order)
+        return "Success"
+
     def new_node(self, x: float, y: float, name: str = None):
         n_node = Node(self.node_id, x, y, name)
         self.node_id += 1
@@ -57,8 +71,8 @@ class Graph:
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None):
-        n_agv = AGV(serial, color, x, y, heading, agv_status, battery_level, charging_status, velocity, last_node_id, driving_status)
+    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None, connection_status=None):
+        n_agv = AGV(serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
         self.agvs.append(n_agv)
         return n_agv
 
@@ -66,7 +80,7 @@ class Graph:
         for node in self.nodes:
             if node.nid == nid:
                 return node
-        return None
+        raise Exception("Node not found, FATAL")
 
     def find_node_by_coords(self, x: float, y: float):
         for node in self.nodes:
@@ -80,11 +94,34 @@ class Graph:
                 return agv
         raise Exception("AGV not found, FATAL")
 
-    def get_order_by_id(self, order_id: int):
-        for order in self.orders + self.completed_orders:
-            if order.order_id == order_id:
-                return order
-        raise Exception("Order not found, FATAL")
+    def get_free_agvs(self) -> List[AGV]:
+        # Returns a list of all agvs, which are currently not executing an order
+        free_agvs = []
+        for agv in self.agvs:
+            if agv.connection_status == 'ONLINE' and not agv.has_order():
+                free_agvs.append(agv)
+        return free_agvs
+
+    def get_nearest_free_agv(self, node: Node) -> AGV:
+        min_dist = math.inf
+        nearest_agv = None
+        for agv in self.get_free_agvs():
+            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_agv = agv
+        return nearest_agv
+
+    def get_nearest_node_from_agv(self, agv: AGV) -> Node:
+        min_dist = math.inf
+        nearest_node = None
+        # Is there a more efficient way than iterating over all the nodes?
+        for node in self.nodes:
+            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_node = node
+        return nearest_node
 
     def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
         result = list()
@@ -190,7 +227,7 @@ class Graph:
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
 
-        for order in self.orders:
+        for order in self.current_orders:
             color = self.get_agv_by_id(int(order.serialNumber)).color
             for edge in order.edges:
                 start = self.find_node_by_id(int(edge.startNodeId))
@@ -274,5 +311,5 @@ class Graph:
             edges=vda5050_edges
         )
 
-        self.orders.append(order)
+        self.current_orders.append(order)
         return order
