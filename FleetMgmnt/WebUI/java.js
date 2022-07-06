@@ -11,7 +11,7 @@ createApp({
             toStation: null,
             agvs: [],
             orders: [],
-            graph : [],
+            graph: [],
 
         }
     },
@@ -34,48 +34,48 @@ createApp({
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
-              this.graph = (await graph_node_promise).data
+            this.graph = (await graph_node_promise).data
 
 
             window.myLineChart = new Chart(document.getElementById("myChart"), {
                 type: 'scatter',
                 data: {
-                datasets: [{
-                label: "Test-Graph",
-                fill: false,
-                borderColor: "green",
-                data: this.graph[1] ,
-                        }]
-                         },
+                    datasets: [{
+                        label: "Test-Graph",
+                        fill: false,
+                        borderColor: "green",
+                        data: this.graph[1],
+                    }]
+                },
                 options: {
-                       response : true,
-                       legend: {
-                            display: false
-                             },
-                       scales: {
+                    response: true,
+                    legend: {
+                        display: false
+                    },
+                    scales: {
                         xAxes: [{
                             gridLines: {
                                 drawOnChartArea: false
-                        }
-                      }],
+                            }
+                        }],
                         yAxes: [{
                             gridLines: {
                                 drawOnChartArea: false
-                        }
-                      }]
+                            }
+                        }]
                     }
-                        }
-                    });
-            for(let i=0;i<this.graph.length;i++){
-                     myLineChart.data.datasets.push({
-                            label: "item "+i,
-                            fill: false,
-                            borderColor: "green",
-                            data: this.graph[i],
-                        });
-                 }
+                }
+            });
+            for (let i = 0; i < this.graph.length; i++) {
+                myLineChart.data.datasets.push({
+                    label: "item " + i,
+                    fill: false,
+                    borderColor: "green",
+                    data: this.graph[i],
+                });
+            }
             window.myLineChart.update();
-                        }
+        }
     },
     created() {
         setInterval(this.updateUIdata, 4000)
