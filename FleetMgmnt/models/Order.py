@@ -31,7 +31,7 @@ class OrderType(Enum):
 
 class Order:
 
-    def __init__(self, start: Node.Node, end: Node.Node):
+    def __init__(self, start: Node.Node, end: Node.Node, order_type: OrderType = OrderType.NORMAL):
         global order_id_counter
         with order_id_lock:
             self.order_id = order_id_counter
