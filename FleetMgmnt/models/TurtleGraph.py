@@ -94,6 +94,12 @@ class Graph:
                 return agv
         raise Exception("AGV not found, FATAL")
 
+    def get_order_by_id(self, order_id: int):
+        for order in self.current_orders + self.pending_orders + self.completed_orders:
+            if order.order_id == order_id:
+                return order
+        raise Exception("Order not found, FATAL")
+
     def get_free_agvs(self) -> List[AGV]:
         # Returns a list of all agvs, which are currently not executing an order
         free_agvs = []
@@ -133,7 +139,8 @@ class Graph:
     def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
         order_nodes = self.get_order_by_id(order_id)
         critical_path = set()
-        for order in self.orders:
+        for agv in self.agvs:
+            order = agv.order
             if order.order_id == order_id:
                 continue
             intersect = set(order_nodes).intersection(set(order.get_nodes_to_drive()))
