@@ -25,13 +25,15 @@ class Worker(Node):
         self.get_logger().info('Receiving: "%s"' % msg)
 
     def call_order(self, msg):
+        if msg.serial_number != self.serial_number:
+            return
         self.get_logger().info('Receiving: "%s"' % msg)
         order_id = int(msg.order_id)
         if order_id not in self.finished_orders:
             self.orders[order_id] = msg.nodes
 
     def call_map(self, msg):
-        # self.get_logger().info('Receiving: "%s"' % msg)
+        self.get_logger().info('Receiving: "%s"' % msg)
         data = base64.b64decode(msg.data).decode()
         with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
             f.write(data)
@@ -71,9 +73,13 @@ class Worker(Node):
     def __init__(self):
         super().__init__('worker')
 
-        self.get_logger().info('worker started')
+        self.get_logger().info('worker startedxxx')
 
         # vars
+
+        # Turtlebot
+        self.serial_number = "2"
+
         # MQTT
         self.data = ""
         self.map_client_set = MinimalMapClientSet()
@@ -101,9 +107,9 @@ class Worker(Node):
         # Subscribe to
         # - MQTT
         self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
-        self.action_sub = self.create_subscription(Order, "/order", self.call_order, 10)
-        self.order_sub = self.create_subscription(Order, "/instantAction", self.call_action, 10)
-        self.map_sub = self.create_subscription(String, "/map", self.call_map, 10)
+        self.action_sub = self.create_subscription(Order, "/order2", self.call_order, 10)
+        self.order_sub = self.create_subscription(Order, "/instantAction2", self.call_action, 10)
+        self.map_sub = self.create_subscription(String, "/map2", self.call_map, 10)
         # - Sick location estimation and virtual line measurement
         self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
         self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
@@ -113,11 +119,12 @@ class Worker(Node):
         # Publish to
         # - MQTT
         self.pub_mqtt = self.create_publisher(String, "/echo", 10)
-        self.pub_state = self.create_publisher(OrderInformation, "/state", 10)
-        self.pub_visualisation = self.create_publisher(Visualization, "/visualization", 10)
-        self.pub_connection = self.create_publisher(Connection, "/connection", 10)
+        self.pub_state = self.create_publisher(OrderInformation, "/state2", 10)
+        self.pub_visualisation = self.create_publisher(Visualization, "/visualization2", 10)
+        self.pub_connection = self.create_publisher(Connection, "/connection2", 10)
         # say hello
         msg_connection = Connection()
+        msg_connection.serial_number = self.serial_number
         msg_connection.connection_state = "ONLINE"
         self.pub_connection.publish(msg_connection)
 
@@ -146,6 +153,7 @@ class Worker(Node):
 
     def deinit(self):
         msg_connection = Connection()
+        msg_connection.serial_number = self.serial_number
         msg_connection.connection_state = "OFFLINE"
         self.pub_connection.publish(msg_connection)
         # self.get_logger().info('Publishing: "%s"' %msg_connection)
@@ -167,6 +175,7 @@ class Worker(Node):
         msg_batterystate.battery_voltage = self.battery_voltage
 
         msg_state = OrderInformation()
+        msg_state.serial_number = self.serial_number
         msg_state.order_id = str(self.current_order)
         msg_state.last_node_id = str(self.last_node_id)
         msg_state.last_node_sequence_id = self.last_node_sequence_id
@@ -178,6 +187,7 @@ class Worker(Node):
 
         # optional
         # msg_vis = Visualization()
+        # msg_vis.serial_number = self.serial_number
         # msg_vis.header_id = self.i
         # msg_vis.agv_position = msg_agvpos
         # self.pub_visualisation.publish(msg_vis)
@@ -197,7 +207,7 @@ class Worker(Node):
     def rotate_self(self, angle, linear_speed=0.0):
         self.get_logger().info('Rotate')
         msg_twist = Twist()
-        angular_speed = 0.4
+        angular_speed = 0.5
         pose = self.normalize_angle(self.pose[2])
         # rotate in negative direction
         if ((angle - pose) + 360) % 360 > 180:
@@ -258,13 +268,13 @@ class Worker(Node):
                 # get distance to nearest lane
                 d_lane = min(self.lanes, key=abs)
                 # right margin
-                if d_lane > 40 and last_lane:
+                if d_lane > 37 and last_lane:
                     self.get_logger().info('turn left')
-                    self.rotate_self((self.pose[2] + 5) % 360, linear_speed)
+                    self.rotate_self((self.pose[2] + 3) % 360, 0.2)
                 # left margin
-                elif d_lane < -40 and last_lane:
+                elif d_lane < -37 and last_lane:
                     self.get_logger().info('turn right')
-                    self.rotate_self((self.pose[2] - 5) % 360, linear_speed)
+                    self.rotate_self((self.pose[2] - 3) % 360, 0.2)
                 last_lane = True
             time.sleep(0.3)
         self.get_logger().info('Leave Follow Line')
@@ -318,6 +328,7 @@ class Worker(Node):
                 self.finished_orders.append(order_id)
                 self.current_order = ""
                 self.get_logger().info('Finished order %d' % order_id)
+            #self.get_logger().info("still looping")
 
             # when all orders are finished, remove the finished orders
             for order in self.finished_orders:
