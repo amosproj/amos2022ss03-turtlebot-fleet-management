@@ -6,10 +6,11 @@ import time
 from flask import Response
 from matplotlib import pyplot as plt
 
+import collavoid
 import main
 import mqtt
-import turtlegraph
 import vda5050
+from models.Order import Order, OrderType
 
 
 def send_robot_to_node(serial, source_node, target_node):
@@ -17,10 +18,24 @@ def send_robot_to_node(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-    order = main.graph.create_vda5050_order(nodes, edges, serial)
+    # order3 = main.graph.create_vda5050_order(nodes, edges, serial)
+    agv = main.graph.get_agv_by_id(int(serial))
 
-    thread = threading.Thread(target=order_executor, args=(order, ))
-    thread.start()
+    new_order = Order(source, target)
+    agv.order = new_order
+    new_order.agv = agv
+    print(new_order.completed)
+    print(new_order.base)
+    print(new_order.horizon)
+
+    new_order.try_extension(0, 0)
+
+    print(new_order.completed)
+    print(new_order.base)
+    print(new_order.horizon)
+
+    msg = new_order.create_vda5050_message(agv)
+    mqtt.client.publish(vda5050.get_mqtt_topic(str(serial), vda5050.Topic.ORDER), msg.json(), 2)
 
     return "Success"
 
@@ -48,6 +63,7 @@ def get_path_image(serial, source_node, target_node):
     source = main.graph.find_node_by_id(int(source_node))
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
+
 
     for edge in edges:
         ax1.plot(
@@ -86,18 +102,61 @@ def get_stations():
 def get_agv_info():
     agv_and_info = list()
     for agv in main.graph.get_agvs():
-        agv_and_info.append({"agv_id": agv.aid, "status": agv.agv_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
+        agv_and_info.append({"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
 
 
 def get_orders():
     orders = list()
-    for order in main.graph.orders:
+    for order in main.graph.current_orders:
         orders.append(json.loads(order.json()))
     return orders
 
 
-def order_executor(order: vda5050.OrderMessage):
+def order_distributor():
+    while True:
+        free_agvs = main.graph.get_free_agvs()
+        # Copy the list from the graph in order to be able to change it without effecting the iteration over the objects
+        pending_orders = main.graph.pending_orders.copy()
+        for order in pending_orders:
+            if len(free_agvs) == 0:
+                break
+
+            if order.agv is not None:
+                # An agv is already assigned to the order
+                if order.agv in free_agvs:
+                    agv = order.agv
+                else:
+                    continue
+            else:
+                # Assign the nearest free agv to the order
+                agv = main.graph.get_nearest_free_agv(order.start)
+                order.agv = agv
+
+            nearest_node = main.graph.get_nearest_node_from_agv(agv)
+            if nearest_node == order.start:
+                # AGV is already on or near the start node of the order
+                main.graph.pending_orders.remove(order)
+                main.graph.current_orders.append(order)
+                executing_order = order
+            else:
+                # AGV is not near the start node (another node is nearer) -> Make a relocation order
+                reloc_order = Order(nearest_node, order.start, OrderType.RELOCATION)
+                main.graph.current_orders.append(reloc_order)
+                executing_order = reloc_order
+
+            agv.order = executing_order
+            # Send order_message to turtlebot
+            msg = executing_order.create_vda5050_message(agv)
+            # Agv-id same as Serial-Number ??
+            mqtt.client.publish(vda5050.get_mqtt_topic(agv.aid, vda5050.Topic.ORDER), msg.json(), 2)
+
+            free_agvs.remove(agv)
+        # Wait for 10 seconds until checking again for free robots / available orders
+        time.sleep(10)
+
+
+def order_executor(order: Order):
     node_id = 0
     edge_id = 0
 
@@ -138,5 +197,5 @@ def order_executor(order: vda5050.OrderMessage):
     for node in order.nodes:
         main.graph.find_node_by_id(int(node.nodeId)).release()
     main.graph.lock.release()
-    main.graph.orders.remove(order)
+    main.graph.current_orders.remove(order)
     main.graph.completed_orders.append(order)

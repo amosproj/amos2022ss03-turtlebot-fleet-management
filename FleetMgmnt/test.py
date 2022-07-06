@@ -1,6 +1,6 @@
 import unittest
 
-import turtlegraph
+from models import TurtleGraph
 import vmap_importer
 
 
@@ -13,18 +13,18 @@ class TestVmapImporter(unittest.TestCase):
 
 class TestTurtlegraph(unittest.TestCase):
     def test_turtlegraph(self):
-        graph = turtlegraph.Graph()
+        graph = TurtleGraph.Graph()
         graph.vmap_lines_to_graph("demo.vmap")
         self.assertEqual(len(graph.nodes), 15)
         self.assertEqual(len(graph.edges), 32)
 
     def test_turtlegraph_strongly_connected(self):
-        graph = turtlegraph.Graph()
+        graph = TurtleGraph.Graph()
         graph.vmap_lines_to_graph("demo.vmap")
         self.assertEqual(graph.is_strongly_connected(), True)
 
     def test_turtlegraph_not_strongly_connected(self):
-        graph = turtlegraph.Graph()
+        graph = TurtleGraph.Graph()
         graph.vmap_lines_to_graph("demo.vmap")
         graph.nodes.pop().start = None
         self.assertEqual(graph.is_strongly_connected(), False)
@@ -32,8 +32,8 @@ class TestTurtlegraph(unittest.TestCase):
 
 class TestGraphSearch(unittest.TestCase):
     def setUp(self):
-        self.graph = turtlegraph.Graph()
-        self.graph.vmap_lines_to_graph("demo.vmap")
+        self.graph = TurtleGraph.Graph()
+        self.graph.vmap_lines_to_graph("maps/demo.vmap")
 
     def test_shortest_path_nodes(self):
         start_node = self.graph.find_node_by_id(2)
