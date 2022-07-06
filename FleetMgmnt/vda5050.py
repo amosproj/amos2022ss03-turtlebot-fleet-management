@@ -498,8 +498,13 @@ class StateMessage(Message, JsonSerializable):
 
 
 def get_mqtt_topic(serial_number: str, topic: Topic):
+    ifname = "BMOS"
+    if serial_number == "1":
+        ifname = "AMOS"
+    else:
+        ifname = "BMOS"
     return (
-        INTERFACE_NAME
+        ifname
         + "/v"
         + PROTOCOL_VERSION
         + "/"

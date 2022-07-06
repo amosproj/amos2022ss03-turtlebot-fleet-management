@@ -3,13 +3,14 @@ import os
 import threading
 import time
 
+import worker
 import mqtt
-import turtlegraph
+from models import TurtleGraph
 import webserver
 
 docker = 'FMS_DOCKER' in os.environ
 config = {}
-graph = turtlegraph.Graph()
+graph = TurtleGraph.Graph()
 
 config_path = 'config.json'
 if docker:
@@ -33,6 +34,7 @@ def main():
     launch_thread(webserver.start, ())
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
                                  config['mqtt']['username'], config['mqtt']['password']))
+    launch_thread(worker.order_distributor(), ())
     launch_thread(placeholder, ())  # Example
 
 
