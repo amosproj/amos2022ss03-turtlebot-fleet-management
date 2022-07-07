@@ -125,7 +125,8 @@ class Order:
 
         if success:
             self.base.append(next_node)
-            self.horizon.remove(next_node)
+            if next_node in self.horizon:
+                self.horizon.remove(next_node)
 
         self.unlock_all()
         self.lock_all()

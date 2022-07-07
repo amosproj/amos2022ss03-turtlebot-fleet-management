@@ -64,7 +64,6 @@ def get_path_image(serial, source_node, target_node):
     target = main.graph.find_node_by_id(int(target_node))
     nodes, edges = main.graph.get_shortest_route(source, target)
 
-
     for edge in edges:
         ax1.plot(
             [edge.start.x, edge.end.x],

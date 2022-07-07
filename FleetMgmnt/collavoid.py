@@ -1,6 +1,6 @@
 from typing import List
 
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Polygon, Point
 
 import main
 from models.Node import Node, SAFETY_BUFFER_NODE
@@ -8,7 +8,7 @@ from models.Node import Node, SAFETY_BUFFER_NODE
 
 def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]):
     if len(path) == 0:
-        raise Exception
+        return Point(agv_pos).buffer(0.5)
     elif len(path) == 1:
         return path[0].buffer
 

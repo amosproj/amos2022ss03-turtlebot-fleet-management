@@ -131,6 +131,7 @@ class Graph:
         return result
 
     def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
+        return [node]
         order_nodes = self.get_order_by_id(order_id)
         critical_path = set()
         for order in self.orders:

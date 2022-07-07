@@ -30,7 +30,7 @@ def on_message(client, userdata, msg):
         update_agv_driving_status(serial_number, pr.packet_receiver_for_state(msg.payload))
     elif topic == "connection":
         serial_number = msg.topic.split('/')[-2]
-        update_connection_state(pr.packet_receiver_for_connection(msg.payload))
+        update_connection_state(pr.packet_receiver_for_connection(msg.payload), serial_qnd)
         update_agv_connection_state(serial_number, pr.packet_receiver_for_connection(msg.payload))
     # TODO Handling all the other information and topics
 
