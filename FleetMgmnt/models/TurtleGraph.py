@@ -31,6 +31,7 @@ class Graph:
         self.all_orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
+        self.image = self.create_image()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -53,7 +54,8 @@ class Graph:
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
         order = Order(self, start, end)
-        if agv_id is None or agv_id == 'AUTO':
+        if agv_id is None or 'AUTO' in agv_id:
+            order.agv = agv_id
             self.pending_orders.put(order)
         else:
             # If an agv is already assigned to the order, set this field in order
@@ -278,6 +280,11 @@ class Graph:
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
         plt.close(fig1)
         return plt_io
+
+    def create_map_thread(self):
+        while True:
+            self.image = self.create_image()
+            # print("Image rendered")
 
     def create_json(self):
         n = list()

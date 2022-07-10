@@ -54,7 +54,7 @@ createApp({
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
 
-        setInterval(this.updateUIdata, 4000)
+        setInterval(this.updateUIdata, 1000)
 
         /*
         const canvas = document.querySelector('#canvas');

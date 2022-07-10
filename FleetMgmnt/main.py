@@ -42,6 +42,7 @@ def main():
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
                                  config['mqtt']['username'], config['mqtt']['password'], graph))
     launch_thread(worker.order_distributor, (graph, ))
+    launch_thread(graph.create_map_thread(), ())
     launch_thread(placeholder, ())  # Example
 
 

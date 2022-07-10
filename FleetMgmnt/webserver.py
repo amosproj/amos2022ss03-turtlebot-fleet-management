@@ -1,4 +1,5 @@
 import json
+import logging
 
 from flask import Flask, Response, send_from_directory
 
@@ -12,6 +13,9 @@ graph = TurtleGraph.Graph
 def start(real_graph):
     global graph
     graph = real_graph
+
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     app.run(host="0.0.0.0", port=8080)
 
 
@@ -37,8 +41,7 @@ def station_send_to(station_id, target_station_id):
 
 @app.route("/graph")
 def graph_image():
-    img = graph.create_image()
-    return Response(img.getvalue(), mimetype="image/png")
+    return Response(graph.image.getvalue(), mimetype="image/png")
 
 
 @app.route("/graph.json")
@@ -69,7 +72,7 @@ def get_orders():
 
         if order.agv is not None:
             dickt['agv'] = str(order.agv.aid)
-        result.append()
+        result.append(dickt)
 
     return Response(json.dumps(result), mimetype="application/json")
 

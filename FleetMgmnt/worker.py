@@ -125,7 +125,14 @@ def order_distributor(real_graph):
         print("Order Distributor is now distributing an order")
 
         agvs = graph.agvs
-        selected_agv = agvs[random.randint(0, 1)]
+
+
+        target = random.randint(0, 1)
+        if next_order.agv == 'AUTO1':
+            target = 0
+        elif next_order.agv == 'AUTO2':
+            target = 1
+        selected_agv = agvs[target]
 
         distance = 0
         if selected_agv.x is not None:
