@@ -28,6 +28,7 @@ class Graph:
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
         self.pending_orders = Queue()
+        self.all_orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
 

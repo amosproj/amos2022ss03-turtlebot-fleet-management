@@ -50,13 +50,28 @@ def graph_json():
 def graph_stations():
     return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
+
 @app.route("/api/agv/info")
 def get_agv_info():
     return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
 
+
 @app.route("/api/orders")
 def get_orders():
-    return Response(json.dumps(worker.get_orders()), mimetype="application/json")
+    result = list()
+    for order in graph.all_orders:
+        dickt = {
+            'id': order.order_id,
+            'update_id': order.order_update_id,
+            'status': order.status,
+            'agv': 'UNASSIGNED'
+        }
+
+        if order.agv is not None:
+            dickt['agv'] = str(order.agv.aid)
+        result.append()
+
+    return Response(json.dumps(result), mimetype="application/json")
 
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")

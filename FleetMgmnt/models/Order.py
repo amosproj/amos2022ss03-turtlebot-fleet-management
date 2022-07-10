@@ -17,7 +17,7 @@ order_id_counter = 0
 order_id_lock = threading.Lock()
 
 
-class OrderStatus(Enum):
+class OrderStatus(int, Enum):
     CREATED = 0
     ASSIGNED = 1
     ACTIVE = 2
@@ -48,6 +48,7 @@ class Order:
         self.horizon, _ = self.graph.get_shortest_route(start, end)
         self.sem = threading.Semaphore(0)
         self.agv = None
+        graph.all_orders.append(self)
 
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
