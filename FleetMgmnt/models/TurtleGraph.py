@@ -1,6 +1,8 @@
 import io
 import json
 import math
+import numpy as np
+import time
 import threading
 from queue import Queue
 from typing import List
@@ -16,7 +18,9 @@ from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
 from matplotlib import pyplot as plt
+import matplotlib.style as mpls
 
+mpls.use('fast')
 
 class Graph:
     def __init__(self):
@@ -210,6 +214,7 @@ class Graph:
         return orders
 
     def create_image(self):
+        # drawing the edeges and saving fig to png takes most of the time
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
         for edge in self.edges:
@@ -254,7 +259,6 @@ class Graph:
             if agv.order is not None:
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
-
         for cur_order in self.get_active_orders():
             color = cur_order.agv.color
             for edge in cur_order.edges:
@@ -274,7 +278,6 @@ class Graph:
                         linestyle="--",
                         alpha=0.5
                     )
-
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
@@ -283,8 +286,10 @@ class Graph:
 
     def create_map_thread(self):
         while True:
+            start = time.time()
             self.image = self.create_image()
-            # print("Image rendered")
+            end = time.time()
+            # print("Map rendered in " + str(end-start))
 
     def create_json(self):
         n = list()

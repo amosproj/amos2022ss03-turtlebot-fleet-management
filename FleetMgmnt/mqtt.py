@@ -8,12 +8,12 @@ from models import TurtleGraph
 
 client: mqtt.Client
 graph: TurtleGraph.Graph
+map_name = ""
 
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")
-    # main.graph.new_agv()
 
 
 def on_message(client, userdata, msg):
@@ -64,14 +64,12 @@ def update_agv_velocity(state_msg):
 
 def update_connection_state(state_msg):
     if state_msg.connectionState == "ONLINE":
-        config_path = 'config.json'
-        with open(config_path, "r") as config_file:
-            config_json = 'maps/' + json.load(config_file)["map"]
-            with open(config_json, "r") as file:
-                data = file.read()
-                encoded = base64.b64encode(data.encode('ascii')).decode()
+        map_path = "maps/" + map_name
+        with open(map_path, "r") as file:
+            data = file.read()
+            encoded = base64.b64encode(data.encode('ascii')).decode()
 
-                client.publish("AMOS/v1/TurtleBot/" + str(state_msg.serialNumber) + "/map", '{"data": "' + encoded + '"}')
+            client.publish("AMOS/v1/TurtleBot/" + str(state_msg.serialNumber) + "/map", '{"data": "' + encoded + '"}')
 
 
 def update_agv_last_node_id(state_msg):
@@ -94,9 +92,10 @@ def update_agv_connection_state(connection_msg):
     graph.get_agv_by_id(int(connection_msg.serialNumber)).update_connection_status(connection_state)
 
 
-def connect(host, port, username, password, real_graph):
-    global graph, client
-    graph = real_graph
+def connect(host, port, username, password, new_map_name, new_graph):
+    global client, graph, map_name
+    graph = new_graph
+    map_name = new_map_name
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
