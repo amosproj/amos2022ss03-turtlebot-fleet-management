@@ -23,6 +23,7 @@ def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]):
 
 
 def get_nodes_colliding_with_polygon(polygon: Polygon):
+    raise Exception
     positive = list()
     for node in main.graph.nodes:
         if node.buffer.intersects(polygon):

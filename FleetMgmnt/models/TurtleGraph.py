@@ -143,14 +143,16 @@ class Graph:
                 result.append(node)
         return result
 
-    def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
+    def next_node_critical_path_membership(self, node: Node, order) -> List[Node]:
         return [node]
-        order_nodes = self.get_order_by_id(order_id)
         critical_path = set()
-        for order in self.orders:
-            if order.order_id == order_id:
+        for agv in self.agvs:
+            if agv.order is None:
                 continue
-            intersect = set(order_nodes).intersection(set(order.get_nodes_to_drive()))
+            order2 = agv.order
+            if order2.order_id == order.id:
+                continue
+            intersect = set(order.nodes).intersection(set(order.get_nodes_to_drive()))
             if node in intersect:
                 critical_path += intersect
         return list(critical_path)

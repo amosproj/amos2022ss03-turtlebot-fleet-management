@@ -125,7 +125,7 @@ def order_distributor(real_graph):
         print("Order Distributor is now distributing an order")
 
         agvs = graph.agvs
-        selected_agv = agvs[0]
+        selected_agv = agvs[random.randint(0, 1)]
 
         distance = 0
         if selected_agv.x is not None:

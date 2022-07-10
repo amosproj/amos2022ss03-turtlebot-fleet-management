@@ -3,7 +3,7 @@ import threading
 
 from shapely.geometry import Point
 
-SAFETY_BUFFER_NODE = 0.5  # m
+SAFETY_BUFFER_NODE = 0.1  # m
 
 
 class Node:

@@ -52,7 +52,6 @@ class Order:
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
         nodes.extend(self.base)
-        print(self.order_id)
         # print(self.order_update_id)
         self.order_update_id += 1
         return self.graph.create_vda5050_order(nodes, [], str(agv.aid), self.order_id, self.order_update_id, self.horizon)
