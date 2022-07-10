@@ -2,6 +2,7 @@ import io
 import json
 import math
 import threading
+from queue import Queue
 from typing import List
 
 import shapely.geometry
@@ -26,8 +27,7 @@ class Graph:
         self.edge_id = 0
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
-        self.pending_orders = list()
-        self.current_orders = list()
+        self.pending_orders = Queue()
         self.completed_orders = list()
         self.lock = threading.Lock()
 
@@ -51,12 +51,24 @@ class Graph:
     def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
-        order = Order(start, end)
-        if agv_id is not None:
+        order = Order(self, start, end)
+        if agv_id is None or agv_id == 'AUTO':
+            self.pending_orders.put(order)
+        else:
             # If an agv is already assigned to the order, set this field in order
             agv = self.get_agv_by_id(int(agv_id))
             order.agv = agv
-        self.pending_orders.append(order)
+
+            distance = 0
+            if agv.x is not None:
+                distance = math.dist((agv.x, agv.y), (order.start.x, order.start.y))
+            if distance > 1:
+                nearest = self.get_nearest_node_from_agv(agv)
+                reloc_order = Order(self, nearest, order.start)
+                agv.pending_orders.put(reloc_order)
+                print("Relocation order also created")
+            agv.pending_orders.put(order)
+            print("Order assigned directly to agv")
         return "Success"
 
     def new_node(self, x: float, y: float, name: str = None):
@@ -72,7 +84,7 @@ class Graph:
         return n_edge
 
     def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None, connection_status=None):
-        n_agv = AGV(serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
+        n_agv = AGV(self, serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
         self.agvs.append(n_agv)
         return n_agv
 
@@ -89,6 +101,7 @@ class Graph:
         raise Exception("Node not found, FATAL")
 
     def get_agv_by_id(self, aid: int):
+        # print("Our agvs " + str(self.agvs))
         for agv in self.agvs:
             if agv.aid == aid:
                 return agv
@@ -182,6 +195,15 @@ class Graph:
                 agvs.append(agv)
         return agvs
 
+    def get_active_orders(self):
+        return []
+        orders = list()
+        for agv in self.agvs:
+            if agv.order is not None:
+                orders.append(orders)
+        # print('Active orders ' + str(orders))
+        return orders
+
     def create_image(self):
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
@@ -228,9 +250,9 @@ class Graph:
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
 
-        for order in self.current_orders:
-            color = self.get_agv_by_id(int(order.serialNumber)).color
-            for edge in order.edges:
+        for cur_order in self.get_active_orders():
+            color = cur_order.agv.color
+            for edge in cur_order.edges:
                 start = self.find_node_by_id(int(edge.startNodeId))
                 end = self.find_node_by_id(int(edge.endNodeId))
                 if edge.released:
@@ -312,5 +334,4 @@ class Graph:
             edges=vda5050_edges
         )
 
-        self.current_orders.append(order)
         return order

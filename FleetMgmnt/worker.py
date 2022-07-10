@@ -1,5 +1,7 @@
 import io
 import json
+import math
+import random
 import threading
 import time
 
@@ -7,21 +9,23 @@ from flask import Response
 from matplotlib import pyplot as plt
 
 import collavoid
-import main
 import mqtt
 import vda5050
+from models import TurtleGraph
 from models.Order import Order, OrderType
+
+graph: TurtleGraph.Graph
 
 
 def send_robot_to_node(serial, source_node, target_node):
-    source = main.graph.find_node_by_id(int(source_node))
-    target = main.graph.find_node_by_id(int(target_node))
-    nodes, edges = main.graph.get_shortest_route(source, target)
+    source = graph.find_node_by_id(int(source_node))
+    target = graph.find_node_by_id(int(target_node))
+    nodes, edges = graph.get_shortest_route(source, target)
 
     # order3 = main.graph.create_vda5050_order(nodes, edges, serial)
-    agv = main.graph.get_agv_by_id(int(serial))
+    agv = graph.get_agv_by_id(int(serial))
 
-    new_order = Order(source, target)
+    new_order = Order(graph, source, target)
     agv.order = new_order
     new_order.agv = agv
     print(new_order.completed)
@@ -43,7 +47,7 @@ def send_robot_to_node(serial, source_node, target_node):
 def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
-    for edge in main.graph.edges:
+    for edge in graph.edges:
         ax1.plot(
             [edge.start.x, edge.end.x],
             [edge.start.y, edge.end.y],
@@ -60,9 +64,9 @@ def get_path_image(serial, source_node, target_node):
             color="gray"
         )
 
-    source = main.graph.find_node_by_id(int(source_node))
-    target = main.graph.find_node_by_id(int(target_node))
-    nodes, edges = main.graph.get_shortest_route(source, target)
+    source = graph.find_node_by_id(int(source_node))
+    target = graph.find_node_by_id(int(target_node))
+    nodes, edges = graph.get_shortest_route(source, target)
 
     for edge in edges:
         ax1.plot(
@@ -93,28 +97,50 @@ def get_path_image(serial, source_node, target_node):
 
 def get_stations():
     stations = list()
-    for station in main.graph.get_stations():
+    for station in graph.get_stations():
         stations.append({"nid": station.nid, "name": station.name})
     return stations
 
 
 def get_agv_info():
     agv_and_info = list()
-    for agv in main.graph.get_agvs():
+    for agv in graph.get_agvs():
         agv_and_info.append({"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
 
 
 def get_orders():
+    return []
     orders = list()
-    for order in main.graph.current_orders:
+    for order in graph.get_active_orders():
         orders.append(json.loads(order.json()))
     return orders
 
 
-def order_distributor():
+def order_distributor(real_graph):
+    global graph
+    graph = real_graph
     while True:
-        free_agvs = main.graph.get_free_agvs()
+        next_order = graph.pending_orders.get()
+        print("Order Distributor is now distributing an order")
+
+        agvs = graph.agvs
+        selected_agv = agvs[0]
+
+        distance = 0
+        if selected_agv.x is not None:
+            distance = math.dist((selected_agv.x, selected_agv.y), (next_order.start.x, next_order.start.y))
+        if distance > 1:
+            nearest = graph.get_nearest_node_from_agv(selected_agv)
+            reloc_order = Order(graph, nearest, next_order.start)
+            selected_agv.pending_orders.put(reloc_order)
+            print("Relocation order also created")
+        selected_agv.pending_orders.put(next_order)
+        print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(selected_agv.pending_orders))
+
+        continue
+
+
         # Copy the list from the graph in order to be able to change it without effecting the iteration over the objects
         pending_orders = main.graph.pending_orders.copy()
         for order in pending_orders:
@@ -161,16 +187,16 @@ def order_executor(order: Order):
 
     locked_by_us = list()
     while True:
-        main.graph.lock.acquire()
+        graph.lock.acquire()
         success = True
         for node in order.nodes:
-            n = main.graph.find_node_by_id(int(node.nodeId))
+            n = graph.find_node_by_id(int(node.nodeId))
             success = n.try_lock()
             if success:
                 locked_by_us.append(n)
             else:
                 break
-        main.graph.lock.release()
+        graph.lock.release()
         time.sleep(3)
         if success:
             print("All locks acquired successfully ")
@@ -192,9 +218,9 @@ def order_executor(order: Order):
         node_id += 1
         edge_id += 1
     print("Order is fully released")
-    main.graph.lock.acquire()
+    graph.lock.acquire()
     for node in order.nodes:
-        main.graph.find_node_by_id(int(node.nodeId)).release()
-    main.graph.lock.release()
-    main.graph.current_orders.remove(order)
-    main.graph.completed_orders.append(order)
+        graph.find_node_by_id(int(node.nodeId)).release()
+    graph.lock.release()
+    graph.current_orders.remove(order)
+    graph.completed_orders.append(order)
