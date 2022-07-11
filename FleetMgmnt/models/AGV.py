@@ -8,7 +8,8 @@ import vda5050
 
 
 class AGV:
-    def __init__(self, graph, aid: int, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status):
+    def __init__(self, graph, aid: int, color, x, y, heading, battery_level, charging_status, velocity, last_node_id,
+                 driving_status, connection_status):
         self.graph = graph
         self.aid = aid
         self.order = None
@@ -30,7 +31,6 @@ class AGV:
             print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
             next_order = self.pending_orders.get()
             print("AGV is now starting on new order")
-
 
             self.lock.acquire()
             print("AGV has gotten lock")
