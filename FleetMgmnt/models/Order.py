@@ -19,10 +19,9 @@ order_id_lock = threading.Lock()
 
 class OrderStatus(int, Enum):
     CREATED = 0
-    ASSIGNED = 1
-    ACTIVE = 2
-    WAITING = 3
-    COMPLETED = 4
+    ACTIVE = 1
+    COMPLETED = 2
+    CANCELLED = 3
 
 
 class OrderType(Enum):
@@ -92,8 +91,7 @@ class Order:
             self.graph.lock.acquire()
             self.unlock_all()
             self.graph.lock.release()
-            self.status = OrderStatus.COMPLETED
-            self.sem.release()
+            self.complete()
             return
 
         base_position = self.base.index(last_node)
@@ -131,6 +129,8 @@ class Order:
                 raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
+        if self.status == OrderStatus.CREATED:
+            self.status = OrderStatus.ACTIVE
         if len(self.horizon) == 0:
             return False
         next_node = self.horizon[0]
@@ -170,4 +170,16 @@ class Order:
         # Should return all nodes that are not passed yet.
         all_nodes = self.base + self.horizon
         return list(set(all_nodes) - set(self.completed))
+
+    def complete(self):
+        # This function completes the order. The next order assigned to this AGV will start.
+        self.status = OrderStatus.COMPLETED
+        self.sem.release()
+
+    def cancel(self):
+        # Order Cancellation
+        # ToDo: Send MQTT message so the order actually stops
+        self.status = OrderStatus.CANCELLED
+        self.sem.release()
+
 
