@@ -40,6 +40,7 @@ def update_agv_position(serial_number, state_msg):
     main.graph.get_agv_by_id(1).update_position(agv_x, agv_y)
 
 
+
 def update_agv_actions_state(serial_number, state_msg):
     action_state = state_msg.actionStates
     actions = list()

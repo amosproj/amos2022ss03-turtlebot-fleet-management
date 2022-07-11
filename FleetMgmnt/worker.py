@@ -91,6 +91,14 @@ def get_path_coordinate(serial, source_node, target_node):
     return Response(json.dumps(nodes_list), mimetype="application/json")
 
 
+def get_agv_and_coordinates():
+    agv_info = list()
+    for agv in main.graph.get_agvs():
+        if agv.x is not None and agv.y is not None:
+            agv_info.append({"x": agv.x, "y": agv.y, "color": agv.color})
+    return agv_info
+
+
 def get_stations():
     stations = list()
     for station in main.graph.get_stations():
@@ -113,17 +121,6 @@ def get_node_coordinates():
         temp.append({"x": edges.end.x, "y": edges.end.y})
         nodes.append(temp)
     return nodes
-
-
-def get_node_order_coordinates():
-    orders_nodes = list()
-    for edges in main.graph.orders:
-        temp = list()
-        temp.append({"x": edges.start.x, "y": edges.start.y})
-        temp.append({"x": edges.end.x, "y": edges.end.y})
-        orders_nodes.append(temp)
-    print("Venkatesh! Look Here Parimala")
-    return orders_nodes
 
 
 def get_orders():
