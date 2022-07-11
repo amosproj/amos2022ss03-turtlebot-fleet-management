@@ -79,7 +79,7 @@ class Order:
         return vda5050_order
 
     def update_last_node(self, nid: str, pos: (float, float)):
-        print("Last node " + str(nid))
+        # print("Last node " + str(nid))
 
         last_node = self.graph.find_node_by_id(int(nid))
         if last_node is None or \
@@ -100,10 +100,10 @@ class Order:
             distance = math.dist((head.x, head.y), pos)
             if distance > 0.4:
                 self.base.remove(head)
-                print("Removing " + str(head.nid))
+                # print("Removing " + str(head.nid))
                 self.completed.append(head)
             else:
-                print("Not removing " + str(head.nid) + " because dist " + str(distance))
+                # print("Not removing " + str(head.nid) + " because dist " + str(distance))
         self.graph.lock.acquire()
         self.unlock_all()
         self.lock_all()

@@ -28,21 +28,21 @@ class AGV:
 
     def order_executor_thread(self):
         while True:
-            print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
+            # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
             next_order = self.pending_orders.get()
-            print("AGV is now starting on new order")
+            # print("AGV is now starting on new order")
 
             self.lock.acquire()
-            print("AGV has gotten lock")
+            # print("AGV has gotten lock")
             self.order = next_order
             self.order.agv = self
-            print("AGV " + str(self.aid) + " has a new order, executing now...")
+            # print("AGV " + str(self.aid) + " has a new order, executing now...")
             while self.order.extension_required(self.x, self.y):
                 self.order.try_extension(self.x, self.y)
             self.lock.release()
 
             self.order.sem.acquire()
-            print("AGV " + str(self.aid) + " has finished order")
+            # print("AGV " + str(self.aid) + " has finished order")
             time.sleep(1)
 
     def has_order(self):

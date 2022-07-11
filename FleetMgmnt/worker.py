@@ -124,7 +124,7 @@ def order_distributor(real_graph):
     graph = real_graph
     while True:
         next_order = graph.pending_orders.get()
-        print("Order Distributor is now distributing an order")
+        # print("Order Distributor is now distributing an order")
 
         agvs = graph.agvs
 
@@ -142,51 +142,12 @@ def order_distributor(real_graph):
             nearest = graph.get_nearest_node_from_agv(selected_agv)
             reloc_order = Order(graph, nearest, next_order.start)
             selected_agv.pending_orders.put(reloc_order)
-            print("Relocation order also created")
+            # print("Relocation order also created")
         selected_agv.pending_orders.put(next_order)
-        print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(
-            selected_agv.pending_orders))
+        # print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(
+        #    selected_agv.pending_orders))
 
         continue
-
-        # Copy the list from the graph in order to be able to change it without effecting the iteration over the objects
-        pending_orders = main.graph.pending_orders.copy()
-        for order in pending_orders:
-            if len(free_agvs) == 0:
-                break
-
-            if order.agv is not None:
-                # An agv is already assigned to the order
-                if order.agv in free_agvs:
-                    agv = order.agv
-                else:
-                    continue
-            else:
-                # Assign the nearest free agv to the order
-                agv = main.graph.get_nearest_free_agv(order.start)
-                order.agv = agv
-
-            nearest_node = main.graph.get_nearest_node_from_agv(agv)
-            if nearest_node == order.start:
-                # AGV is already on or near the start node of the order
-                main.graph.pending_orders.remove(order)
-                main.graph.current_orders.append(order)
-                executing_order = order
-            else:
-                # AGV is not near the start node (another node is nearer) -> Make a relocation order
-                reloc_order = Order(nearest_node, order.start, OrderType.RELOCATION)
-                main.graph.current_orders.append(reloc_order)
-                executing_order = reloc_order
-
-            agv.order = executing_order
-            # Send order_message to turtlebot
-            msg = executing_order.create_vda5050_message(agv)
-            # Agv-id same as Serial-Number ??
-            mqtt.client.publish(vda5050.get_mqtt_topic(agv.aid, vda5050.Topic.ORDER), msg.json(), 2)
-
-            free_agvs.remove(agv)
-        # Wait for 10 seconds until checking again for free robots / available orders
-        time.sleep(10)
 
 
 def order_executor(order: Order):

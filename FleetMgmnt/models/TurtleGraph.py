@@ -13,7 +13,7 @@ import vmap_importer
 import graph_search as gs
 import vda5050
 
-from models.Order import Order
+from models.Order import Order, OrderType
 from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
@@ -72,11 +72,11 @@ class Graph:
                 distance = math.dist((agv.x, agv.y), (order.start.x, order.start.y))
             if distance > 1:
                 nearest = self.get_nearest_node_from_agv(agv)
-                reloc_order = Order(self, nearest, order.start)
+                reloc_order = Order(self, nearest, order.start, OrderType.RELOCATION)
                 agv.pending_orders.put(reloc_order)
-                print("Relocation order also created")
+                # print("Relocation order also created")
             agv.pending_orders.put(order)
-            print("Order assigned directly to agv")
+            # print("Order assigned directly to agv")
         return "Success"
 
     def new_node(self, x: float, y: float, name: str = None):
