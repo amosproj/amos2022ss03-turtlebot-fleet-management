@@ -76,10 +76,25 @@ def get_path_image(serial, source_node, target_node):
     return Response(plt_io.getvalue(), mimetype="image/png")
 
 
+def get_path_coordinate(serial, source_node, target_node):
+
+    source = main.graph.find_node_by_id(int(source_node))
+    target = main.graph.find_node_by_id(int(target_node))
+    nodes, edges = main.graph.get_shortest_route(source, target)
+
+    nodes_list = list()
+    for edge in edges:
+        temp = list()
+        temp.append({"x": edge.start.x, "y": edge.start.y})
+        temp.append({"x": edge.end.x, "y": edge.end.y})
+        nodes_list.append(temp)
+    return Response(json.dumps(nodes_list), mimetype="application/json")
+
+
 def get_stations():
     stations = list()
     for station in main.graph.get_stations():
-        stations.append({"nid": station.nid, "name": station.name})
+        stations.append({"nid": station.nid, "name": station.name, "x": station.x, "y": station.y})
     return stations
 
 
@@ -98,6 +113,17 @@ def get_node_coordinates():
         temp.append({"x": edges.end.x, "y": edges.end.y})
         nodes.append(temp)
     return nodes
+
+
+def get_node_order_coordinates():
+    orders_nodes = list()
+    for edges in main.graph.orders:
+        temp = list()
+        temp.append({"x": edges.start.x, "y": edges.start.y})
+        temp.append({"x": edges.end.x, "y": edges.end.y})
+        orders_nodes.append(temp)
+    print("Venkatesh! Look Here Parimala")
+    return orders_nodes
 
 
 def get_orders():

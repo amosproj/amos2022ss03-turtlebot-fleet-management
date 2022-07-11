@@ -59,6 +59,11 @@ def get_graph_nodes():
     return Response(json.dumps(worker.get_node_coordinates()), mimetype="application/json")
 
 
+@app.route("/api/graph/order_coordinates")
+def get_graph_order_nodes():
+    return Response(json.dumps(worker.get_node_order_coordinates()), mimetype="application/json")
+
+
 @app.route("/api/orders")
 def get_orders():
     return Response(json.dumps(worker.get_orders()), mimetype="application/json")
@@ -73,6 +78,12 @@ def robot_send_to(robot_serial, source_node_id, target_node_id):
 @app.get("/api/agv/<robot_serial>/pathDisplay/<source_node_id>/<target_node_id>")
 def robot_send_to_path(robot_serial, source_node_id, target_node_id):
     return worker.get_path_image(robot_serial, source_node_id, target_node_id)
+    # return str(robot_serial) + " " + str(target_node_id)
+
+
+@app.get("/api/agv/<robot_serial>/coordinate_pathDisplay/<source_node_id>/<target_node_id>")
+def robot_send_to_coordinate(robot_serial, source_node_id, target_node_id):
+    return worker.get_path_coordinate(robot_serial, source_node_id, target_node_id)
     # return str(robot_serial) + " " + str(target_node_id)
 
 

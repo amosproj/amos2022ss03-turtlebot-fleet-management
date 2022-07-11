@@ -12,6 +12,7 @@ createApp({
             agvs: [],
             orders: [],
             graph : [],
+            orderpath : [],
 
         }
     },
@@ -21,6 +22,7 @@ createApp({
         },
         async sendOrder() {
             await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
+
         },
         async updateUIdata() {
             // This is kind of a quick and dirty function, refreshing everything every second
@@ -31,54 +33,111 @@ createApp({
             const orders_promise = axios.get('/api/orders')
             const agv_states_promise = axios.get('/api/agv/info')
             const graph_node_promise = axios.get('/api/graph/coordinates')
+            const graph_node_order_promise = axios.get('/api/agv/' + this.robotSerial + '/coordinate_pathDisplay/' + this.fromStation + '/' + this.toStation)
+            this.orderpath = (await graph_node_order_promise).data
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
-              this.graph = (await graph_node_promise).data
+            this.graph = (await graph_node_promise).data
 
-
-            window.myLineChart = new Chart(document.getElementById("myChart"), {
+            console.log(this.orderpath)
+            console.log(this.graph)
+            const points = new Array()
+            window.myLineChart = new Chart('ChartJsChart', {
                 type: 'scatter',
                 data: {
                 datasets: [{
                 label: "Test-Graph",
                 fill: false,
-                borderColor: "green",
-                data: this.graph[1] ,
+                borderColor: "gray",
+                showLine: false,
+                data: this.graph[0] ,
                         }]
                          },
                 options: {
-                       response : true,
+                          plugins:{
+                         autocolors: false,
+                          annotation: {
+                            annotations:points
+                          },
                        legend: {
                             display: false
-                             },
+                             }
+                              },
                        scales: {
-                        xAxes: [{
-                            gridLines: {
-                                drawOnChartArea: false
+                        x: {
+                            grid: {
+                                display: false
                         }
-                      }],
-                        yAxes: [{
-                            gridLines: {
-                                drawOnChartArea: false
+                      },
+                        y: {
+                            grid: {
+                                display: false
                         }
-                      }]
+                      }
                     }
-                        }
+                       },
+                    plugins: ['chartjs-plugin-annotation']
                     });
             for(let i=0;i<this.graph.length;i++){
                      myLineChart.data.datasets.push({
-                            label: "item "+i,
-                            fill: false,
-                            borderColor: "green",
-                            data: this.graph[i],
+                        label: 'Edge_'+ i ,
+                        data: this.graph[i],
+                        fill: false,
+                        showLine: true,
+                        borderColor: 'gray',
+                        tension: 0.1,
+                        order: 1
                         });
-                 }
+                 };
+            for(let i=0;i<this.orderpath.length;i++){
+                     myLineChart.data.datasets.push({
+                        label: 'Order_'+ i ,
+                        data: this.orderpath[i],
+                        fill: false,
+                        showLine: true,
+                        borderColor: 'red',
+                        tension: 0.1,
+                        order: 0
+                        });
+                 };
+            for(let i=0;i<this.stations.length;i++){
+                     points.push({
+                          type: 'point',
+                          backgroundColor: 'red',
+                          borderColor: 'blue',
+                          borderWidth: 1,
+                          pointStyle: 'rectRot',
+                          scaleID: 'y',
+                          xValue: this.stations[i].x,
+                          yValue: this.stations[i].y
+                        });
+                 };
+                 for(let i=0;i<this.stations.length;i++){
+                     points.push({
+                          type: 'label',
+                          borderColor: 'green',
+                          borderRadius: 7,
+                          borderWidth: 2,
+                          content: [this.stations[i].name+' ('+this.stations[i].nid+')'],
+                          font: {
+                            size:16
+                          },
+                          position: {
+                            x: 'end',
+                            y: 'end'
+                          },
+                          xValue: this.stations[i].x,
+                          yValue: this.stations[i].y
+                        });
+                 };
             window.myLineChart.update();
-                        }
+
+
+        }
     },
     created() {
-        setInterval(this.updateUIdata, 4000)
+        setInterval(this.updateUIdata, 2000)
     },
     async mounted() {
         let result = await axios.get('/api/graph/stations')
