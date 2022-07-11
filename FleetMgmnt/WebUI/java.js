@@ -27,22 +27,11 @@ createApp({
             this.refreshMap()
 
             const orders_promise = axios.get('/api/orders')
-            const agv_states_promise = axios.get('/api/agv/info')
+            const agv_states_promise = axios.get('/api/agvs')
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
-            this.updateConnectionStatus();
-        },
-        async updateConnectionStatus(){
-             var status_element = document.getElementById("status");
-             if (status_element.innerText === "ONLINE"){
-                status_element.classList.add("online");
-             } else if(status_element.innerText === "OFFLINE"){
-                status_element.classList.add("offline");
-             }else{
-                status_element.classList.add("niether");
-         }
-
+            this.agvs = JSON.parse('[{"agv_id": 1, "driving_status": "No Status", "connection_state": "ONLINE", "charging_status": "Discharging", "battery_level": 33.787879943847656, "velocity": 0.0}, {"agv_id": 2, "driving_status": "No Status", "connection_state": "OFFLINE", "charging_status": "Discharging", "battery_level": 25.15151596069336, "velocity": 0.0}]')
         }
     },
     created() {

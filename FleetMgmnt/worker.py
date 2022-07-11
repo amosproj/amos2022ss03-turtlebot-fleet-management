@@ -105,7 +105,9 @@ def get_stations():
 def get_agv_info():
     agv_and_info = list()
     for agv in graph.get_agvs():
-        agv_and_info.append({"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status, "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
+        agv_and_info.append(
+            {"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status,
+             "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
 
 
@@ -126,7 +128,6 @@ def order_distributor(real_graph):
 
         agvs = graph.agvs
 
-
         target = random.randint(0, 1)
         if next_order.agv == 'AUTO1':
             target = 0
@@ -143,10 +144,10 @@ def order_distributor(real_graph):
             selected_agv.pending_orders.put(reloc_order)
             print("Relocation order also created")
         selected_agv.pending_orders.put(next_order)
-        print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(selected_agv.pending_orders))
+        print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(
+            selected_agv.pending_orders))
 
         continue
-
 
         # Copy the list from the graph in order to be able to change it without effecting the iteration over the objects
         pending_orders = main.graph.pending_orders.copy()

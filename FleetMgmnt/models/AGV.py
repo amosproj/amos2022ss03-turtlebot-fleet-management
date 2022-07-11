@@ -21,7 +21,7 @@ class AGV:
         self.color = color
         self.last_node_id = last_node_id
         self.driving_status = driving_status
-        self.connection_status = connection_status
+        self.connection_status = 'OFFLINE'
         self.pending_orders = Queue()
         self.lock = threading.Lock()
 
