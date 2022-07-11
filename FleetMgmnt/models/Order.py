@@ -143,7 +143,7 @@ class Order:
         if len(self.horizon) == 0:
             return False
         next_node = self.horizon[0]
-        next_nodes = self.graph.next_node_critical_path_membership(next_node, self.order_id)
+        next_nodes = self.graph.next_node_critical_path_membership(next_node, self.graph.get_order_by_id(int(self.order_id)))
 
         virtual_cosp = self.get_cosp(next_nodes)
 
@@ -177,7 +177,10 @@ class Order:
         output = {}
         output['id'] = self.order_id
         output['update_id'] = self.order_update_id
-        output['agv'] = str(self.agv.aid)
+        if self.agv is None:
+            output['agv'] = '?'
+        else:
+            output['agv'] = str(self.agv.aid)
         output['status'] = self.status
         output['type'] = self.order_type
         output['start'] = self.start.nid

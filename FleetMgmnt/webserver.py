@@ -7,7 +7,7 @@ import worker
 from models import TurtleGraph
 
 app = Flask(__name__)
-graph = TurtleGraph.Graph
+graph = TurtleGraph.Graph()
 
 
 def start(real_graph):

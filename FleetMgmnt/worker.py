@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 import collavoid
 import mqtt
 import vda5050
-from models import TurtleGraph
+from models import TurtleGraph, AGV
 from models.Order import Order, OrderType
 
 graph: TurtleGraph.Graph
@@ -126,14 +126,22 @@ def order_distributor(real_graph):
         next_order = graph.pending_orders.get()
         # print("Order Distributor is now distributing an order")
 
-        agvs = graph.agvs
-
-        target = random.randint(0, 1)
-        if next_order.agv == 'AUTO1':
-            target = 0
-        elif next_order.agv == 'AUTO2':
-            target = 1
-        selected_agv = agvs[target]
+        if type(next_order.agv) is AGV.AGV:
+            selected_agv = next_order.agv
+        elif type(next_order.agv) is str:
+            # Actually shouldn't be a String
+            if next_order.agv == 'AUTO1':
+                target = 1
+            elif next_order.agv == 'AUTO2':
+                target = 2
+            else:
+                target = random.randint(0, 1) + 1
+                print('Random choose of agv')
+            selected_agv = graph.get_agv_by_id(target)
+        else:
+            target = random.randint(0, 1) + 1
+            selected_agv = graph.get_agv_by_id(target)
+            print('Random choose of agv')
 
         distance = 0
         if selected_agv.x is not None:

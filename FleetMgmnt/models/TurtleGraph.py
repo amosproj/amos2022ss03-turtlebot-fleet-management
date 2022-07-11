@@ -7,18 +7,20 @@ import threading
 from queue import Queue
 from typing import List
 
+from matplotlib import pyplot as plt
+import matplotlib.style as mpls
 import shapely.geometry
 
+# TODO Fix import paths
 import vmap_importer
 import graph_search as gs
 import vda5050
 
-from models.Order import Order, OrderType
+from models.Order import Order, OrderType, OrderStatus
 from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
-from matplotlib import pyplot as plt
-import matplotlib.style as mpls
+
 
 mpls.use('fast')
 
@@ -59,8 +61,11 @@ class Graph:
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
         order = Order(self, start, end)
-        if agv_id is None or 'AUTO' in agv_id:
-            order.agv = agv_id
+        if agv_id is None:
+            order.agv = None
+            self.pending_orders.put(order)
+        elif 'AUTO' in agv_id:
+            order.agv = self.get_agv_by_id(int(agv_id[-1]))
             self.pending_orders.put(order)
         else:
             # If an agv is already assigned to the order, set this field in order
@@ -115,6 +120,13 @@ class Graph:
                 return agv
         raise Exception("AGV not found, FATAL")
 
+    def get_order_by_id(self, order_id: int):
+        assert(type(order_id) == int, "Wrong datatype, int is required")
+        for order in self.all_orders:
+            if order.order_id == order_id:
+                return order
+        raise Exception("Order not found, FATAL")
+
     def get_free_agvs(self) -> List[AGV]:
         # Returns a list of all agvs, which are currently not executing an order
         free_agvs = []
@@ -151,18 +163,17 @@ class Graph:
                 result.append(node)
         return result
 
-    def next_node_critical_path_membership(self, node: Node, order) -> List[Node]:
-        return [node]
+    def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
+        # return [node]
         critical_path = set()
-        for agv in self.agvs:
-            if agv.order is None:
+        for order2 in self.all_orders:
+            if order2.status != OrderStatus.ACTIVE:
                 continue
-            order2 = agv.order
-            if order2.order_id == order.id:
+            if order2.order_id == order.order_id:
                 continue
-            intersect = set(order.nodes).intersection(set(order.get_nodes_to_drive()))
+            intersect = set(order2.get_nodes_to_drive()).intersection(set(order.get_nodes_to_drive()))
             if node in intersect:
-                critical_path += intersect
+                critical_path = critical_path.union(intersect)
         return list(critical_path)
 
     def bfs(self, start: Node):
@@ -206,12 +217,12 @@ class Graph:
         return agvs
 
     def get_active_orders(self):
-        return []
+        # return []
         orders = list()
-        for agv in self.agvs:
-            if agv.order is not None:
-                orders.append(orders)
-        # print('Active orders ' + str(orders))
+        # Alternative: Iterate over agvs and get the orders, more efficient but probably higher error potential
+        for order in self.all_orders:
+            if order.status == OrderStatus.ACTIVE:
+                orders.append(order)
         return orders
 
     def create_image(self):
@@ -262,23 +273,23 @@ class Graph:
                 ax1.plot(x, y, color=agv.color)
         for cur_order in self.get_active_orders():
             color = cur_order.agv.color
-            for edge in cur_order.edges:
-                start = self.find_node_by_id(int(edge.startNodeId))
-                end = self.find_node_by_id(int(edge.endNodeId))
-                if edge.released:
-                    ax1.plot(
-                        [start.x, end.x],
-                        [start.y, end.y],
-                        color=color,
-                    )
-                else:
-                    ax1.plot(
-                        [start.x, end.x],
-                        [start.y, end.y],
-                        color=color,
-                        linestyle="--",
-                        alpha=0.5
-                    )
+            # for edge in cur_order.edges:
+            #     start = self.find_node_by_id(int(edge.startNodeId))
+            #     end = self.find_node_by_id(int(edge.endNodeId))
+            #     if edge.released:
+            #         ax1.plot(
+            #             [start.x, end.x],
+            #             [start.y, end.y],
+            #             color=color,
+            #         )
+            #     else:
+            #         ax1.plot(
+            #             [start.x, end.x],
+            #             [start.y, end.y],
+            #             color=color,
+            #             linestyle="--",
+            #             alpha=0.5
+            #         )
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
