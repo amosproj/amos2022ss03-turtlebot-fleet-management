@@ -53,10 +53,31 @@ class Order:
     def create_vda5050_message(self, agv: AGV):
         nodes = self.completed.copy()
         nodes.extend(self.base)
-        # print(self.order_update_id)
         self.order_update_id += 1
-        return self.graph.create_vda5050_order(nodes, [], str(agv.aid), self.order_id, self.order_update_id, self.horizon)
-        # TODO move the complete vda5050 message creation to this method ?
+
+        vda5050_nodes = []
+        for seq_id, n in enumerate(nodes + self.horizon):
+            vda5050_nodes.append(vda5050.Node(
+                node_id=str(n.nid),
+                sequence_id=seq_id,
+                released=n not in self.horizon,
+                actions=[],
+                node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
+            ))
+
+        vda5050_order = vda5050.OrderMessage(
+            headerid=0,
+            timestamp='',
+            version='',
+            manufacturer='',  # All more general information, probably should not be set here
+            serialnumber=str(agv.aid),
+            order_id=str(self.order_id),
+            order_update_id=self.order_update_id,
+            nodes=vda5050_nodes,
+            edges=[]
+        )
+
+        return vda5050_order
 
     def update_last_node(self, nid: str, pos: (float, float)):
         print("Last node " + str(nid))
