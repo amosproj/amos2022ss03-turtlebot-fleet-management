@@ -44,7 +44,7 @@ def graph_image():
     return Response(graph.image.getvalue(), mimetype="image/png")
 
 
-@app.route("/graph.json")
+@app.route("/api/graph")
 def graph_json():
     return Response(graph.create_json(), mimetype="application/json")
 
@@ -78,7 +78,7 @@ def get_orders():
 
 
 @app.delete("/api/orders/<order_id>")
-def get_orders(order_id):
+def cancel_order(order_id):
     for order in graph.all_orders:
         if order.order_id == int(order_id):
             order.cancel()

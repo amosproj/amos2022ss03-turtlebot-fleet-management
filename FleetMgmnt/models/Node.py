@@ -7,6 +7,13 @@ SAFETY_BUFFER_NODE = 0.1  # m
 
 
 class Node:
+    @staticmethod
+    def node_list_to_id_list(l):
+        result = list()
+        for n in l:
+            result.append(n.nid)
+        return result
+
     def __init__(self, nid: int, x: float, y: float, name: str = None):
         self.nid = nid
         self.x = x
@@ -18,11 +25,8 @@ class Node:
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
-    def json(self, pretty: bool = False) -> str:
-        if pretty:
-            return json.dumps(self.to_dict(), default=lambda o: o.to_dict(), indent=4)
-        else:
-            return json.dumps(self.to_dict(), default=lambda o: o.to_dict())
+    def json(self) -> str:
+        return json.dumps({'nid': self.nid, 'x': self.x, 'y': self.y, 'name': self.name})
 
     def try_lock(self, order_id: int) -> bool:
         if self.lock == -1 or self.lock == order_id:

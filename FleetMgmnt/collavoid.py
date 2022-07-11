@@ -7,6 +7,8 @@ from models.Node import Node, SAFETY_BUFFER_NODE
 
 
 def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]):
+    if agv_pos[0] is None:
+        return Point(0, 0).buffer(0.01)
     if len(path) == 0:
         return Point(agv_pos).buffer(0.5)
     elif len(path) == 1:

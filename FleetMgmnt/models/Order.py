@@ -8,30 +8,29 @@ import shapely.geometry
 import collavoid
 import mqtt
 import vda5050
-from models import Node
 from models.AGV import AGV
-from models.Node import SAFETY_BUFFER_NODE
+from models.Node import SAFETY_BUFFER_NODE, Node
 
 
 order_id_counter = 0
 order_id_lock = threading.Lock()
 
 
-class OrderStatus(int, Enum):
-    CREATED = 0
-    ACTIVE = 1
-    COMPLETED = 2
-    CANCELLED = 3
+class OrderStatus(str, Enum):
+    CREATED = 'CREATED'
+    ACTIVE = 'ACTIVE'
+    COMPLETED = 'COMPLETED'
+    CANCELLED = 'CANCELLED'
 
 
-class OrderType(Enum):
-    NORMAL = 0
-    RELOCATION = 1
+class OrderType(str, Enum):
+    NORMAL = 'NORMAL'
+    RELOCATION = 'RELOCATION'
 
 
 class Order:
 
-    def __init__(self, graph, start: Node.Node, end: Node.Node, order_type: OrderType = OrderType.NORMAL):
+    def __init__(self, graph, start: Node, end: Node, order_type: OrderType = OrderType.NORMAL):
         global order_id_counter
         self.graph = graph
         with order_id_lock:
@@ -103,6 +102,7 @@ class Order:
                 # print("Removing " + str(head.nid))
                 self.completed.append(head)
             else:
+                pass
                 # print("Not removing " + str(head.nid) + " because dist " + str(distance))
         self.graph.lock.acquire()
         self.unlock_all()
@@ -134,8 +134,10 @@ class Order:
         if len(self.horizon) == 0:
             return False
         next_node = self.horizon[0]
-        distance = math.dist((x, y), (next_node.x, next_node.y))
-        return distance < 1
+        distance = 2
+        if x is not None:
+            distance = math.dist((x, y), (next_node.x, next_node.y))
+        return distance < 1.3
 
     def try_extension(self, x: float, y: float) -> bool:
         if len(self.horizon) == 0:
@@ -170,6 +172,20 @@ class Order:
         # Should return all nodes that are not passed yet.
         all_nodes = self.base + self.horizon
         return list(set(all_nodes) - set(self.completed))
+
+    def serialize(self):
+        output = {}
+        output['id'] = self.order_id
+        output['update_id'] = self.order_update_id
+        output['agv'] = str(self.agv.aid)
+        output['status'] = self.status
+        output['type'] = self.order_type
+        output['start'] = self.start.nid
+        output['end'] = self.end.nid
+        output['completed'] = Node.node_list_to_id_list(self.completed)
+        output['base'] = Node.node_list_to_id_list(self.base)
+        output['horizon'] = Node.node_list_to_id_list(self.horizon)
+        return output
 
     def complete(self):
         # This function completes the order. The next order assigned to this AGV will start.

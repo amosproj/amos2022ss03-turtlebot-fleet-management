@@ -296,10 +296,10 @@ class Graph:
         n = list()
         for node in self.nodes:
             n.append(json.loads(node.json()))
-        e = list()
-        for edge in self.edges:
-            e.append(json.loads(edge.json()))
-        return json.dumps({"nodes": n, "edges": e}, indent=4)
+        orders = list()
+        for order in self.all_orders:
+            orders.append(order.serialize())
+        return json.dumps({"nodes": n, "orders": orders}, indent=4)
 
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
         return self.graph_search.get_shortest_route(start, target)
