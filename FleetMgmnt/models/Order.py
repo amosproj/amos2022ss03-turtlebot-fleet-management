@@ -203,4 +203,9 @@ class Order:
         self.status = OrderStatus.CANCELLED
         self.sem.release()
 
+    def resend(self):
+        # This will just resend the latest update in case of crash
+        mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
+                            self.create_vda5050_message(self.agv).json(), 2)
+
 

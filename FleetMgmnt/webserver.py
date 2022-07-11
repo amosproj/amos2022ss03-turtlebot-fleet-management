@@ -61,20 +61,12 @@ def get_agv_info():
 
 @app.route("/api/orders")
 def get_orders():
-    result = list()
+    orders = list()
     for order in graph.all_orders:
-        dickt = {
-            'id': order.order_id,
-            'update_id': order.order_update_id,
-            'status': order.status,
-            'agv': 'UNASSIGNED'
-        }
-
-        if order.agv is not None:
-            dickt['agv'] = str(order.agv.aid)
-        result.append(dickt)
-
-    return Response(json.dumps(result), mimetype="application/json")
+        serialized_order = order.serialize()
+        del serialized_order['cosp']
+        orders.append(serialized_order)
+    return Response(json.dumps(orders), mimetype="application/json")
 
 
 @app.delete("/api/orders/<order_id>")
@@ -82,6 +74,14 @@ def cancel_order(order_id):
     for order in graph.all_orders:
         if order.order_id == int(order_id):
             order.cancel()
+    return Response(json.dumps({"success": True}), mimetype="application/json")
+
+
+@app.post("/api/orders/<order_id>/resend")
+def resend_order(order_id):
+    for order in graph.all_orders:
+        if order.order_id == int(order_id):
+            order.resend()
     return Response(json.dumps({"success": True}), mimetype="application/json")
 
 

@@ -20,6 +20,12 @@ createApp({
         async sendOrder() {
             await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
         },
+        async cancelOrder(id) {
+            await axios.delete('/api/orders/' + id)
+        },
+        async resendOrder(id) {
+            await axios.post('/api/orders/' + id + '/resend')
+        },
         async updateUIdata() {
             // This is kind of a quick and dirty function, refreshing everything every second
             // An update like this is better done via WebSockets
@@ -31,7 +37,6 @@ createApp({
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
-            this.agvs = JSON.parse('[{"agv_id": 1, "driving_status": "No Status", "connection_state": "ONLINE", "charging_status": "Discharging", "battery_level": 33.787879943847656, "velocity": 0.0}, {"agv_id": 2, "driving_status": "No Status", "connection_state": "OFFLINE", "charging_status": "Discharging", "battery_level": 25.15151596069336, "velocity": 0.0}]')
         }
     },
     created() {
