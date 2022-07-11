@@ -26,7 +26,7 @@ class Node:
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
     def json(self) -> str:
-        return json.dumps({'nid': self.nid, 'x': self.x, 'y': self.y, 'name': self.name})
+        return json.dumps({'nid': self.nid, 'x': self.x, 'y': self.y, 'name': self.name, 'lock': self.lock})
 
     def try_lock(self, order_id: int) -> bool:
         if self.lock == -1 or self.lock == order_id:

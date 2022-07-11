@@ -185,6 +185,11 @@ class Order:
         output['completed'] = Node.node_list_to_id_list(self.completed)
         output['base'] = Node.node_list_to_id_list(self.base)
         output['horizon'] = Node.node_list_to_id_list(self.horizon)
+        output['cosp'] = []
+        x_coords = self.get_cosp().exterior.xy[0].tolist()
+        y_coords = self.get_cosp().exterior.xy[1].tolist()
+        for i, x in enumerate(x_coords):
+            output['cosp'].append({'x': x, 'y': y_coords[i]})
         return output
 
     def complete(self):
