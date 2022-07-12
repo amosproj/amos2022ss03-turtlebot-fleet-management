@@ -1,15 +1,13 @@
 import math
 import threading
 from enum import Enum
-from typing import List
 
-import shapely.geometry
 
 import collavoid
 import mqtt
 import vda5050
 from models.AGV import AGV
-from models.Node import SAFETY_BUFFER_NODE, Node
+from models.Node import Node
 
 
 order_id_counter = 0
@@ -59,10 +57,10 @@ class Order:
                 node_id=str(n.nid),
                 sequence_id=seq_id,
                 released=n not in self.horizon,
-                actions=[],
+                actions=n.actions,
                 node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
             ))
-
+            print(n.actions)
         vda5050_order = vda5050.OrderMessage(
             headerid=0,
             timestamp='',
