@@ -18,6 +18,7 @@ class AGV:
         self.heading = heading
         self.battery_level = battery_level
         self.charging_status = charging_status
+        self.charging_prepare = False
         self.velocity = velocity
         self.color = color
         self.last_node_id = last_node_id
@@ -28,6 +29,10 @@ class AGV:
 
     def order_executor_thread(self):
         while True:
+            if self.charging_status == "Charging":
+                time.sleep(10)
+                continue
+
             # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
             next_order = self.pending_orders.get()
             # print("AGV is now starting on new order")

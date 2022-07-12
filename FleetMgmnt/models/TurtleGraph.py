@@ -7,8 +7,12 @@ import threading
 from queue import Queue
 from typing import List
 
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.style as mpls
+mpls.use("fast")
+
 import shapely.geometry
 
 # TODO Fix import paths
@@ -22,8 +26,6 @@ from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
 
-
-mpls.use('fast')
 
 
 class Graph:
@@ -322,7 +324,7 @@ class Graph:
             start = time.time()
             self.image = self.create_image()
             end = time.time()
-            # print("Map rendered in " + str(end-start))
+            print("Map rendered in " + str(end-start))
 
     def create_json(self):
         n = list()

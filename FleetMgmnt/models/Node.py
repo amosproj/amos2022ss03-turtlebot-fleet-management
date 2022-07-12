@@ -21,6 +21,7 @@ class Node:
         self.name = name
         self.lock = -1
         self.buffer = Point(self.x, self.y).buffer(SAFETY_BUFFER_NODE)
+        self.actions = []
 
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}

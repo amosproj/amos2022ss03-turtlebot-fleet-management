@@ -2,7 +2,7 @@ from typing import List
 
 from shapely.geometry import LineString, Polygon, Point
 
-import main
+#import main
 from models.Node import Node, SAFETY_BUFFER_NODE
 
 
