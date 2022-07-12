@@ -143,13 +143,13 @@ class TestNextNodeCriticalPathMembership(unittest.TestCase):
 class TestNextNodeCriticalPathMembershipCurvedGraph(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
-        self.graph.vmap_lines_to_graph("maps/room_04.150_curved.vmap")
+        self.graph.vmap_lines_to_graph("maps/room_04.150_curved_old.vmap")
         self.nodes = {}
         # Create dict with nodes for easier access
         for n in self.graph.nodes:
             self.nodes[n.nid] = n
         self.order0 = create_mock_order(self.graph, self.nodes[62], self.nodes[53])
-        self.order1 = create_mock_order(self.graph, self.nodes[138], self.nodes[62])
+        self.order1 = create_mock_order(self.graph, self.nodes[138], self.nodes[127])
         self.order2 = create_mock_order(self.graph, self.nodes[53], self.nodes[111])
 
     def test_no_critical_path(self):
@@ -162,8 +162,8 @@ class TestNextNodeCriticalPathMembershipCurvedGraph(unittest.TestCase):
         self.graph.all_orders = [self.order0, self.order1]
         critical_path = self.graph.next_node_critical_path_membership(self.nodes[2], self.order1)
         # Visualization of critical path for debug and understanding issues
-        # visualize_path(self.graph, critical_path)
-        self.assertTrue(len(critical_path) > 13)
+        # visualize_path(self.graph, critical_path, [self.nodes[2]])
+        self.assertTrue(len(critical_path) > 5)
         self.assertTrue(self.nodes[2] in critical_path)
 
     def test_critical_path2(self):
