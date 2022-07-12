@@ -15,6 +15,7 @@ import shapely.geometry
 import vmap_importer
 import graph_search as gs
 import vda5050
+import collavoid
 
 from models.Order import Order, OrderType, OrderStatus
 from models.Edge import Edge
@@ -121,7 +122,6 @@ class Graph:
         raise Exception("AGV not found, FATAL")
 
     def get_order_by_id(self, order_id: int):
-        assert(type(order_id) == int, "Wrong datatype, int is required")
         for order in self.all_orders:
             if order.order_id == order_id:
                 return order
@@ -164,17 +164,38 @@ class Graph:
         return result
 
     def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
-        # return [node]
-        critical_path = set()
+        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
+                                                                     order.get_nodes_to_drive())
+        critical_path_buffer = None
+
         for order2 in self.all_orders:
             if order2.status != OrderStatus.ACTIVE:
+                # Calculate only critical paths with active orders
                 continue
             if order2.order_id == order.order_id:
+                # Order shouldn't have critical path with itself
                 continue
-            intersect = set(order2.get_nodes_to_drive()).intersection(set(order.get_nodes_to_drive()))
-            if node in intersect:
-                critical_path = critical_path.union(intersect)
-        return list(critical_path)
+
+            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.agv.x, order2.agv.y),
+                                                                          order2.get_nodes_to_drive())
+
+            intersection = order_path_buffer.intersection(order2_path_buffer)
+
+            if node.buffer.intersects(intersection):
+                if critical_path_buffer is None:
+                    critical_path_buffer = intersection
+                else:
+                    critical_path_buffer = critical_path_buffer.union(intersection)
+
+        if critical_path_buffer is None:
+            return [node]
+
+        critical_path = []
+        for n in self.nodes:
+            if n.buffer.intersects(critical_path_buffer):
+                critical_path.append(n)
+
+        return critical_path
 
     def bfs(self, start: Node):
         q = [start]

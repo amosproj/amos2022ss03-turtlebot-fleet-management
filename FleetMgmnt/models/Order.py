@@ -143,7 +143,7 @@ class Order:
         if len(self.horizon) == 0:
             return False
         next_node = self.horizon[0]
-        next_nodes = self.graph.next_node_critical_path_membership(next_node, self.graph.get_order_by_id(int(self.order_id)))
+        next_nodes = self.graph.next_node_critical_path_membership(next_node, self)
 
         virtual_cosp = self.get_cosp(next_nodes)
 
