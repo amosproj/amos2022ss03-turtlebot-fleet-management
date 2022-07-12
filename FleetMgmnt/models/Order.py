@@ -114,7 +114,10 @@ class Order:
     def get_cosp(self, virtual_ext = list()):
         base_copy = self.base.copy()
         base_copy.extend(virtual_ext)
-        return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
+        if self.agv is not None:
+            return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
+        else:
+            return collavoid.get_path_safety_buffer_polygon((None, None), base_copy)
 
     def unlock_all(self):
         for node in self.graph.nodes:
