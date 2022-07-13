@@ -1,9 +1,11 @@
 import sys
 
 from sick_lidar_localization.srv import LocSetMapSrv, LocLoadMapToCacheSrv
+from kobuki_ros_interfaces.action import AutoDocking
 
 import rclpy
 from rclpy.node import Node
+from rclpy.action import ActionClient
 
 
 class MinimalMapClientSet(Node):
@@ -32,3 +34,15 @@ class MinimalMapClientLoad(Node):
     def send_request(self, path):
         self.req.mappath = str(path)
         self.future = self.cli.call_async(self.req)
+
+
+class DockingClient(Node):
+
+    def __init__(self):
+        super().__init__('docking_client')
+        self._action_client = ActionClient(self, AutoDocking, 'auto_docking_action')
+
+    def send_request(self):
+        goal_msg = AutoDocking.Goal()
+        self._action_client.wait_for_server()
+        return self._action_client.send_goal_async(goal_msg)

@@ -2,7 +2,7 @@ import rclpy
 import time
 import math
 import base64
-from .map_client import MinimalMapClientSet, MinimalMapClientLoad
+from .map_client import MinimalMapClientSet, MinimalMapClientLoad, DockingClient
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -23,22 +23,30 @@ class Worker(Node):
 
     def call_action(self, msg):
         self.get_logger().info('Receiving: "%s"' % msg)
+        for action in msg.instantActions:
+            if action.actionType == "startCharging":
+                self.get_logger().info("start charging")
+                self.action_client.send_request()
+                self.charging = True
+            elif action.actionType == "stopCharging":
+                self.charging = False
+            elif action.actionType == "cancelOrder":
+                self.get_logger().info('cancell Order')
+                self.is_cancelled = True
 
     def call_order(self, msg):
-        if msg.serial_number != self.serial_number:
-            return
         self.get_logger().info('Receiving: "%s"' % msg)
         order_id = int(msg.order_id)
-        if order_id not in self.finished_orders:
-            self.orders[order_id] = msg.nodes
+        #if order_id not in self.finished_orders:
+        self.orders[order_id] = msg.nodes
 
     def call_map(self, msg):
-        self.get_logger().info('Receiving: "%s"' % msg)
+        #self.get_logger().info('Receiving: "%s"' % msg)
         data = base64.b64decode(msg.data).decode()
         with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
             f.write(data)
         path = "current_room.vmap"
-
+        #self.get_logger().info("opened map to write")
         self.map_client_set.send_request(path)
         while rclpy.ok():
             rclpy.spin_once(self.map_client_set)
@@ -73,12 +81,12 @@ class Worker(Node):
     def __init__(self):
         super().__init__('worker')
 
-        self.get_logger().info('worker startedxxx')
+        self.get_logger().info('worker started')
 
         # vars
 
         # Turtlebot
-        self.serial_number = "2"
+        self.serial_number = "1"
 
         # MQTT
         self.data = ""
@@ -98,18 +106,20 @@ class Worker(Node):
         self.current_order = ""
         self.last_node_id = ""
         self.last_node_sequence_id = 0
-        self.cancel_current_order = False
+        self.is_cancelled = False
 
         # Kuboki
         self.battery_charge = 0.0
         self.battery_voltage = 0.0
+        self.charging = False
+        self.action_client = DockingClient()
 
         # Subscribe to
         # - MQTT
         self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
-        self.action_sub = self.create_subscription(Order, "/order2", self.call_order, 10)
-        self.order_sub = self.create_subscription(Order, "/instantAction2", self.call_action, 10)
-        self.map_sub = self.create_subscription(String, "/map2", self.call_map, 10)
+        self.action_sub = self.create_subscription(Order, "/order", self.call_order, 10)
+        self.order_sub = self.create_subscription(Order, "/instantAction", self.call_action, 10)
+        self.map_sub = self.create_subscription(String, "/map", self.call_map, 10)
         # - Sick location estimation and virtual line measurement
         self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
         self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
@@ -119,9 +129,9 @@ class Worker(Node):
         # Publish to
         # - MQTT
         self.pub_mqtt = self.create_publisher(String, "/echo", 10)
-        self.pub_state = self.create_publisher(OrderInformation, "/state2", 10)
-        self.pub_visualisation = self.create_publisher(Visualization, "/visualization2", 10)
-        self.pub_connection = self.create_publisher(Connection, "/connection2", 10)
+        self.pub_state = self.create_publisher(OrderInformation, "/state", 10)
+        self.pub_visualisation = self.create_publisher(Visualization, "/visualization", 10)
+        self.pub_connection = self.create_publisher(Connection, "/connection", 10)
         # say hello
         msg_connection = Connection()
         msg_connection.serial_number = self.serial_number
@@ -173,6 +183,7 @@ class Worker(Node):
         msg_batterystate = BatteryState()
         msg_batterystate.battery_charge = self.battery_charge
         msg_batterystate.battery_voltage = self.battery_voltage
+        msg_batterystate.charging = self.charging
 
         msg_state = OrderInformation()
         msg_state.serial_number = self.serial_number
@@ -324,15 +335,17 @@ class Worker(Node):
                     if nodes[node_counter].released:
                         self.drive_to_node(nodes[node_counter])
                         node_counter += 1
+                    if self.is_cancelled:
+                        break
                 # when one order is finished move it to finished_orders
                 self.finished_orders.append(order_id)
                 self.current_order = ""
                 self.get_logger().info('Finished order %d' % order_id)
-            #self.get_logger().info("still looping")
+                del self.orders[order_id]
 
             # when all orders are finished, remove the finished orders
-            for order in self.finished_orders:
-                del self.orders[order]
+            #for order in self.finished_orders:
+            #    del self.orders[order]
 
 
 def main(args=None):
