@@ -20,6 +20,12 @@ createApp({
         async sendOrder() {
             await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
         },
+        async cancelOrder(id) {
+            await axios.delete('/api/orders/' + id)
+        },
+        async resendOrder(id) {
+            await axios.post('/api/orders/' + id + '/resend')
+        },
         async updateUIdata() {
             // This is kind of a quick and dirty function, refreshing everything every second
             // An update like this is better done via WebSockets
@@ -27,22 +33,10 @@ createApp({
             this.refreshMap()
 
             const orders_promise = axios.get('/api/orders')
-            const agv_states_promise = axios.get('/api/agv/info')
+            const agv_states_promise = axios.get('/api/agvs')
 
             this.orders = (await orders_promise).data
             this.agvs = (await agv_states_promise).data
-            this.updateConnectionStatus();
-        },
-        async updateConnectionStatus(){
-             var status_element = document.getElementById("status");
-             if (status_element.innerText === "ONLINE"){
-                status_element.classList.add("online");
-             } else if(status_element.innerText === "OFFLINE"){
-                status_element.classList.add("offline");
-             }else{
-                status_element.classList.add("niether");
-         }
-
         }
     },
     created() {
@@ -54,7 +48,7 @@ createApp({
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
 
-        setInterval(this.updateUIdata, 4000)
+        setInterval(this.updateUIdata, 1000)
 
         /*
         const canvas = document.querySelector('#canvas');

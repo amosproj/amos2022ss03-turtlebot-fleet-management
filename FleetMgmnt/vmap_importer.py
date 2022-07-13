@@ -131,7 +131,7 @@ def remove_duplicate_lines():
                 break
 
 
-def create_plot(show: bool = False):
+def create_plot(file_name: str = 'imported_vmap.png', show: bool = False):
     for line in lines:
         plt.plot(
             [line.start.x, line.end.x],
@@ -141,16 +141,13 @@ def create_plot(show: bool = False):
         )
     for point in points:
         plt.annotate(point.name, point.get_coords())
-    # plt.axis([4, 5, 2.4, 3])
-    # plt.axis([4, 4.1, -5, -4.75])
-    # plt.axis([-0.2, 0.2, -5.5, -4])
+
     if show:
         plt.show(dpi=3000, bbox_inches="tight")
     else:
-        plt.savefig("imported_vmap.png", dpi=3000, bbox_inches="tight")
+        plt.savefig(file_name, dpi=3000, bbox_inches="tight")
 
 
 if __name__ == '__main__':
-    # import_vmap("room_04.150.vmap")
     import_vmap("maps/room_04.150_curved.vmap")
-    create_plot()
+    create_plot('./misc/room_04.150_curved.png')

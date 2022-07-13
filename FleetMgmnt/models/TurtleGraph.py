@@ -1,20 +1,29 @@
 import io
 import json
 import math
+import numpy as np
+import time
 import threading
+from queue import Queue
 from typing import List
 
+from matplotlib import pyplot as plt
+import matplotlib.style as mpls
 import shapely.geometry
 
+# TODO Fix import paths
 import vmap_importer
 import graph_search as gs
 import vda5050
+import collavoid
 
-from models.Order import Order
+from models.Order import Order, OrderType, OrderStatus
 from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
-from matplotlib import pyplot as plt
+
+
+mpls.use('fast')
 
 
 class Graph:
@@ -26,10 +35,11 @@ class Graph:
         self.edge_id = 0
         self.agv_id = 0
         self.graph_search = gs.GraphSearch(self)
-        self.pending_orders = list()
-        self.current_orders = list()
+        self.pending_orders = Queue()
+        self.all_orders = list()
         self.completed_orders = list()
         self.lock = threading.Lock()
+        self.image = self.create_image()
 
     def vmap_lines_to_graph(self, file: str):
         points, lines = vmap_importer.import_vmap(file)
@@ -51,12 +61,28 @@ class Graph:
     def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
-        order = Order(start, end)
-        if agv_id is not None:
+        order = Order(self, start, end)
+        if agv_id is None:
+            order.agv = None
+            self.pending_orders.put(order)
+        elif 'AUTO' in agv_id:
+            order.agv = self.get_agv_by_id(int(agv_id[-1]))
+            self.pending_orders.put(order)
+        else:
             # If an agv is already assigned to the order, set this field in order
             agv = self.get_agv_by_id(int(agv_id))
             order.agv = agv
-        self.pending_orders.append(order)
+
+            distance = 0
+            if agv.x is not None:
+                distance = math.dist((agv.x, agv.y), (order.start.x, order.start.y))
+            if distance > 1:
+                nearest = self.get_nearest_node_from_agv(agv)
+                reloc_order = Order(self, nearest, order.start, OrderType.RELOCATION)
+                agv.pending_orders.put(reloc_order)
+                # print("Relocation order also created")
+            agv.pending_orders.put(order)
+            # print("Order assigned directly to agv")
         return "Success"
 
     def new_node(self, x: float, y: float, name: str = None):
@@ -72,7 +98,7 @@ class Graph:
         return n_edge
 
     def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None, connection_status=None):
-        n_agv = AGV(serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
+        n_agv = AGV(self, serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
         self.agvs.append(n_agv)
         return n_agv
 
@@ -89,10 +115,17 @@ class Graph:
         raise Exception("Node not found, FATAL")
 
     def get_agv_by_id(self, aid: int):
+        # print("Our agvs " + str(self.agvs))
         for agv in self.agvs:
             if agv.aid == aid:
                 return agv
         raise Exception("AGV not found, FATAL")
+
+    def get_order_by_id(self, order_id: int):
+        for order in self.all_orders:
+            if order.order_id == order_id:
+                return order
+        raise Exception("Order not found, FATAL")
 
     def get_free_agvs(self) -> List[AGV]:
         # Returns a list of all agvs, which are currently not executing an order
@@ -130,16 +163,39 @@ class Graph:
                 result.append(node)
         return result
 
-    def next_node_critical_path_membership(self, node: Node, order_id: int) -> List[Node]:
-        order_nodes = self.get_order_by_id(order_id)
-        critical_path = set()
-        for order in self.orders:
-            if order.order_id == order_id:
+    def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
+        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
+                                                                     order.get_nodes_to_drive())
+        critical_path_buffer = None
+
+        for order2 in self.all_orders:
+            if order2.status != OrderStatus.ACTIVE:
+                # Calculate only critical paths with active orders
                 continue
-            intersect = set(order_nodes).intersection(set(order.get_nodes_to_drive()))
-            if node in intersect:
-                critical_path += intersect
-        return list(critical_path)
+            if order2.order_id == order.order_id:
+                # Order shouldn't have critical path with itself
+                continue
+
+            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.agv.x, order2.agv.y),
+                                                                          order2.get_nodes_to_drive())
+
+            intersection = order_path_buffer.intersection(order2_path_buffer)
+
+            if node.buffer.intersects(intersection):
+                if critical_path_buffer is None:
+                    critical_path_buffer = intersection
+                else:
+                    critical_path_buffer = critical_path_buffer.union(intersection)
+
+        if critical_path_buffer is None:
+            return [node]
+
+        critical_path = []
+        for n in self.nodes:
+            if n.buffer.intersects(critical_path_buffer):
+                critical_path.append(n)
+
+        return critical_path
 
     def bfs(self, start: Node):
         q = [start]
@@ -181,7 +237,17 @@ class Graph:
                 agvs.append(agv)
         return agvs
 
+    def get_active_orders(self):
+        # return []
+        orders = list()
+        # Alternative: Iterate over agvs and get the orders, more efficient but probably higher error potential
+        for order in self.all_orders:
+            if order.status == OrderStatus.ACTIVE:
+                orders.append(order)
+        return orders
+
     def create_image(self):
+        # drawing the edeges and saving fig to png takes most of the time
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
         for edge in self.edges:
@@ -226,90 +292,46 @@ class Graph:
             if agv.order is not None:
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
-
-        for order in self.current_orders:
-            color = self.get_agv_by_id(int(order.serialNumber)).color
-            for edge in order.edges:
-                start = self.find_node_by_id(int(edge.startNodeId))
-                end = self.find_node_by_id(int(edge.endNodeId))
-                if edge.released:
-                    ax1.plot(
-                        [start.x, end.x],
-                        [start.y, end.y],
-                        color=color,
-                    )
-                else:
-                    ax1.plot(
-                        [start.x, end.x],
-                        [start.y, end.y],
-                        color=color,
-                        linestyle="--",
-                        alpha=0.5
-                    )
-
+        for cur_order in self.get_active_orders():
+            color = cur_order.agv.color
+            # for edge in cur_order.edges:
+            #     start = self.find_node_by_id(int(edge.startNodeId))
+            #     end = self.find_node_by_id(int(edge.endNodeId))
+            #     if edge.released:
+            #         ax1.plot(
+            #             [start.x, end.x],
+            #             [start.y, end.y],
+            #             color=color,
+            #         )
+            #     else:
+            #         ax1.plot(
+            #             [start.x, end.x],
+            #             [start.y, end.y],
+            #             color=color,
+            #             linestyle="--",
+            #             alpha=0.5
+            #         )
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
         plt.close(fig1)
         return plt_io
 
+    def create_map_thread(self):
+        while True:
+            start = time.time()
+            self.image = self.create_image()
+            end = time.time()
+            # print("Map rendered in " + str(end-start))
+
     def create_json(self):
         n = list()
         for node in self.nodes:
             n.append(json.loads(node.json()))
-        e = list()
-        for edge in self.edges:
-            e.append(json.loads(edge.json()))
-        return json.dumps({"nodes": n, "edges": e}, indent=4)
+        orders = list()
+        for order in self.all_orders:
+            orders.append(order.serialize())
+        return json.dumps({"nodes": n, "orders": orders}, indent=4)
 
     def get_shortest_route(self, start: Node, target: Node) -> (List[Node], List[Edge]):
         return self.graph_search.get_shortest_route(start, target)
-
-    def create_vda5050_order(self, nodes: List[Node], edges: List[Edge], serial: str,
-                             order_id, order_update_id, horizon: List[Node]) -> vda5050.OrderMessage:
-        vda5050_nodes = []
-        global_seq_id = 0
-        for seq_id, n in enumerate(nodes):
-            vda5050_nodes.append(vda5050.Node(
-                node_id=str(n.nid),
-                sequence_id=seq_id,
-                released=True,
-                actions=[],
-                node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
-            ))
-            global_seq_id = seq_id + 1
-        for seq_id, n in enumerate(horizon):
-            vda5050_nodes.append(vda5050.Node(
-                node_id=str(n.nid),
-                sequence_id=seq_id + global_seq_id,
-                released=False,
-                actions=[],
-                node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
-            ))
-
-        vda5050_edges = []
-        for seq_id, e in enumerate(edges):
-            vda5050_edges.append(vda5050.Edge(
-                edge_id=str(e.eid),
-                sequence_id=seq_id,
-                released=True,
-                start_node_id=str(e.start.nid),
-                end_node_id=str(e.end.nid),
-                actions=[],
-                length=e.length
-            ))
-
-        order = vda5050.OrderMessage(
-            headerid=0,
-            timestamp='',
-            version='',
-            manufacturer='',
-            serialnumber=serial,  # All more general information, probably should not be set here
-            order_id=str(order_id),
-            order_update_id=order_update_id,  # Also, can't be set here
-            nodes=vda5050_nodes,
-            edges=vda5050_edges
-        )
-
-        self.current_orders.append(order)
-        return order
