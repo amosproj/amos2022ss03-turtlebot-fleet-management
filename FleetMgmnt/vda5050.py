@@ -497,20 +497,15 @@ class StateMessage(Message, JsonSerializable):
         self.safetyState = safety_state
 
 
-def get_mqtt_topic(serial_number: str, topic: Topic):
-    ifname = "BMOS"
-    if serial_number == "1":
-        ifname = "AMOS"
-    else:
-        ifname = "BMOS"
+def get_mqtt_topic(serial_number, topic: Topic):
     return (
-        ifname
+        "AMOS"
         + "/v"
         + PROTOCOL_VERSION
         + "/"
         + MANUFACTURER
         + "/"
-        + serial_number
+        + str(serial_number)
         + "/"
         + topic.value
     )

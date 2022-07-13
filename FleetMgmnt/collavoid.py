@@ -1,14 +1,16 @@
 from typing import List
 
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Polygon, Point
 
 import main
 from models.Node import Node, SAFETY_BUFFER_NODE
 
 
 def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]):
+    if agv_pos[0] is None:
+        return Point(0, 0).buffer(0.01)
     if len(path) == 0:
-        raise Exception
+        return Point(agv_pos).buffer(0.5)
     elif len(path) == 1:
         return path[0].buffer
 
@@ -23,6 +25,7 @@ def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]):
 
 
 def get_nodes_colliding_with_polygon(polygon: Polygon):
+    raise Exception
     positive = list()
     for node in main.graph.nodes:
         if node.buffer.intersects(polygon):
