@@ -70,10 +70,32 @@ def get_path_image(serial, source_node, target_node):
     return Response(plt_io.getvalue(), mimetype="image/png")
 
 
+def get_path_coordinate(serial, source_node, target_node):
+    source = graph.find_node_by_id(int(source_node))
+    target = graph.find_node_by_id(int(target_node))
+    nodes, edges = graph.get_shortest_route(source, target)
+
+    nodes_list = list()
+    for edge in edges:
+        temp = list()
+        temp.append({"x": edge.start.x, "y": edge.start.y})
+        temp.append({"x": edge.end.x, "y": edge.end.y})
+        nodes_list.append(temp)
+    return Response(json.dumps(nodes_list), mimetype="application/json")
+
+
+def get_agv_and_coordinates():
+    agv_info = list()
+    for agv in graph.get_agvs():
+        if agv.x is not None and agv.y is not None:
+            agv_info.append({"x": agv.x, "y": agv.y, "color": agv.color})
+    return agv_info
+
+
 def get_stations():
     stations = list()
     for station in graph.get_stations():
-        stations.append({"nid": station.nid, "name": station.name})
+        stations.append({"nid": station.nid, "name": station.name, "x": station.x, "y": station.y})
     return stations
 
 
@@ -84,6 +106,15 @@ def get_agv_info():
             {"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status,
              "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity})
     return agv_and_info
+
+def get_node_coordinates():
+    nodes = list()
+    for edges in graph.edges:
+        temp = list()
+        temp.append({"x": edges.start.x, "y": edges.start.y})
+        temp.append({"x": edges.end.x, "y": edges.end.y})
+        nodes.append(temp)
+    return nodes
 
 
 def get_orders():
