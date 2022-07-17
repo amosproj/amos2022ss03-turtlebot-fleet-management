@@ -53,7 +53,7 @@ class Worker(Node):
         with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
             f.write(data)
         path = "current_room.vmap"
-        #self.get_logger().info("opened map to write")
+
         self.map_client_set.send_request(path)
         while rclpy.ok():
             rclpy.spin_once(self.map_client_set)
@@ -93,7 +93,7 @@ class Worker(Node):
         # vars
 
         # Turtlebot
-        self.serial_number = "1"
+        self.serial_number = "2"
 
         # MQTT
         self.data = ""

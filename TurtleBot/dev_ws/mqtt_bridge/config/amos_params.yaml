@@ -7,7 +7,7 @@ mqtt_bridge_node:
         host: broker.hivemq.com
         port: 1883
         keepalive: 60
-      private_path: device/001
+      private_path: device/002
     # serializer: json:dumps
     # deserializer: json:loads
     n_bridges: 11
@@ -24,4 +24,3 @@ mqtt_bridge_node:
       bridge10: ["mqtt_bridge.bridge:MqttToRosBridge","std_msgs.msg:String","AMOS/v1/TurtleBot/2/map","/map"]
       bridge11: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:OrderInformation", "/state", "AMOS/v1/TurtleBot/2/state"]
       # bridge12: ["mqtt_bridge.bridge:RosToMqttBridge","vda5050_msgs.msg:Visualization", "/visualization", "AMOS/v1/TurtleBot/2/visualization"]
-

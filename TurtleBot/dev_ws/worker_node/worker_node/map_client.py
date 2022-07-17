@@ -6,7 +6,6 @@ from kobuki_ros_interfaces.action import AutoDocking
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
-from rclpy.action import ActionClient
 
 
 class MinimalMapClientSet(Node):
