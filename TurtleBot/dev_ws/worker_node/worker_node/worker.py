@@ -23,25 +23,32 @@ class Worker(Node):
 
     def call_action(self, msg):
         self.get_logger().info('Receiving: "%s"' % msg)
-        for action in msg.instantActions:
-            if action.actionType == "startCharging":
-                self.get_logger().info("start charging")
+        for action in msg.instant_actions:
+            if action.action_type == "startCharging":
+                self.get_logger().info("Start charging")
                 self.action_client.send_request()
                 self.charging = True
-            elif action.actionType == "stopCharging":
+            elif action.action_type == "stopCharging":
+                self.get_logger().info("Stop charging")
                 self.charging = False
-            elif action.actionType == "cancelOrder":
-                self.get_logger().info('cancell Order')
+                # drive from charging station
+                msg_twist = Twist()
+                msg_twist.linear.x = -0.3
+                self.pub_vel.publish(msg_twist)
+                time.sleep(3)
+                msg_twist.linear.x = 0.0
+                self.pub_vel.publish(msg_twist)
+            elif action.action_type == "cancelOrder":
+                self.get_logger().info('Cancel order')
                 self.is_cancelled = True
 
     def call_order(self, msg):
         self.get_logger().info('Receiving: "%s"' % msg)
         order_id = int(msg.order_id)
-        #if order_id not in self.finished_orders:
         self.orders[order_id] = msg.nodes
 
     def call_map(self, msg):
-        #self.get_logger().info('Receiving: "%s"' % msg)
+        # self.get_logger().info('Receiving: "%s"' % msg)
         data = base64.b64decode(msg.data).decode()
         with open('/opt/sick/SICKAppEngine/home/appdata/public/maps/current_room.vmap', 'w') as f:
             f.write(data)
@@ -116,15 +123,15 @@ class Worker(Node):
 
         # Subscribe to
         # - MQTT
-        self.mqtt_sub = self.create_subscription(String, "/back", self.call_mqtt, 10)
-        self.action_sub = self.create_subscription(Order, "/order", self.call_order, 10)
-        self.order_sub = self.create_subscription(Order, "/instantAction", self.call_action, 10)
-        self.map_sub = self.create_subscription(String, "/map", self.call_map, 10)
+        self.create_subscription(String, "/back", self.call_mqtt, 10)
+        self.create_subscription(Order, "/order", self.call_order, 10)
+        self.create_subscription(InstantActions, "/instantActions", self.call_action, 10)
+        self.create_subscription(String, "/map", self.call_map, 10)
         # - Sick location estimation and virtual line measurement
-        self.location_sub = self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
-        self.line_sub = self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
+        self.create_subscription(LocalizationControllerResultMessage0502, "/localizationcontroller/out/localizationcontroller_result_message_0502", self.call_location, 10)
+        self.create_subscription(LineMeasurementMessage0403, "/localizationcontroller/out/line_measurement_message_0403", self.call_linemeasurement, 10)
         # - Kuboki
-        self.battery_sub = self.create_subscription(ROSBatteryState, "/mobile_base/sensors/battery_state", self.call_batterystate, 10)
+        self.create_subscription(ROSBatteryState, "/sensors/battery_state", self.call_batterystate, 10)
 
         # Publish to
         # - MQTT
@@ -139,8 +146,8 @@ class Worker(Node):
         self.pub_connection.publish(msg_connection)
 
         # - Kuboki
-        self.pub_power = self.create_publisher(MotorPower, "/mobile_base/commands/motor_power", 10)
-        self.pub_vel = self.create_publisher(Twist, "/mobile_base/commands/velocity", 10)
+        self.pub_power = self.create_publisher(MotorPower, "/commands/motor_power", 10)
+        self.pub_vel = self.create_publisher(Twist, "/commands/velocity", 10)
         # switch on motor power
         msg_power = MotorPower()
         msg_power.state = 1
@@ -245,8 +252,6 @@ class Worker(Node):
             time.sleep(0.2)
         self.get_logger().info('pose "%d"' % pose)
         self.get_logger().info('Leave Rotate')
-        #msg_twist.angular.z = 0.0
-        #self.pub_vel.publish(msg_twist)
 
     # follow line
     def follow_line(self, goal):
@@ -289,8 +294,6 @@ class Worker(Node):
                 last_lane = True
             time.sleep(0.3)
         self.get_logger().info('Leave Follow Line')
-        #msg_twist.linear.x = 0.0
-        #self.pub_vel.publish(msg_twist)
 
     def drive_to_node(self, node):
         self.get_logger().info('Drive to node %s' % node.node_id)
@@ -334,6 +337,10 @@ class Worker(Node):
                     # TODO check if turtlebot is already on target node
                     if nodes[node_counter].released:
                         self.drive_to_node(nodes[node_counter])
+                        if len(nodes[node_counter].actions) > 0 and nodes[node_counter].actions[0].action_type == "startCharging":
+                            self.get_logger().info("start charging")
+                            self.action_client.send_request()
+                            self.charging = True
                         node_counter += 1
                     if self.is_cancelled:
                         break
@@ -342,11 +349,6 @@ class Worker(Node):
                 self.current_order = ""
                 self.get_logger().info('Finished order %d' % order_id)
                 del self.orders[order_id]
-
-            # when all orders are finished, remove the finished orders
-            #for order in self.finished_orders:
-            #    del self.orders[order]
-
 
 def main(args=None):
     rclpy.init(args=args)
