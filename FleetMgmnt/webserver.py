@@ -14,8 +14,8 @@ def start(real_graph):
     global graph
     graph = real_graph
 
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    #log = logging.getLogger('werkzeug')
+    #log.setLevel(logging.ERROR)
     app.run(host="0.0.0.0", port=8080)
 
 
@@ -54,9 +54,19 @@ def graph_stations():
     return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
 
-@app.route("/api/agvs")
+@app.route("/api/agv")
 def get_agv_info():
     return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
+
+
+@app.route("/api/graph/coordinates")
+def get_graph_nodes():
+    return Response(json.dumps(worker.get_node_coordinates()), mimetype="application/json")
+
+
+@app.get("/api/graph/agv_coordinates")
+def get_agv_and_coordinate():
+    return Response(json.dumps(worker.get_agv_and_coordinates()), mimetype="application/json")
 
 
 @app.route("/api/orders")
@@ -97,6 +107,11 @@ def robot_send_to_path(robot_serial, source_node_id, target_node_id):
     # ToDo: This is a legacy API endpoint and should be removed or changed before final release
     return worker.get_path_image(robot_serial, source_node_id, target_node_id)
     # return str(robot_serial) + " " + str(target_node_id)
+
+
+@app.get("/api/agv/<robot_serial>/coordinate_pathDisplay/<source_node_id>/<target_node_id>")
+def robot_send_to_coordinate(robot_serial, source_node_id, target_node_id):
+    return worker.get_path_coordinate(robot_serial, source_node_id, target_node_id)
 
 
 @app.route("/")
