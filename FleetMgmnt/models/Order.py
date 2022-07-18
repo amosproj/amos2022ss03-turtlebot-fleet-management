@@ -2,13 +2,11 @@ import math
 import threading
 from enum import Enum
 
-
 import collavoid
 import mqtt
 import vda5050
 from models.AGV import AGV
 from models.Node import Node
-
 
 order_id_counter = 0
 order_id_lock = threading.Lock()
@@ -60,7 +58,7 @@ class Order:
                 actions=n.actions,
                 node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
             ))
-            print(n.actions)
+            # print(n.actions)
         vda5050_order = vda5050.OrderMessage(
             headerid=0,
             timestamp='',
@@ -109,7 +107,7 @@ class Order:
 
     # COSP = Current Order Safety Polygon
     # AGV position + Base
-    def get_cosp(self, virtual_ext = list()):
+    def get_cosp(self, virtual_ext=list()):
         base_copy = self.base.copy()
         base_copy.extend(virtual_ext)
         if self.agv is not None:
@@ -148,9 +146,15 @@ class Order:
 
         virtual_cosp = self.get_cosp(next_nodes)
 
+        id_list = list()
+        for node in self.graph.find_nodes_for_colocking(virtual_cosp):
+            id_list.append(node.nid)
+        print("Trying lock: " + str(self.order_id) + " - " + str(id_list))
+
         self.graph.lock.acquire()
         success = True
         for node in self.graph.find_nodes_for_colocking(virtual_cosp):
+            # print("Locking")
             if not node.try_lock(self.order_id):
                 success = False
                 break
@@ -164,10 +168,11 @@ class Order:
         self.lock_all()
         self.graph.lock.release()
 
-        mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
-                                 self.create_vda5050_message(self.agv).json(), 2)
+        if success:
+            mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
+                                self.create_vda5050_message(self.agv).json(), 2)
 
-        return True
+        return success
 
     def get_nodes_to_drive(self):
         # Should return all nodes that are not passed yet.
@@ -190,10 +195,13 @@ class Order:
         output['base'] = Node.node_list_to_id_list(self.base)
         output['horizon'] = Node.node_list_to_id_list(self.horizon)
         output['cosp'] = []
-        x_coords = self.get_cosp().exterior.xy[0].tolist()
-        y_coords = self.get_cosp().exterior.xy[1].tolist()
-        for i, x in enumerate(x_coords):
-            output['cosp'].append({'x': x, 'y': y_coords[i]})
+        try:
+            x_coords = self.get_cosp().exterior.xy[0].tolist()
+            y_coords = self.get_cosp().exterior.xy[1].tolist()
+            for i, x in enumerate(x_coords):
+                output['cosp'].append({'x': x, 'y': y_coords[i]})
+        except:
+            output['cosp'] = []
         return output
 
     def complete(self):
@@ -204,12 +212,27 @@ class Order:
     def cancel(self):
         # Order Cancellation
         # ToDo: Send MQTT message so the order actually stops
+        self.unlock_all()
         self.status = OrderStatus.CANCELLED
         self.sem.release()
+
+        if self.agv is not None:
+            vda5050_order = vda5050.OrderMessage(
+                headerid=0,
+                timestamp='',
+                version='',
+                manufacturer='',  # All more general information, probably should not be set here
+                serialnumber=str(self.agv.aid),
+                order_id=str(self.order_id),
+                order_update_id=self.order_update_id + 1,
+                nodes=[],
+                edges=[]
+            )
+
+        mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
+                            vda5050_order.json(), 2)
 
     def resend(self):
         # This will just resend the latest update in case of crash
         mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                             self.create_vda5050_message(self.agv).json(), 2)
-
-

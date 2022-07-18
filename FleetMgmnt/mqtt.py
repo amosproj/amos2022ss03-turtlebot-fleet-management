@@ -1,6 +1,5 @@
 import math
 import base64
-import json
 
 import paho.mqtt.client as mqtt
 import packet_receiver as pr
@@ -17,7 +16,7 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    # print(msg.topic + " " + str(msg.payload))
+    print(msg.topic + " " + str(msg.payload))
     topic = msg.topic.split('/')[-1]
     if topic == "state":
         update_agv_position(pr.packet_receiver_for_state(msg.payload))

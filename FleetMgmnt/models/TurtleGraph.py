@@ -1,7 +1,6 @@
 import io
 import json
 import math
-import numpy as np
 import time
 import threading
 from queue import Queue
@@ -165,6 +164,7 @@ class Graph:
         return result
 
     def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
+        # return [node]
         order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
                                                                      order.get_nodes_to_drive())
         critical_path_buffer = None
@@ -323,7 +323,8 @@ class Graph:
             start = time.time()
             self.image = self.create_image()
             end = time.time()
-            print("Map rendered in " + str(end-start))
+            time.sleep(1)
+            # print("Map rendered in " + str(end-start))
 
     def create_json(self):
         n = list()

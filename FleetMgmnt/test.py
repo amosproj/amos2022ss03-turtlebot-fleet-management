@@ -1,6 +1,5 @@
 import unittest
 
-import main  # Needed to prevent circular imports
 from models import TurtleGraph, Order
 import vmap_importer
 import matplotlib.pyplot as plt
