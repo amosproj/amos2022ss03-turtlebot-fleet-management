@@ -1,11 +1,6 @@
-import math
 import threading
 import time
 from queue import Queue
-
-import mqtt
-import vda5050
-from models.Order import OrderStatus
 
 
 class AGV:
@@ -46,7 +41,7 @@ class AGV:
             self.order.agv = self
             # print("AGV " + str(self.aid) + " has a new order, executing now...")
             throttle = 0
-            while self.order.status == OrderStatus.ACTIVE and self.order.extension_required(self.x, self.y):
+            while self.order.extension_required(self.x, self.y):
                 if self.order.try_extension(self.x, self.y):
                     throttle = 0
                 else:

@@ -1,5 +1,4 @@
 import json
-import threading
 
 from shapely.geometry import Point
 

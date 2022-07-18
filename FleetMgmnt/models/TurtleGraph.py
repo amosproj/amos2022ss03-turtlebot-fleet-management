@@ -1,7 +1,6 @@
 import io
 import json
 import math
-import numpy as np
 import time
 import threading
 from queue import Queue

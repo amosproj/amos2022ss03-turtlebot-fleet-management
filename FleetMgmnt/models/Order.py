@@ -2,13 +2,11 @@ import math
 import threading
 from enum import Enum
 
-
 import collavoid
 import mqtt
 import vda5050
 from models.AGV import AGV
 from models.Node import Node
-
 
 order_id_counter = 0
 order_id_lock = threading.Lock()
@@ -109,7 +107,7 @@ class Order:
 
     # COSP = Current Order Safety Polygon
     # AGV position + Base
-    def get_cosp(self, virtual_ext = list()):
+    def get_cosp(self, virtual_ext=list()):
         base_copy = self.base.copy()
         base_copy.extend(virtual_ext)
         if self.agv is not None:
@@ -218,9 +216,23 @@ class Order:
         self.status = OrderStatus.CANCELLED
         self.sem.release()
 
+        if self.agv is not None:
+            vda5050_order = vda5050.OrderMessage(
+                headerid=0,
+                timestamp='',
+                version='',
+                manufacturer='',  # All more general information, probably should not be set here
+                serialnumber=str(self.agv.aid),
+                order_id=str(self.order_id),
+                order_update_id=self.order_update_id + 1,
+                nodes=[],
+                edges=[]
+            )
+
+        mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
+                            vda5050_order.json(), 2)
+
     def resend(self):
         # This will just resend the latest update in case of crash
         mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                             self.create_vda5050_message(self.agv).json(), 2)
-
-
