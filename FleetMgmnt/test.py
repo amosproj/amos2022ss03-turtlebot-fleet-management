@@ -98,6 +98,49 @@ class TestGraphSearch(unittest.TestCase):
         self.assertEqual(edges[-1].end, end_node)
 
 
+class TestAlternativeGraphSearch(unittest.TestCase):
+    def setUp(self):
+        self.graph = TurtleGraph.Graph()
+        self.graph.vmap_lines_to_graph("maps/demo.vmap")
+
+    def test_alternative_route_1(self):
+        start_node = self.graph.find_node_by_id(2)
+        end_node = self.graph.find_node_by_id(14)
+        excluded = [self.graph.find_node_by_id(0), self.graph.find_node_by_id(4)]
+        nodes, edges = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        self.assertNotEqual(len(nodes), 5)
+        self.assertEqual(edges[0].start, start_node)
+        self.assertEqual(edges[-1].end, end_node)
+        self.assertEqual(len(nodes), 8)
+        self.assertTrue(self.graph.find_node_by_id(11) in nodes)
+        self.assertFalse(self.graph.find_node_by_id(0) in nodes)
+
+    def test_alternative_route_2(self):
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        excluded = [self.graph.find_node_by_id(5)]
+        nodes, edges = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        self.assertTrue(len(nodes) > 4)
+        self.assertEqual(edges[0].start, start_node)
+        self.assertEqual(edges[-1].end, end_node)
+        self.assertEqual(len(nodes), 9)
+        self.assertTrue(self.graph.find_node_by_id(13) in nodes)
+        self.assertFalse(self.graph.find_node_by_id(5) in nodes)
+
+    def test_shortest_after_alternative(self):
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        excluded = [self.graph.find_node_by_id(5)]
+        nodes1, edges1 = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        nodes2, edges2 = self.graph.graph_search.get_shortest_route(start_node, end_node)
+        self.assertTrue(len(nodes1) > len(nodes2))
+        self.assertEqual(edges2[0].start, start_node)
+        self.assertEqual(edges2[-1].end, end_node)
+        self.assertTrue(self.graph.find_node_by_id(5) in nodes2)
+
+
 class TestNextNodeCriticalPathMembership(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()

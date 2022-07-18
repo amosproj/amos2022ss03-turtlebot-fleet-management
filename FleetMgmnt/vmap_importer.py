@@ -65,6 +65,9 @@ lines: List[Line] = list()
 
 
 def import_vmap(filename: str):
+    points.clear()
+    lines.clear()
+
     f = open(filename, "r")
     vmap_lines = f.readlines()
 

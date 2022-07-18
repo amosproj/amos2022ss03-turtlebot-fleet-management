@@ -9,9 +9,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.style as mpls
-mpls.use("fast")
 
 import shapely.geometry
 
@@ -26,7 +24,8 @@ from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
 
-
+matplotlib.use("Agg")
+mpls.use("fast")
 
 class Graph:
     def __init__(self):
