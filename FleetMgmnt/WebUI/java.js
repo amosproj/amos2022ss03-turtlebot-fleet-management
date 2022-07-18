@@ -21,8 +21,8 @@ const chartjs_config = {
                             annotations: points
                           },
                        legend: {
-                            display: false
-                             }
+                       display: false
+                  }
                               },
                        scales: {
                         x: {
@@ -61,7 +61,7 @@ createApp({
         refreshMap() {
            document.getElementById('graphmap').src = 'graph?' + Math.random()
         },
-        async graphDataSetting(){
+        async initialGraphDataSetting(){
             const graph_data_promise = axios.get('/api/graph')
             const graph_data_edges = axios.get('/api/graph/edges')
             const agv_states_promise = axios.get('/api/agv')
@@ -75,13 +75,13 @@ createApp({
 
             for(let i=0;i<this.graph_edges.length;i++){
                      myLineChart.data.datasets.push({
-                        label: 'Edge_'+ i ,
+                        label: 'Edge' ,
                         data: this.graph_edges[i],
                         fill: false,
                         showLine: true,
                         borderColor: 'gray',
                         tension: 0.1,
-                        order: 1
+                        order: 2
                         });
                  };
             for(let i=0;i<graph_nodes.length;i++){
@@ -157,13 +157,24 @@ createApp({
             }Horizon_coordinate.push({"horico":temp_horizon,"color":color})
 
             };
+
+            var datasets_chart = myLineChart.data.datasets
+            for (let i=0;i<datasets_chart.length;i++) {
+            if (datasets_chart[i].label === 'orders_Horizon'){
+            console.log(myLineChart.data.datasets)
+            myLineChart.data.datasets.splice(i,1);
+            myLineChart.data.labels.pop();
+            }
+            }
                  for (let i=0;i<Horizon_coordinate.length;i++){
                      myLineChart.data.datasets.push({
-                        label: 'orders_1',
+                        label: 'orders_Horizon',
+                        pointRadius: 0,
                         data: Horizon_coordinate[i].horico,
                         fill: false,
                         showLine: true,
                         borderColor: Horizon_coordinate[i].color,
+                        borderDash: [5,5],
                         tension: 0.1,
                         order: 0
                         });
@@ -178,7 +189,7 @@ createApp({
 
                     var Base_orders= new Array()
             for (let i=0;i<graph_orders.length;i++){
-            Base_orders.push({"base":graph_orders[i].horizon,"index":graph_orders[i].agv})
+            Base_orders.push({"base":graph_orders[i].base,"index":graph_orders[i].agv})
             }
 
 
@@ -199,15 +210,23 @@ createApp({
             }Base_coordinate.push({"baseco":temp_base,"color":color})
 
             };
+
+            var datasets_chart = myLineChart.data.datasets
+            for (let i=0;i<datasets_chart.length;i++) {
+            if (datasets_chart[i].label === 'orders_Base'){
+            myLineChart.data.datasets.splice(i,1);
+            myLineChart.data.labels.pop();
+            }
+            }
                  for (let i=0;i<Base_coordinate.length;i++){
                      myLineChart.data.datasets.push({
-                        label: 'orders_1',
+                        label: 'orders_Base',
                         data: Base_coordinate[i].baseco,
                         fill: false,
                         showLine: true,
-                        borderColor: "green",
+                        borderColor: Base_coordinate[i].color,
                         tension: 0.1,
-                        order: 0
+                        order: 1
                         });
             }
 
@@ -248,6 +267,7 @@ createApp({
 
             this.highlightPathOrderHorizon(graph_orders,order_nodes)
             this.highlightPathOrderBase(graph_orders,order_nodes)
+
         }
 
     },
@@ -260,8 +280,8 @@ createApp({
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
         myLineChart = new Chart('ChartJsChart',chartjs_config);
-        this.graphDataSetting()
-        setInterval(this.updateUIdata, 1000)
+        this.initialGraphDataSetting()
+        setInterval(this.updateUIdata, 5000)
 
         /*
         const canvas = document.querySelector('#canvas');
