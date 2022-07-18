@@ -82,7 +82,7 @@ def get_agv_info():
     for agv in graph.get_agvs():
         agv_and_info.append(
             {"agv_id": agv.aid, "driving_status": agv.driving_status, "connection_state": agv.connection_status,
-             "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity, "x": random.randint(1,5), "y": random.randint(1,7), "color": agv.color})
+             "charging_status": agv.charging_status, "battery_level": agv.battery_level, "velocity": agv.velocity, "x": agv.x, "y": agv.y, "color": agv.color})
     return agv_and_info
 
 
