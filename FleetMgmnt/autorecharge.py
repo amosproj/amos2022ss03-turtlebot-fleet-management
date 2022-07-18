@@ -6,6 +6,7 @@ import vda5050
 
 
 def generate_recharge_orders(graph):
+    return
     while True:
         for agv in graph.get_agvs():
             if agv.connection_status == "ONLINE":
