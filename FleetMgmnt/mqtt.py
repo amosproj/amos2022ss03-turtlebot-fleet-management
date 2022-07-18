@@ -33,9 +33,7 @@ def on_message(client, userdata, msg):
 
 def update_agv_position(state_msg):
     pos = state_msg.agvPosition
-    agv_x = pos.x
-    agv_y = pos.y
-    graph.get_agv_by_id(int(state_msg.serialNumber)).update_position(agv_x, agv_y)
+    graph.get_agv_by_id(int(state_msg.serialNumber)).update_position(pos.x, pos.y)
 
 
 def update_agv_battery(state_msg):
@@ -45,19 +43,15 @@ def update_agv_battery(state_msg):
 
 def update_agv_charging_status(state_msg):
     battery_state = state_msg.batteryState
-    if battery_state.charging is True:
-        temp = "Charging"
-        graph.get_agv_by_id(int(state_msg.serialNumber)).update_charging_status(temp)
-    elif battery_state.charging is False:
-        temp = "Discharging"
-        graph.get_agv_by_id(int(state_msg.serialNumber)).update_charging_status(temp)
+    if battery_state.charging:
+        graph.get_agv_by_id(int(state_msg.serialNumber)).update_charging_status("Charging")
+    else:
+        graph.get_agv_by_id(int(state_msg.serialNumber)).update_charging_status("Discharging")
 
 
 def update_agv_velocity(state_msg):
-    velocity = state_msg.velocity
-    vx = velocity.vx
-    vy = velocity.vy
-    resultant_velocity = math.sqrt(math.pow(vx, 2) + math.pow(vy, 2))
+    vel = state_msg.velocity
+    resultant_velocity = math.sqrt(math.pow(vel.vx, 2) + math.pow(vel.vy, 2))
     graph.get_agv_by_id(int(state_msg.serialNumber)).update_velocity(resultant_velocity)
 
 
@@ -77,9 +71,9 @@ def update_agv_last_node_id(state_msg):
 
 
 def update_agv_driving_status(state_msg):
-    if state_msg.driving is True and state_msg.paused is False:
+    if state_msg.driving and not state_msg.paused:
         status = "Driving"
-    elif state_msg.driving is False and state_msg.paused is True:
+    elif not state_msg.driving and state_msg.paused:
         status = "Paused"
     else:
         status = "No Status"
