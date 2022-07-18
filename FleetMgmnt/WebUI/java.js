@@ -1,83 +1,24 @@
 const {createApp} = Vue
-
-
-createApp({
-    data() {
-        return {
-            pathUrl: null,
-            stations: [],
-            robotSerial: "1",
-            fromStation: null,
-            toStation: null,
-            agvs: [],
-            orders: [],
-            graph : [],
-            orderpath : [],
-            agv_pos_color : [],
-        }
-    },
-    methods: {
-        refreshMap() {
-           document.getElementById('graphmap').src = 'graph?' + Math.random()
-        },
-        async sendOrder() {
-            await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
-            const graph_node_order_promise = axios.get('/api/agv/' + this.robotSerial + '/coordinate_pathDisplay/' + this.fromStation + '/' + this.toStation)
-            this.orderpath = (await graph_node_order_promise).data
-                        for(let i=0;i<this.orderpath.length;i++){
-                     myLineChart.data.datasets.push({
-                        label: 'Order_'+ i ,
-                        data: this.orderpath[i],
-                        fill: false,
-                        showLine: true,
-                        borderColor: 'red',
-                        tension: 0.1,
-                        order: 0
-                        });
-                 };
-                 window.myLineChart.update();
-        },
-        async cancelOrder(id) {
-            await axios.delete('/api/orders/' + id)
-        },
-        async resendOrder(id) {
-            await axios.post('/api/orders/' + id + '/resend')
-        },
-        async updateUIdata() {
-            // This is kind of a quick and dirty function, refreshing everything every second
-            // An update like this is better done via WebSockets
-
-            this.refreshMap()
-
-            const orders_promise = axios.get('/api/orders')
-            const agv_states_promise = axios.get('/api/agv')
-            const graph_node_promise = axios.get('/api/graph/coordinates')
-            const agv_coordinate_color = axios.get('/api/graph/agv_coordinates')
-
-            this.orders = (await orders_promise).data
-            this.agvs = (await agv_states_promise).data
-            this.graph = (await graph_node_promise).data
-            this.agv_pos_color = (await agv_coordinate_color).data
-
-            console.log(this.agv_pos_color)
-
-            const points = new Array()
-            window.myLineChart = new Chart('ChartJsChart', {
+var points = new Array()
+const chartjs_config = {
                 type: 'scatter',
                 data: {
                 datasets: [{
                 label: "Test-Graph",
                 fill: false,
                 borderColor: "gray",
-                showLine: false,
-                data: this.graph[0] ,
+                showLine: true,
+                data: null,
                         }]
                          },
                 options: {
+                              animation: {
+        duration: 0, // general animation time
+    },
                           plugins:{
                          autocolors: false,
                           annotation: {
-                            annotations:points
+                            annotations: points
                           },
                        legend: {
                             display: false
@@ -97,11 +38,45 @@ createApp({
                     }
                        },
                     plugins: ['chartjs-plugin-annotation']
-                    });
-            for(let i=0;i<this.graph.length;i++){
+                    }
+
+createApp({
+    data() {
+        return {
+            pathUrl: null,
+            stations: [],
+            robotSerial: "1",
+            fromStation: null,
+            toStation: null,
+            orders: [],
+            agvs: [],
+            graph: [],
+            graph_edges: [],
+
+
+
+        }
+    },
+    methods: {
+        refreshMap() {
+           document.getElementById('graphmap').src = 'graph?' + Math.random()
+        },
+        async graphDataSetting(){
+            const graph_data_promise = axios.get('/api/graph')
+            const graph_data_edges = axios.get('/api/graph/edges')
+            const agv_states_promise = axios.get('/api/agv')
+
+
+            this.agvs = (await agv_states_promise).data
+            this.graph = (await graph_data_promise).data
+            this.graph_edges = (await graph_data_edges).data
+
+            var graph_nodes = this.graph.nodes
+
+            for(let i=0;i<this.graph_edges.length;i++){
                      myLineChart.data.datasets.push({
                         label: 'Edge_'+ i ,
-                        data: this.graph[i],
+                        data: this.graph_edges[i],
                         fill: false,
                         showLine: true,
                         borderColor: 'gray',
@@ -109,7 +84,8 @@ createApp({
                         order: 1
                         });
                  };
-            for(let i=0;i<this.stations.length;i++){
+            for(let i=0;i<graph_nodes.length;i++){
+                if (graph_nodes[i].name != null ){
                      points.push({
                           type: 'point',
                           backgroundColor: 'red',
@@ -117,17 +93,18 @@ createApp({
                           borderWidth: 1,
                           pointStyle: 'rectRot',
                           scaleID: 'y',
-                          xValue: this.stations[i].x,
-                          yValue: this.stations[i].y
+                          xValue: graph_nodes[i].x,
+                          yValue: graph_nodes[i].y
                         });
-                 };
-                 for(let i=0;i<this.stations.length;i++){
+                 }};
+                 for(let i=0;i<graph_nodes.length;i++){
+                 if (graph_nodes[i].name != null ){
                      points.push({
                           type: 'label',
                           borderColor: 'green',
                           borderRadius: 7,
                           borderWidth: 2,
-                          content: [this.stations[i].name+' ('+this.stations[i].nid+')'],
+                          content: [graph_nodes[i].name+' ('+graph_nodes[i].nid+')'],
                           font: {
                             size:16
                           },
@@ -135,24 +112,144 @@ createApp({
                             x: 'end',
                             y: 'end'
                           },
-                          xValue: this.stations[i].x,
-                          yValue: this.stations[i].y
+                          xValue: graph_nodes[i].x,
+                          yValue: graph_nodes[i].y
                         });
-                                      };
-                 for(let i=0;i<this.agv_pos_color.length;i++){
+                                      }};
+
+                 for(let i=0;i<this.agvs.length;i++){
                      points.push({
                           type: 'point',
-                          backgroundColor: this.agv_pos_color[i].color,
+                          backgroundColor: this.agvs[i].color,
                           borderColor: 'blue',
                           borderWidth: 1,
                           pointStyle: 'rectRot',
                           scaleID: 'y',
-                          xValue: this.agv_pos_color[i].x,
-                          yValue: this.agv_pos_color[i].y
+                          xValue:  this.agvs[i].x,
+                          yValue:  this.agvs[i].y
                         });
                  };
-            window.myLineChart.update();
+                 myLineChart.update();
+
+        },
+        highlightPathOrderHorizon(graph_orders,order_nodes) {
+
+                    var Horizons_orders= new Array()
+            for (let i=0;i<graph_orders.length;i++){
+            Horizons_orders.push({"hor":graph_orders[i].horizon,"index":graph_orders[i].agv})
+            }
+
+
+            var Horizon_coordinate = new Array()
+
+            for (let k=0;k<Horizons_orders.length;k++){
+            var Horizons = Horizons_orders[k].hor
+            var colour_index  = Horizons_orders[k].index
+            var color = this.agvs[parseInt(colour_index)-1].color
+            var temp_horizon = new Array()
+            for (let i=0;i<Horizons.length;i++){
+              for (let j=0;j<order_nodes.length;j++){
+              if (Horizons[i] == order_nodes[j].nid){
+              temp_horizon.push({"x":order_nodes[j].x,"y":order_nodes[j].y})
+              }
+              }
+
+            }Horizon_coordinate.push({"horico":temp_horizon,"color":color})
+
+            };
+                 for (let i=0;i<Horizon_coordinate.length;i++){
+                     myLineChart.data.datasets.push({
+                        label: 'orders_1',
+                        data: Horizon_coordinate[i].horico,
+                        fill: false,
+                        showLine: true,
+                        borderColor: Horizon_coordinate[i].color,
+                        tension: 0.1,
+                        order: 0
+                        });
+            }
+
+
+            myLineChart.update();
+
+
+        },
+        highlightPathOrderBase(graph_orders,order_nodes) {
+
+                    var Base_orders= new Array()
+            for (let i=0;i<graph_orders.length;i++){
+            Base_orders.push({"base":graph_orders[i].horizon,"index":graph_orders[i].agv})
+            }
+
+
+            var Base_coordinate = new Array()
+
+            for (let k=0;k<Base_orders.length;k++){
+            var Bases = Base_orders[k].base
+            var colour_index  = Base_orders[k].index
+            var color = this.agvs[parseInt(colour_index)-1].color
+            var temp_base = new Array()
+            for (let i=0;i<Bases.length;i++){
+              for (let j=0;j<order_nodes.length;j++){
+              if (Bases[i] == order_nodes[j].nid){
+              temp_base.push({"x":order_nodes[j].x,"y":order_nodes[j].y})
+              }
+              }
+
+            }Base_coordinate.push({"baseco":temp_base,"color":color})
+
+            };
+                 for (let i=0;i<Base_coordinate.length;i++){
+                     myLineChart.data.datasets.push({
+                        label: 'orders_1',
+                        data: Base_coordinate[i].baseco,
+                        fill: false,
+                        showLine: true,
+                        borderColor: "green",
+                        tension: 0.1,
+                        order: 0
+                        });
+            }
+
+
+            myLineChart.update();
+
+
+        },
+        async sendOrder() {
+            await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
+        },
+        async cancelOrder(id) {
+            await axios.delete('/api/orders/' + id)
+        },
+        async resendOrder(id) {
+            await axios.post('/api/orders/' + id + '/resend')
+        },
+        async updateUIdata() {
+            // This is kind of a quick and dirty function, refreshing everything every second
+            // An update like this is better done via WebSockets
+
+            this.refreshMap()
+            const agv_states_promise = axios.get('/api/agv')
+            const graph_data_promise = axios.get('/api/graph')
+            const order_data_promise = axios.get('/api/orders')
+
+            this.agvs = (await agv_states_promise).data
+            this.graph = (await graph_data_promise).data
+            this.orders = (await order_data_promise).data
+
+            for (let i=0;i<this.agvs.length;i++){
+            points[points.length-(this.agvs.length-i)].xValue = this.agvs[i].x
+            points[points.length-(this.agvs.length-i)].yValue = this.agvs[i].y
+            }
+
+            var graph_orders = this.graph.orders
+            var order_nodes = this.graph.nodes
+
+            this.highlightPathOrderHorizon(graph_orders,order_nodes)
+            this.highlightPathOrderBase(graph_orders,order_nodes)
         }
+
     },
     created() {
 
@@ -162,7 +259,8 @@ createApp({
         this.stations = result.data
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
-
+        myLineChart = new Chart('ChartJsChart',chartjs_config);
+        this.graphDataSetting()
         setInterval(this.updateUIdata, 1000)
 
         /*
