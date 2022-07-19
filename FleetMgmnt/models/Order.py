@@ -2,6 +2,8 @@ import math
 import threading
 from enum import Enum
 
+from matplotlib import pyplot as plt
+
 import collavoid
 import mqtt
 import vda5050
@@ -42,6 +44,7 @@ class Order:
         self.horizon, _ = self.graph.get_shortest_route(start, end)
         self.sem = threading.Semaphore(0)
         self.agv = None
+        self.lastCosp = start.buffer
         graph.all_orders.append(self)
 
     def create_vda5050_message(self, agv: AGV):
@@ -74,7 +77,7 @@ class Order:
         return vda5050_order
 
     def update_last_node(self, nid: str, pos: (float, float)):
-        # print("Last node " + str(nid))
+        # print("Last node in order " + str(self.order_id) + " - " + str(nid))
 
         last_node = self.graph.find_node_by_id(int(nid))
         if last_node is None or \
@@ -123,9 +126,10 @@ class Order:
         for node in self.base:
             if not node.try_lock(self.order_id):
                 raise Exception
-        for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
-            if not node.try_lock(self.order_id):
-                raise Exception
+        # for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
+        #     if not node.try_lock(self.order_id):
+        #         print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
+        #         raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
         if self.status == OrderStatus.CREATED:
@@ -143,26 +147,42 @@ class Order:
             return False
         next_node = self.horizon[0]
         next_nodes = self.graph.next_node_critical_path_membership(next_node, self)
+        base_append = list()
 
-        virtual_cosp = self.get_cosp(next_nodes)
+        critical = len(next_nodes)> 1
+        if not critical:
+            virtual_cosp = self.get_cosp(next_nodes)
+            self.lastCosp = virtual_cosp
+            #next_nodes += self.graph.find_nodes_for_colocking(virtual_cosp, self)
+            #for node in next_nodes:
+            #    next_nodes += self.graph.next_node_critical_path_membership(node, self)
+            base_append.append(next_node)
+        else:
+            for horizon_node in self.horizon:
+                if horizon_node in next_nodes:
+                    base_append.append(horizon_node)
+                else:
+                    break
 
         id_list = list()
-        for node in self.graph.find_nodes_for_colocking(virtual_cosp):
+        for node in next_nodes:
             id_list.append(node.nid)
         print("Trying lock: " + str(self.order_id) + " - " + str(id_list))
 
         self.graph.lock.acquire()
         success = True
-        for node in self.graph.find_nodes_for_colocking(virtual_cosp):
+        for node in next_nodes:
             # print("Locking")
             if not node.try_lock(self.order_id):
+                print("Order " + str(self.order_id) + " failed to lock: " + str(node.nid))
                 success = False
                 break
 
         if success:
-            self.base.append(next_node)
-            if next_node in self.horizon:
-                self.horizon.remove(next_node)
+            for node in base_append:
+                self.base.append(node)
+                if node in self.horizon:
+                    self.horizon.remove(node)
 
         self.unlock_all()
         self.lock_all()

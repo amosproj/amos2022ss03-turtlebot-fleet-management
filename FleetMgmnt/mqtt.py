@@ -1,5 +1,6 @@
 import math
 import base64
+import threading
 
 import paho.mqtt.client as mqtt
 import packet_receiver as pr
@@ -17,6 +18,11 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     # print(msg.topic + " " + str(msg.payload))
+    thread = threading.Thread(target=on_message_thread, args=(client, userdata, msg))
+    thread.start()
+
+
+def on_message_thread(client, userdata, msg):
     topic = msg.topic.split('/')[-1]
     if topic == "state":
         update_agv_position(pr.packet_receiver_for_state(msg.payload))
