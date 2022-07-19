@@ -12,18 +12,21 @@ class GraphSearch(AStar):
     def get_shortest_route(self, start, end):
         key = (start.nid, end.nid)
         if key not in self.shortest_routes.keys():
-            self.shortest_routes[key] = self.calculate_shortest_route(start, end)
+            self.shortest_routes[key] = self.calculate_route(start, end)
         return self.shortest_routes[key]
 
     def get_alternative_route(self, start, end, excluded_nodes):
-        return self.calculate_shortest_route(start, end, excluded_nodes)
+        return self.calculate_route(start, end, excluded_nodes)
 
-    def calculate_shortest_route(self, start, end, excluded_nodes=None):
+    def calculate_route(self, start, end, excluded_nodes=None):
         if excluded_nodes is None:
             excluded_nodes = []
         self.excluded_nodes = excluded_nodes
 
-        route_nodes = list(self.astar(start, end))  # List of nodes
+        route = self.astar(start, end)
+        if route is None:
+            return [], []
+        route_nodes = list(route)  # List of nodes
         route_edges = list()  # List of edges
         for i, node in enumerate(route_nodes[:-1]):
             edges = self.graph.get_node_edges(node)
