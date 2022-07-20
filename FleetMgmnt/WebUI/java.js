@@ -52,6 +52,7 @@ createApp({
             agvs: [],
             graph: [],
             graph_edges: [],
+            connect_edge: [],
 
 
 
@@ -167,6 +168,8 @@ createApp({
             }
             }
                  for (let i=0;i<Horizon_coordinate.length;i++){
+                    var temp_connect = Horizon_coordinate[i].horico
+                    this.connect_edge.push({"coor": temp_connect[temp_connect.length-1], "agv_color": Horizon_coordinate[i].color})
                      myLineChart.data.datasets.push({
                         label: 'orders_Horizon',
                         pointRadius: 0,
@@ -180,8 +183,6 @@ createApp({
                         });
             }
 
-
-            myLineChart.update();
 
 
         },
@@ -218,7 +219,10 @@ createApp({
             myLineChart.data.labels.pop();
             }
             }
+
                  for (let i=0;i<Base_coordinate.length;i++){
+                 var temp_connect = Base_coordinate[i].baseco
+                 this.connect_edge.push({"coor": temp_connect[temp_connect.length-1], "agv_color": Base_coordinate[i].color})
                      myLineChart.data.datasets.push({
                         label: 'orders_Base',
                         data: Base_coordinate[i].baseco,
@@ -229,9 +233,6 @@ createApp({
                         order: 1
                         });
             }
-
-
-            myLineChart.update();
 
 
         },
@@ -260,13 +261,15 @@ createApp({
             for (let i=0;i<this.agvs.length;i++){
             points[points.length-(this.agvs.length-i)].xValue = this.agvs[i].x
             points[points.length-(this.agvs.length-i)].yValue = this.agvs[i].y
-            }
+            };
 
             var graph_orders = this.graph.orders
             var order_nodes = this.graph.nodes
 
             this.highlightPathOrderHorizon(graph_orders,order_nodes)
             this.highlightPathOrderBase(graph_orders,order_nodes)
+
+            myLineChart.update();
 
         }
 
@@ -281,7 +284,7 @@ createApp({
         this.toStation = this.stations[1].nid
         myLineChart = new Chart('ChartJsChart',chartjs_config);
         this.initialGraphDataSetting()
-        setInterval(this.updateUIdata, 5000)
+        setInterval(this.updateUIdata, 1000)
 
         /*
         const canvas = document.querySelector('#canvas');
