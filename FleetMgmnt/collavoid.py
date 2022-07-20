@@ -1,8 +1,5 @@
 from typing import List
-
 from shapely.geometry import LineString, Polygon, Point
-
-import main
 from models.Node import Node, SAFETY_BUFFER_NODE
 
 

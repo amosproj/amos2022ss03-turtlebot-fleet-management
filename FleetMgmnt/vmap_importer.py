@@ -2,6 +2,8 @@ import math
 from typing import List
 
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
 
 
 class Point:
@@ -63,6 +65,9 @@ lines: List[Line] = list()
 
 
 def import_vmap(filename: str):
+    points.clear()
+    lines.clear()
+
     f = open(filename, "r")
     vmap_lines = f.readlines()
 

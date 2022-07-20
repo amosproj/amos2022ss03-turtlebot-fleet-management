@@ -1,14 +1,15 @@
 import io
 import json
 import math
-import numpy as np
 import time
 import threading
 from queue import Queue
 from typing import List
 
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib
 import matplotlib.style as mpls
+
 import shapely.geometry
 
 # TODO Fix import paths
@@ -22,9 +23,8 @@ from models.Edge import Edge
 from models.Node import Node
 from models.AGV import AGV
 
-
-mpls.use('fast')
-
+matplotlib.use("Agg")
+mpls.use("fast")
 
 class Graph:
     def __init__(self):
@@ -156,14 +156,20 @@ class Graph:
                 nearest_node = node
         return nearest_node
 
-    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
+    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon, order: Order = None) -> List[Node]:
         result = list()
         for node in self.nodes:
-            if polygon.intersects(node.buffer):
+            #if polygon.intersects(node.buffer):
+            if polygon.contains(node.spoint):
                 result.append(node)
+        #if order is not None:
+        #    for node in result:
+        #        critical = self.next_node_critical_path_membership(node, order)
+        #        result = critical + result
         return result
 
     def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
+        # return [node]
         order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
                                                                      order.get_nodes_to_drive())
         critical_path_buffer = None
@@ -181,7 +187,7 @@ class Graph:
 
             intersection = order_path_buffer.intersection(order2_path_buffer)
 
-            if node.buffer.intersects(intersection):
+            if intersection.contains(node.spoint):
                 if critical_path_buffer is None:
                     critical_path_buffer = intersection
                 else:
@@ -290,8 +296,10 @@ class Graph:
                     color=agv.color
                 )
             if agv.order is not None:
+                x1, y1 = agv.order.lastCosp.exterior.xy
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
+                ax1.plot(x1, y1, color='black')
         for cur_order in self.get_active_orders():
             color = cur_order.agv.color
             # for edge in cur_order.edges:
@@ -322,6 +330,7 @@ class Graph:
             start = time.time()
             self.image = self.create_image()
             end = time.time()
+            time.sleep(1)
             # print("Map rendered in " + str(end-start))
 
     def create_json(self):
