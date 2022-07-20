@@ -2,17 +2,18 @@ import io
 import json
 import math
 import random
-import threading
 import time
-
-from flask import Response
-from matplotlib import pyplot as plt
-
-import collavoid
 import mqtt
 import vda5050
+
+from flask import Response
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
 from models import TurtleGraph, AGV
-from models.Order import Order, OrderType
+from models.Order import Order
+
 
 graph: TurtleGraph.Graph
 
@@ -44,7 +45,7 @@ def send_robot_to_node(serial, source_node, target_node):
     return "Success"
 
 
-def get_path_image(serial, source_node, target_node):
+def get_path_image(serial, source_node, target_node):#
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
     for edge in graph.edges:
@@ -154,8 +155,7 @@ def order_distributor(real_graph):
         selected_agv.pending_orders.put(next_order)
         # print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(
         #    selected_agv.pending_orders))
-
-        continue
+        time.sleep(1)
 
 
 def order_executor(order: Order):

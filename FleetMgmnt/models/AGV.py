@@ -1,10 +1,6 @@
-import math
 import threading
 import time
 from queue import Queue
-
-import mqtt
-import vda5050
 
 
 class AGV:
@@ -18,6 +14,7 @@ class AGV:
         self.heading = heading
         self.battery_level = battery_level
         self.charging_status = charging_status
+        self.charging_prepare = False
         self.velocity = velocity
         self.color = color
         self.last_node_id = last_node_id
@@ -28,17 +25,32 @@ class AGV:
 
     def order_executor_thread(self):
         while True:
+            if self.charging_status == "Charging":
+                time.sleep(10)
+                continue
+
             # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
             next_order = self.pending_orders.get()
             # print("AGV is now starting on new order")
+            if next_order.status != 'CREATED':
+                continue
 
             self.lock.acquire()
             # print("AGV has gotten lock")
             self.order = next_order
             self.order.agv = self
             # print("AGV " + str(self.aid) + " has a new order, executing now...")
+            throttle = 0
             while self.order.extension_required(self.x, self.y):
-                self.order.try_extension(self.x, self.y)
+                if self.order.try_extension(self.x, self.y):
+                    throttle = 0
+                else:
+                    throttle += 1
+                    if throttle > 20:
+                        time.sleep(0.1)
+                    if throttle > 100:
+                        time.sleep(1)
+                        print("Throttling active")
             self.lock.release()
 
             self.order.sem.acquire()
@@ -54,9 +66,9 @@ class AGV:
         self.y = y
         self.heading = heading
         self.lock.acquire()
-        if self.order is not None:
-            while self.order.extension_required(self.x, self.y):
-                self.order.try_extension(self.x, self.y)
+        #if self.order is not None:
+        #    while self.order.extension_required(self.x, self.y):
+        #        self.order.try_extension(self.x, self.y)
         self.lock.release()
 
     def update_battery_level(self, battery, heading=None):

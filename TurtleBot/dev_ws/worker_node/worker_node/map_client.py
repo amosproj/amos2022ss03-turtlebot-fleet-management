@@ -4,8 +4,8 @@ from sick_lidar_localization.srv import LocSetMapSrv, LocLoadMapToCacheSrv
 from kobuki_ros_interfaces.action import AutoDocking
 
 import rclpy
-from rclpy.node import Node
 from rclpy.action import ActionClient
+from rclpy.node import Node
 
 
 class MinimalMapClientSet(Node):
@@ -14,7 +14,7 @@ class MinimalMapClientSet(Node):
         super().__init__('minimal_client_async')
         self.cli = self.create_client(LocSetMapSrv, 'LocSetMap')
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
+            self.get_logger().info('map set service not available, waiting again...')
         self.req = LocSetMapSrv.Request()
 
     def send_request(self, path):
@@ -28,7 +28,7 @@ class MinimalMapClientLoad(Node):
         super().__init__('minimal_client_set_async')
         self.cli = self.create_client(LocLoadMapToCacheSrv, 'LocLoadMapToCache')
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
+            self.get_logger().info('map load service not available, waiting again...')
         self.req = LocLoadMapToCacheSrv.Request()
 
     def send_request(self, path):

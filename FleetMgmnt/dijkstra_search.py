@@ -1,4 +1,4 @@
-from models import Edge, Node, TurtleGraph
+from models import Edge, Node
 import math
 import sys
 import copy

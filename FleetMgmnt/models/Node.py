@@ -1,9 +1,8 @@
 import json
-import threading
 
 from shapely.geometry import Point
 
-SAFETY_BUFFER_NODE = 0.1  # m
+SAFETY_BUFFER_NODE = 0.2  # m
 
 
 class Node:
@@ -20,7 +19,9 @@ class Node:
         self.y = y
         self.name = name
         self.lock = -1
+        self.spoint = Point(self.x, self.y)
         self.buffer = Point(self.x, self.y).buffer(SAFETY_BUFFER_NODE)
+        self.actions = []
 
     def to_dict(self):
         return {k: v for k, v in self.__dict__.items() if v is not None}

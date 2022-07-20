@@ -1,4 +1,5 @@
 import unittest
+import random
 
 import main  # Needed to prevent circular imports
 from models import TurtleGraph, Order
@@ -81,6 +82,13 @@ class TestGraphSearch(unittest.TestCase):
         self.graph = TurtleGraph.Graph()
         self.graph.vmap_lines_to_graph("maps/demo.vmap")
 
+    def test_path_to_same_node(self):
+        start_node = self.graph.find_node_by_id(2)
+        end_node = self.graph.find_node_by_id(2)
+        nodes, edges = self.graph.get_shortest_route(start_node, end_node)
+        self.assertEqual(len(nodes), 1)
+        self.assertTrue(start_node in nodes)
+
     def test_shortest_path_nodes(self):
         start_node = self.graph.find_node_by_id(2)
         end_node = self.graph.find_node_by_id(14)
@@ -96,6 +104,68 @@ class TestGraphSearch(unittest.TestCase):
         self.assertEqual(len(edges), 4)
         self.assertEqual(edges[0].start, start_node)
         self.assertEqual(edges[-1].end, end_node)
+
+
+class TestGraphSearch2(unittest.TestCase):
+    def setUp(self):
+        self.graph = TurtleGraph.Graph()
+        self.graph.vmap_lines_to_graph("maps/room_04.150_options.vmap")
+
+    def test1(self):
+        # self.assertTrue(self.graph.is_strongly_connected())
+        # 191 and 192 not strongly connected -> buggy
+        samples = 100
+        print('-- Calculating the shortest route for', samples, 'random samples --')
+        for _ in range(samples):
+            start_node, end_node = random.choices(self.graph.nodes, k=2)
+            print(start_node.nid, '->', end_node.nid)
+            nodes, edges = self.graph.get_shortest_route(start_node, end_node)
+            self.assertTrue(len(nodes) > 0, 'No route found!')
+            self.assertEqual(nodes[0], start_node)
+            self.assertEqual(nodes[-1], end_node)
+
+
+class TestAlternativeGraphSearch(unittest.TestCase):
+    def setUp(self):
+        self.graph = TurtleGraph.Graph()
+        self.graph.vmap_lines_to_graph("maps/demo.vmap")
+
+    def test_alternative_route_1(self):
+        start_node = self.graph.find_node_by_id(2)
+        end_node = self.graph.find_node_by_id(14)
+        excluded = [self.graph.find_node_by_id(0), self.graph.find_node_by_id(4)]
+        nodes, edges = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        self.assertNotEqual(len(nodes), 5)
+        self.assertEqual(edges[0].start, start_node)
+        self.assertEqual(edges[-1].end, end_node)
+        self.assertEqual(len(nodes), 8)
+        self.assertTrue(self.graph.find_node_by_id(11) in nodes)
+        self.assertFalse(self.graph.find_node_by_id(0) in nodes)
+
+    def test_alternative_route_2(self):
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        excluded = [self.graph.find_node_by_id(5)]
+        nodes, edges = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        self.assertTrue(len(nodes) > 4)
+        self.assertEqual(edges[0].start, start_node)
+        self.assertEqual(edges[-1].end, end_node)
+        self.assertEqual(len(nodes), 9)
+        self.assertTrue(self.graph.find_node_by_id(13) in nodes)
+        self.assertFalse(self.graph.find_node_by_id(5) in nodes)
+
+    def test_shortest_after_alternative(self):
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        excluded = [self.graph.find_node_by_id(5)]
+        nodes1, edges1 = self.graph.graph_search.get_alternative_route(start_node, end_node, excluded)
+        start_node = self.graph.find_node_by_id(3)
+        end_node = self.graph.find_node_by_id(10)
+        nodes2, edges2 = self.graph.graph_search.get_shortest_route(start_node, end_node)
+        self.assertTrue(len(nodes1) > len(nodes2))
+        self.assertEqual(edges2[0].start, start_node)
+        self.assertEqual(edges2[-1].end, end_node)
+        self.assertTrue(self.graph.find_node_by_id(5) in nodes2)
 
 
 class TestNextNodeCriticalPathMembership(unittest.TestCase):

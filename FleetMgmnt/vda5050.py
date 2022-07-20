@@ -229,12 +229,12 @@ class InstantAction(Message, JsonSerializable):
         version: str,
         manufacturer: str,
         serialnumber: str,
-        actions: List[Action],
+        instantActions: List[Action],
     ):
         Message.__init__(
             self, header_id, timestamp, version, manufacturer, serialnumber
         )
-        self.actions = actions
+        self.instantActions = instantActions
 
 
 class NodeState(JsonSerializable):
