@@ -13,6 +13,8 @@ import matplotlib.style as mpls
 import shapely.geometry
 
 # TODO Fix import paths
+from shapely.geometry import Polygon
+
 import vmap_importer
 import graph_search as gs
 import vda5050
@@ -159,8 +161,8 @@ class Graph:
     def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon, order: Order = None) -> List[Node]:
         result = list()
         for node in self.nodes:
-            #if polygon.intersects(node.buffer):
-            if polygon.contains(node.spoint):
+            if polygon.intersects(node.buffer):
+            # if polygon.contains(node.spoint):
                 result.append(node)
         #if order is not None:
         #    for node in result:
@@ -168,10 +170,15 @@ class Graph:
         #        result = critical + result
         return result
 
-    def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
-        # return [node]
-        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
+    def order_critical_path_membership(self, order: Order) -> (List[Node], Polygon):
+        result = []
+        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.start.x, order.start.y),
                                                                      order.get_nodes_to_drive())
+        order_locklist = self.find_nodes_for_colocking(order_path_buffer)
+
+        for node in order_locklist:
+            order_path_buffer = order_path_buffer.union(node.buffer)
+
         critical_path_buffer = None
 
         for order2 in self.all_orders:
@@ -182,26 +189,21 @@ class Graph:
                 # Order shouldn't have critical path with itself
                 continue
 
-            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.agv.x, order2.agv.y),
+            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.start.x, order2.start.y),
                                                                           order2.get_nodes_to_drive())
+            order2_locklist = self.find_nodes_for_colocking(order2_path_buffer)
+
+            for node in order2_locklist:
+                order2_path_buffer = order2_path_buffer.union(node.buffer)
 
             intersection = order_path_buffer.intersection(order2_path_buffer)
+            critical_path_buffer = intersection
 
-            if intersection.contains(node.spoint):
-                if critical_path_buffer is None:
-                    critical_path_buffer = intersection
-                else:
-                    critical_path_buffer = critical_path_buffer.union(intersection)
+            for node in self.nodes:
+                if intersection.contains(node.spoint):
+                    result.append(node)
 
-        if critical_path_buffer is None:
-            return [node]
-
-        critical_path = []
-        for n in self.nodes:
-            if n.buffer.intersects(critical_path_buffer):
-                critical_path.append(n)
-
-        return critical_path
+        return result, critical_path_buffer
 
     def bfs(self, start: Node):
         q = [start]

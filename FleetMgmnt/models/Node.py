@@ -2,7 +2,7 @@ import json
 
 from shapely.geometry import Point
 
-SAFETY_BUFFER_NODE = 0.2  # m
+SAFETY_BUFFER_NODE = 0.35  # m
 
 
 class Node:

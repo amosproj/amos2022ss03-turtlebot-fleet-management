@@ -116,7 +116,10 @@ class Order:
         if self.agv is not None:
             return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
         else:
-            return collavoid.get_path_safety_buffer_polygon((None, None), base_copy)
+            if len(base_copy) == 0:
+                return collavoid.get_path_safety_buffer_polygon((None, None), base_copy)
+            else:
+                return collavoid.get_path_safety_buffer_polygon((base_copy[0].x, base_copy[0].y), base_copy)
 
     def unlock_all(self):
         for node in self.graph.nodes:
@@ -126,10 +129,21 @@ class Order:
         for node in self.base:
             if not node.try_lock(self.order_id):
                 raise Exception
-        # for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
-        #     if not node.try_lock(self.order_id):
-        #         print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
-        #         raise Exception
+        critical_nodes, _ = self.graph.order_critical_path_membership(self)
+        in_crit_path = False
+        for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
+            if node in critical_nodes:
+                in_crit_path = True
+            if not node.try_lock(self.order_id):
+                print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
+                raise Exception
+        if in_crit_path:
+            for node in critical_nodes:
+                if not node.try_lock(self.order_id):
+                    print(
+                        "Order " + str(self.order_id) + " tried to lock crit " + str(node.nid) + " but is locked by " + str(
+                            node.lock))
+                    raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
         if self.status == OrderStatus.CREATED:
@@ -145,50 +159,87 @@ class Order:
     def try_extension(self, x: float, y: float) -> bool:
         if len(self.horizon) == 0:
             return False
+
+        critical_nodes, _ = self.graph.order_critical_path_membership(self)
+
         next_node = self.horizon[0]
-        next_nodes = self.graph.next_node_critical_path_membership(next_node, self)
-        base_append = list()
+        virtual_cosp = self.get_cosp([next_node])
+        colocking_nodes = self.graph.find_nodes_for_colocking(virtual_cosp)
 
-        critical = len(next_nodes)> 1
-        if not critical:
-            virtual_cosp = self.get_cosp(next_nodes)
-            self.lastCosp = virtual_cosp
-            #next_nodes += self.graph.find_nodes_for_colocking(virtual_cosp, self)
-            #for node in next_nodes:
-            #    next_nodes += self.graph.next_node_critical_path_membership(node, self)
-            base_append.append(next_node)
-        else:
-            for horizon_node in self.horizon:
-                if horizon_node in next_nodes:
-                    base_append.append(horizon_node)
-                else:
-                    break
+        nodes_part_of_crit_path = list(set(critical_nodes) & set(colocking_nodes))
 
-        id_list = list()
-        for node in next_nodes:
-            id_list.append(node.nid)
-        print("Trying lock: " + str(self.order_id) + " - " + str(id_list))
-
-        self.graph.lock.acquire()
         success = True
-        for node in next_nodes:
-            # print("Locking")
-            if not node.try_lock(self.order_id):
-                print("Order " + str(self.order_id) + " failed to lock: " + str(node.nid))
-                success = False
-                break
+        if len(nodes_part_of_crit_path) == 0:
+            self.graph.lock.acquire()
+            for node in colocking_nodes:
+                if not node.try_lock(self.order_id):
+                    success = False
+                    break
+            if success:
+                self.base.append(next_node)
+                if next_node in self.horizon:
+                    self.horizon.remove(next_node)
+            self.unlock_all()
+            self.lock_all()
+            self.graph.lock.release()
 
-        if success:
-            for node in base_append:
-                self.base.append(node)
-                if node in self.horizon:
-                    self.horizon.remove(node)
+        else:
+            self.graph.lock.acquire()
+            # We will now try to lock the entire critical path
+            for node in critical_nodes:
+                if not node.try_lock(self.order_id):
+                    success = False
+                    break
+            if success:
+                for node in self.horizon:
+                    co_lock = self.graph.find_nodes_for_colocking(node.buffer)
+                    stop = False
+                    for co_lock_node in co_lock:
+                        if co_lock_node.lock != self.order_id:
+                            stop = True
+                            break
+                    if stop:
+                        break
 
-        self.unlock_all()
-        self.lock_all()
-        self.graph.lock.release()
+                    if node.lock == self.order_id:
+                        self.base.append(node)
+                        self.horizon.remove(node)
+                    else:
+                        break
+            self.unlock_all()
+            self.lock_all()
+            self.graph.lock.release()
 
-        if success:
+            # base_append = list()
+            # print(set(critical_nodes) & set(self.horizon))
+            # initial = True
+            # for node in self.horizon:
+            #     if initial or node in critical_nodes:
+            #         print("Appending " + str(node) + " is  next")
+            #         initial = False
+            #         base_append.append(node)
+            #     else:
+            #         print("Node " + str(node) + " is not next")
+            #         break
+            # virtual_cosp = self.get_cosp(base_append)
+            # colocking_nodes = self.graph.find_nodes_for_colocking(virtual_cosp)
+            #
+            #
+            # for node in colocking_nodes:
+            #     if not node.try_lock(self.order_id):
+            #         success = False
+            #         print("Extension error crit")
+            #         break
+            # if success:
+            #     print("We are appending " + str(base_append))
+            #     for node in base_append:
+            #         self.base.append(node)
+            #         if node in self.horizon:
+            #             self.horizon.remove(node)
+
+
+        # if success:
+        if False:
             mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                                 self.create_vda5050_message(self.agv).json(), 2)
 
