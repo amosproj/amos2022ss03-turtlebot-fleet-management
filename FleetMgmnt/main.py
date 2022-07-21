@@ -1,9 +1,11 @@
 import json
 import os
+import sys
 import threading
 import time
 
 import autorecharge
+import shapeltest
 import worker
 import mqtt
 from models import TurtleGraph
