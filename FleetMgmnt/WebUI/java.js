@@ -4,26 +4,26 @@ const chartjs_config = {
                 type: 'scatter',
                 data: {
                 datasets: [{
-                label: "Test-Graph",
+                label: "Main-Graph",
                 fill: false,
-                borderColor: "gray",
+                borderColor: 'rgb(128,128,128)',
                 showLine: true,
                 data: null,
                         }]
                          },
                 options: {
-                              animation: {
-        duration: 0, // general animation time
-    },
+                         animation: {
+                            duration: 0,
+                                    },
                           plugins:{
-                         autocolors: false,
-                          annotation: {
+                            autocolors: false,
+                            annotation: {
                             annotations: points
-                          },
+                                        },
                        legend: {
-                       display: false
-                  }
-                              },
+                            display: false
+                               }
+                                    },
                        scales: {
                         x: {
                             grid: {
@@ -60,7 +60,7 @@ createApp({
     },
     methods: {
         refreshMap() {
-           document.getElementById('graphmap').src = 'graph?' + Math.random()
+           /*document.getElementById('graphmap').src = 'graph?' + Math.random() */
         },
         async initialGraphDataSetting(){
             const graph_data_promise = axios.get('/api/graph')
@@ -75,7 +75,7 @@ createApp({
             var graph_nodes = this.graph.nodes
 
             for(let i=0;i<this.graph_edges.length;i++){
-                     myLineChart.data.datasets.push({
+                     mainChart.data.datasets.push({
                         label: 'Edge' ,
                         data: this.graph_edges[i],
                         fill: false,
@@ -130,14 +130,16 @@ createApp({
                           yValue:  this.agvs[i].y
                         });
                  };
-                 myLineChart.update();
+                 mainChart.update();
 
         },
         highlightPathOrderHorizon(graph_orders,order_nodes) {
 
-                    var Horizons_orders= new Array()
+            var Horizons_orders= new Array()
             for (let i=0;i<graph_orders.length;i++){
-            Horizons_orders.push({"hor":graph_orders[i].horizon,"index":graph_orders[i].agv})
+                if (graph_orders[i].status === "ACTIVE"){
+                     Horizons_orders.push({"hor":graph_orders[i].horizon,"index":graph_orders[i].agv})
+                }
             }
 
 
@@ -159,20 +161,19 @@ createApp({
 
             };
 
-            var datasets_chart = myLineChart.data.datasets
+            var datasets_chart = mainChart.data.datasets
             for (let i=0;i<datasets_chart.length;i++) {
             if (datasets_chart[i].label === 'orders_Horizon'){
-            console.log(myLineChart.data.datasets)
-            myLineChart.data.datasets.splice(i,1);
-            myLineChart.data.labels.pop();
+            mainChart.data.datasets.splice(i,1);
+            mainChart.data.labels.pop();
             }
             }
                  for (let i=0;i<Horizon_coordinate.length;i++){
                     var temp_connect = Horizon_coordinate[i].horico
                     this.connect_edge.push({"coor": temp_connect[temp_connect.length-1], "agv_color": Horizon_coordinate[i].color})
-                     myLineChart.data.datasets.push({
+                     mainChart.data.datasets.push({
                         label: 'orders_Horizon',
-                        pointRadius: 0,
+                        pointRadius: 5,
                         data: Horizon_coordinate[i].horico,
                         fill: false,
                         showLine: true,
@@ -190,42 +191,44 @@ createApp({
 
                     var Base_orders= new Array()
             for (let i=0;i<graph_orders.length;i++){
-            Base_orders.push({"base":graph_orders[i].base,"index":graph_orders[i].agv})
+            if (graph_orders[i].status === "ACTIVE"){
+                Base_orders.push({"base":graph_orders[i].base,"index":graph_orders[i].agv})
             }
-
+            }
 
             var Base_coordinate = new Array()
 
             for (let k=0;k<Base_orders.length;k++){
-            var Bases = Base_orders[k].base
-            var colour_index  = Base_orders[k].index
-            var color = this.agvs[parseInt(colour_index)-1].color
-            var temp_base = new Array()
-            for (let i=0;i<Bases.length;i++){
-              for (let j=0;j<order_nodes.length;j++){
-              if (Bases[i] == order_nodes[j].nid){
-              temp_base.push({"x":order_nodes[j].x,"y":order_nodes[j].y})
-              }
-              }
-
-            }Base_coordinate.push({"baseco":temp_base,"color":color})
+                var Bases = Base_orders[k].base
+                var colour_index  = Base_orders[k].index
+                var color = this.agvs[parseInt(colour_index)-1].color
+                var temp_base = new Array()
+                for (let i=0;i<Bases.length;i++){
+                  for (let j=0;j<order_nodes.length;j++){
+                     if (Bases[i] == order_nodes[j].nid){
+                        temp_base.push({"x":order_nodes[j].x,"y":order_nodes[j].y})
+                  }
+                  }
+                  }
+                Base_coordinate.push({"baseco":temp_base,"color":color})
 
             };
 
-            var datasets_chart = myLineChart.data.datasets
+            var datasets_chart = mainChart.data.datasets
             for (let i=0;i<datasets_chart.length;i++) {
-            if (datasets_chart[i].label === 'orders_Base'){
-            myLineChart.data.datasets.splice(i,1);
-            myLineChart.data.labels.pop();
+                if (datasets_chart[i].label === 'orders_Base'){
+                    mainChart.data.datasets.splice(i,1);
+                    mainChart.data.labels.pop();
             }
             }
 
                  for (let i=0;i<Base_coordinate.length;i++){
                  var temp_connect = Base_coordinate[i].baseco
                  this.connect_edge.push({"coor": temp_connect[temp_connect.length-1], "agv_color": Base_coordinate[i].color})
-                     myLineChart.data.datasets.push({
+                     mainChart.data.datasets.push({
                         label: 'orders_Base',
                         data: Base_coordinate[i].baseco,
+                        pointRadius: 5,
                         fill: false,
                         showLine: true,
                         borderColor: Base_coordinate[i].color,
@@ -235,6 +238,35 @@ createApp({
             }
 
 
+        },
+        highlightPathOrderPolygon(graph_orders) {
+
+        var datasets_chart = mainChart.data.datasets
+            for (let i=0;i<datasets_chart.length;i++) {
+                if (datasets_chart[i].label === 'orders_Polygon'){
+                    mainChart.data.datasets.splice(i,1);
+                    mainChart.data.labels.pop();
+            }
+            }
+
+        for (let i=0;i<graph_orders.length;i++){
+           if (graph_orders[i].status === "ACTIVE"){
+            var order_polygon = graph_orders[i].cosp
+            colour = parseInt(graph_orders[i].agv) * 10
+            colour1 = parseInt(graph_orders[i].agv) * 50
+            colour2 = parseInt(graph_orders[i].agv) * 100
+             mainChart.data.datasets.push({
+                        label: 'orders_Polygon',
+                        data: order_polygon,
+                        pointRadius: 0,
+                        fill: false,
+                        showLine: true,
+                        borderColor: 'rgb('+colour2.toString()+','+colour1.toString()+','+colour.toString()+')',
+                        tension: 0.1,
+                        order: 1
+                        });
+             }
+            }
         },
         async sendOrder() {
             await axios.post('/api/agv/' + this.robotSerial + '/sendFromTo/' + this.fromStation + '/' + this.toStation)
@@ -268,8 +300,9 @@ createApp({
 
             this.highlightPathOrderHorizon(graph_orders,order_nodes)
             this.highlightPathOrderBase(graph_orders,order_nodes)
+            this.highlightPathOrderPolygon(graph_orders)
 
-            myLineChart.update();
+            mainChart.update();
 
         }
 
@@ -282,7 +315,7 @@ createApp({
         this.stations = result.data
         this.fromStation = this.stations[0].nid
         this.toStation = this.stations[1].nid
-        myLineChart = new Chart('ChartJsChart',chartjs_config);
+        mainChart = new Chart('ChartJsChart',chartjs_config);
         this.initialGraphDataSetting()
         setInterval(this.updateUIdata, 1000)
 
