@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from shapely.geometry import Point
 
@@ -7,9 +8,9 @@ SAFETY_BUFFER_NODE = 0.35  # m
 
 class Node:
     @staticmethod
-    def node_list_to_id_list(l):
+    def node_list_to_id_list(node_list) -> List[int]:
         result = list()
-        for n in l:
+        for n in node_list:
             result.append(n.nid)
         return result
 
@@ -23,7 +24,7 @@ class Node:
         self.buffer = Point(self.x, self.y).buffer(SAFETY_BUFFER_NODE)
         self.actions = []
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
     def json(self) -> str:

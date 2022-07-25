@@ -47,7 +47,7 @@ class BlockingType(str, Enum):
 
 
 class JsonSerializable:
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
     def json(self, pretty: bool = False) -> str:
@@ -172,39 +172,39 @@ class Message(JsonSerializable):
         self.manufacturer = manufacturer
         self.serialNumber = serial_number
 
-    def get_header_id(self):
+    def get_header_id(self) -> int:
         return self.headerId
 
 
 class ConnectionMessage(Message, JsonSerializable):
     def __init__(
         self,
-        headerid: int,
+        header_id: int,
         timestamp: str,
         version: str,
         manufacturer: str,
-        serialnumber: str,
+        serial_number: str,
         connection_state: ConnectionState,
     ):
-        Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)
+        Message.__init__(self, header_id, timestamp, version, manufacturer, serial_number)
         self.connectionState = connection_state
 
 
 class OrderMessage(Message, JsonSerializable):
     def __init__(
         self,
-        headerid: int,
+        header_id: int,
         timestamp: str,
         version: str,
         manufacturer: str,
-        serialnumber: str,
+        serial_number: str,
         order_id: str,
         order_update_id: int,
         nodes: List[Node],
         edges: List[Edge],
         zone_set_id: str = None,
     ):
-        Message.__init__(self, headerid, timestamp, version, manufacturer, serialnumber)
+        Message.__init__(self, header_id, timestamp, version, manufacturer, serial_number)
         self.orderId = order_id
         self.orderUpdateId = order_update_id
         self.nodes = nodes
@@ -228,13 +228,13 @@ class InstantAction(Message, JsonSerializable):
         timestamp: str,
         version: str,
         manufacturer: str,
-        serialnumber: str,
-        instantActions: List[Action],
+        serial_number: str,
+        instant_actions: List[Action],
     ):
         Message.__init__(
-            self, header_id, timestamp, version, manufacturer, serialnumber
+            self, header_id, timestamp, version, manufacturer, serial_number
         )
-        self.instantActions = instantActions
+        self.instantActions = instant_actions
 
 
 class NodeState(JsonSerializable):
@@ -497,7 +497,7 @@ class StateMessage(Message, JsonSerializable):
         self.safetyState = safety_state
 
 
-def get_mqtt_topic(serial_number, topic: Topic):
+def get_mqtt_topic(serial_number: int, topic: Topic) -> str:
     return (
         "AMOS"
         + "/v"
@@ -511,22 +511,9 @@ def get_mqtt_topic(serial_number, topic: Topic):
     )
 
 
-def get_header_id(topic: Topic):
+def get_header_id(topic: Topic) -> int:
     HEADER_ID_LOCK[topic].acquire()
     HEADER_ID[topic] += 1
     hid = HEADER_ID[topic]
     HEADER_ID_LOCK[topic].release()
     return hid
-
-
-# Below this comment is playground code that should be removed before release
-
-# cm = ConnectionMessage(23, "dsf", "hgj", "sdf", "sdfs", ConnectionState.ONLINE)
-
-# node = Node("dsf", 23, True, list())
-# print(node.json(True))
-
-# print(get_mqtt_topic("0", Topic.CONNECTION))
-# print(get_header_id(Topic.CONNECTION))
-# print(get_header_id(Topic.ORDER))
-# print(get_header_id(Topic.CONNECTION))

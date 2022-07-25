@@ -1,12 +1,13 @@
 import math
 import threading
 from enum import Enum
-
-from matplotlib import pyplot as plt
+from typing import List
 
 import collavoid
 import mqtt
+import shapely.geometry
 import vda5050
+from models.AGV import AGV
 from models.Node import Node
 
 order_id_counter = 0
@@ -41,14 +42,12 @@ class Order:
         self.completed = list()
         self.base = list()
         self.horizon, _ = self.graph.get_shortest_route(start, end)
-        print(self.horizon)
-        self.route_lock = threading.Lock()
         self.sem = threading.Semaphore(0)
         self.agv = None
         self.lastCosp = start.buffer
         graph.all_orders.append(self)
 
-    def create_vda5050_message(self, agv):
+    def create_vda5050_message(self, agv: AGV) -> vda5050.OrderMessage:
         nodes = self.completed.copy()
         nodes.extend(self.base)
         self.order_update_id += 1
@@ -64,11 +63,11 @@ class Order:
             ))
             # print(n.actions)
         vda5050_order = vda5050.OrderMessage(
-            headerid=0,
+            header_id=0,
             timestamp='',
             version='',
             manufacturer='',  # All more general information, probably should not be set here
-            serialnumber=str(agv.aid),
+            serial_number=str(agv.aid),
             order_id=str(self.order_id),
             order_update_id=self.order_update_id,
             nodes=vda5050_nodes,
@@ -83,7 +82,8 @@ class Order:
         last_node = self.graph.find_node_by_id(int(nid))
         if last_node is None or \
                 last_node in self.completed or \
-                self.status != OrderStatus.ACTIVE:
+                self.status == OrderStatus.COMPLETED or \
+                last_node not in self.base:
             return
         if last_node == self.end and math.dist((self.end.x, self.end.y), (self.agv.x, self.agv.y)) < 0.3:
             self.graph.lock.acquire()
@@ -92,30 +92,28 @@ class Order:
             self.complete()
             return
 
-        self.route_lock.acquire()
-        while last_node in self.base:
-            next_in_base = self.base[0]
-            if next_in_base == last_node:
-                distance = math.dist((next_in_base.x, next_in_base.y), pos)
-                if distance > 0.4:
-                    self.base.pop(0)
-                    self.completed.append(next_in_base)
-                break
+        base_position = self.base.index(last_node)
+        for i in reversed(range(base_position + 1)):
+            head = self.base[i]
+            distance = math.dist((head.x, head.y), pos)
+            if distance > 0.4:
+                self.base.remove(head)
+                # print("Removing " + str(head.nid))
+                self.completed.append(head)
             else:
-                self.base.pop(0)
-                self.completed.append(next_in_base)
-        self.route_lock.release()
-
+                pass
+                # print("Not removing " + str(head.nid) + " because dist " + str(distance))
         self.graph.lock.acquire()
         self.unlock_all()
         self.lock_all()
         self.graph.lock.release()
 
-    # COSP = Current Order Safety Polygon
-    # AGV position + Base
-    def get_cosp(self, virtual_ext=list()):
+    def get_cosp(self, virtual_ext: List[Node] = None) -> shapely.geometry.Polygon:
+        # COSP = Current Order Safety Polygon
+        # AGV position + Base
         base_copy = self.base.copy()
-        base_copy.extend(virtual_ext)
+        if virtual_ext is not None:
+            base_copy.extend(virtual_ext)
         if self.agv is not None:
             return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
         else:
@@ -130,40 +128,27 @@ class Order:
 
     def lock_all(self):
         for node in self.base:
-            if node.lock != -1:
-                order = self.graph.get_order_by_id(node.lock)
-                if order.status != OrderStatus.ACTIVE:
-                    node.release(order)
             if not node.try_lock(self.order_id):
-                # raise Exception
-                pass
+                raise Exception
         critical_nodes, _ = self.graph.order_critical_path_membership(self)
         in_crit_path = False
         for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
             if node in critical_nodes:
                 in_crit_path = True
-            if node.lock != -1:
-                order = self.graph.get_order_by_id(node.lock)
-                if order.status != OrderStatus.ACTIVE:
-                    node.release(order)
             if not node.try_lock(self.order_id):
-                print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
-                # raise Exception
+                print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(
+                    node.lock))
+                raise Exception
         if in_crit_path:
             for node in critical_nodes:
-                if node.lock != -1:
-                    order = self.graph.get_order_by_id(node.lock)
-                    if order.status != OrderStatus.ACTIVE:
-                        node.release(order)
                 if not node.try_lock(self.order_id):
                     print(
-                        "Order " + str(self.order_id) + " tried to lock crit " + str(node.nid) + " but is locked by " + str(
+                        "Order " + str(self.order_id) + " tried to lock crit " + str(
+                            node.nid) + " but is locked by " + str(
                             node.lock))
-                    # raise Exception
+                    raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
-        if self.status == OrderStatus.CANCELLED:
-            return False
         if self.status == OrderStatus.CREATED:
             self.status = OrderStatus.ACTIVE
         if len(self.horizon) == 0:
@@ -175,8 +160,6 @@ class Order:
         return distance < 1.3
 
     def try_extension(self, x: float, y: float) -> bool:
-        if self.status == OrderStatus.CANCELLED:
-            return False
         if len(self.horizon) == 0:
             return False
 
@@ -190,7 +173,6 @@ class Order:
 
         success = True
         if len(nodes_part_of_crit_path) == 0:
-            self.route_lock.acquire()
             self.graph.lock.acquire()
             for node in colocking_nodes:
                 if not node.try_lock(self.order_id):
@@ -200,13 +182,11 @@ class Order:
                 self.base.append(next_node)
                 if next_node in self.horizon:
                     self.horizon.remove(next_node)
-            self.route_lock.release()
             self.unlock_all()
             self.lock_all()
             self.graph.lock.release()
 
         else:
-            self.route_lock.acquire()
             self.graph.lock.acquire()
             # We will now try to lock the entire critical path
             for node in critical_nodes:
@@ -214,7 +194,6 @@ class Order:
                     success = False
                     break
             if success:
-
                 for node in self.horizon:
                     co_lock = self.graph.find_nodes_for_colocking(node.buffer)
                     stop = False
@@ -230,7 +209,6 @@ class Order:
                         self.horizon.remove(node)
                     else:
                         break
-            self.route_lock.release()
             self.unlock_all()
             self.lock_all()
             self.graph.lock.release()
@@ -262,18 +240,19 @@ class Order:
             #         if node in self.horizon:
             #             self.horizon.remove(node)
 
-        if success and self.status == OrderStatus.ACTIVE:
+        # if success:
+        if False:
             mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                                 self.create_vda5050_message(self.agv).json(), 2)
 
         return success
 
-    def get_nodes_to_drive(self):
+    def get_nodes_to_drive(self) -> List[Node]:
         # Should return all nodes that are not passed yet.
         all_nodes = self.base + self.horizon
         return list(set(all_nodes) - set(self.completed))
 
-    def serialize(self):
+    def serialize(self) -> dict:
         output = {}
         output['id'] = self.order_id
         output['update_id'] = self.order_update_id
@@ -305,18 +284,17 @@ class Order:
 
     def cancel(self):
         # Order Cancellation
-        # ToDo: Send MQTT message so the order actually stops
         self.unlock_all()
         self.status = OrderStatus.CANCELLED
         self.sem.release()
 
         if self.agv is not None:
             vda5050_order = vda5050.OrderMessage(
-                headerid=0,
+                header_id=0,
                 timestamp='',
                 version='',
                 manufacturer='',  # All more general information, probably should not be set here
-                serialnumber=str(self.agv.aid),
+                serial_number=str(self.agv.aid),
                 order_id=str(self.order_id),
                 order_update_id=self.order_update_id + 1,
                 nodes=[],

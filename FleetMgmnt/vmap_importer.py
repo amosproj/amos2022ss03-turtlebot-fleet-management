@@ -15,7 +15,7 @@ class Point:
         else:
             self.name = name
 
-    def get_coords(self):
+    def get_coords(self) -> (float, float):
         return self.x, self.y
 
     def is_equal(self, p) -> bool:
@@ -64,7 +64,7 @@ points: List[Point] = list()
 lines: List[Line] = list()
 
 
-def import_vmap(filename: str):
+def import_vmap(filename: str) -> (List[Point], List[Line]):
     points.clear()
     lines.clear()
 
