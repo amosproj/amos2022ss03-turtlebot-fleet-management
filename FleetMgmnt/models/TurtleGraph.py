@@ -298,10 +298,10 @@ class Graph:
                     color=agv.color
                 )
             if agv.order is not None:
-                x1, y1 = agv.order.lastCosp.exterior.xy
+                # x1, y1 = agv.order.lastCosp.exterior.xy
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
-                ax1.plot(x1, y1, color='black')
+                # ax1.plot(x1, y1, color='black')
         for cur_order in self.get_active_orders():
             color = cur_order.agv.color
             # for edge in cur_order.edges:
@@ -332,7 +332,7 @@ class Graph:
             start = time.time()
             self.image = self.create_image()
             end = time.time()
-            time.sleep(1)
+            time.sleep(0.1)
             # print("Map rendered in " + str(end-start))
 
     def create_json(self):

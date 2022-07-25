@@ -38,7 +38,7 @@ def main():
 
     for agv in config['agvs']:
         n_agv = graph.new_agv(int(agv['serial']), agv['color'])
-        launch_thread(n_agv.order_executor_thread, ())
+        launch_thread(worker.agv_order_executor_thread, (n_agv, ))
 
     launch_thread(webserver.start, (graph, ))
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],

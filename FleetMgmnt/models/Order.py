@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 import collavoid
 import mqtt
 import vda5050
-from models.AGV import AGV
 from models.Node import Node
 
 order_id_counter = 0
@@ -42,12 +41,14 @@ class Order:
         self.completed = list()
         self.base = list()
         self.horizon, _ = self.graph.get_shortest_route(start, end)
+        print(self.horizon)
+        self.route_lock = threading.Lock()
         self.sem = threading.Semaphore(0)
         self.agv = None
         self.lastCosp = start.buffer
         graph.all_orders.append(self)
 
-    def create_vda5050_message(self, agv: AGV):
+    def create_vda5050_message(self, agv):
         nodes = self.completed.copy()
         nodes.extend(self.base)
         self.order_update_id += 1
@@ -82,8 +83,7 @@ class Order:
         last_node = self.graph.find_node_by_id(int(nid))
         if last_node is None or \
                 last_node in self.completed or \
-                self.status == OrderStatus.COMPLETED or \
-                last_node not in self.base:
+                self.status != OrderStatus.ACTIVE:
             return
         if last_node == self.end and math.dist((self.end.x, self.end.y), (self.agv.x, self.agv.y)) < 0.3:
             self.graph.lock.acquire()
@@ -92,17 +92,20 @@ class Order:
             self.complete()
             return
 
-        base_position = self.base.index(last_node)
-        for i in reversed(range(base_position + 1)):
-            head = self.base[i]
-            distance = math.dist((head.x, head.y), pos)
-            if distance > 0.4:
-                self.base.remove(head)
-                # print("Removing " + str(head.nid))
-                self.completed.append(head)
+        self.route_lock.acquire()
+        while last_node in self.base:
+            next_in_base = self.base[0]
+            if next_in_base == last_node:
+                distance = math.dist((next_in_base.x, next_in_base.y), pos)
+                if distance > 0.4:
+                    self.base.pop(0)
+                    self.completed.append(next_in_base)
+                break
             else:
-                pass
-                # print("Not removing " + str(head.nid) + " because dist " + str(distance))
+                self.base.pop(0)
+                self.completed.append(next_in_base)
+        self.route_lock.release()
+
         self.graph.lock.acquire()
         self.unlock_all()
         self.lock_all()
@@ -127,25 +130,40 @@ class Order:
 
     def lock_all(self):
         for node in self.base:
+            if node.lock != -1:
+                order = self.graph.get_order_by_id(node.lock)
+                if order.status != OrderStatus.ACTIVE:
+                    node.release(order)
             if not node.try_lock(self.order_id):
-                raise Exception
+                # raise Exception
+                pass
         critical_nodes, _ = self.graph.order_critical_path_membership(self)
         in_crit_path = False
         for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
             if node in critical_nodes:
                 in_crit_path = True
+            if node.lock != -1:
+                order = self.graph.get_order_by_id(node.lock)
+                if order.status != OrderStatus.ACTIVE:
+                    node.release(order)
             if not node.try_lock(self.order_id):
                 print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
-                raise Exception
+                # raise Exception
         if in_crit_path:
             for node in critical_nodes:
+                if node.lock != -1:
+                    order = self.graph.get_order_by_id(node.lock)
+                    if order.status != OrderStatus.ACTIVE:
+                        node.release(order)
                 if not node.try_lock(self.order_id):
                     print(
                         "Order " + str(self.order_id) + " tried to lock crit " + str(node.nid) + " but is locked by " + str(
                             node.lock))
-                    raise Exception
+                    # raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
+        if self.status == OrderStatus.CANCELLED:
+            return False
         if self.status == OrderStatus.CREATED:
             self.status = OrderStatus.ACTIVE
         if len(self.horizon) == 0:
@@ -157,6 +175,8 @@ class Order:
         return distance < 1.3
 
     def try_extension(self, x: float, y: float) -> bool:
+        if self.status == OrderStatus.CANCELLED:
+            return False
         if len(self.horizon) == 0:
             return False
 
@@ -170,6 +190,7 @@ class Order:
 
         success = True
         if len(nodes_part_of_crit_path) == 0:
+            self.route_lock.acquire()
             self.graph.lock.acquire()
             for node in colocking_nodes:
                 if not node.try_lock(self.order_id):
@@ -179,11 +200,13 @@ class Order:
                 self.base.append(next_node)
                 if next_node in self.horizon:
                     self.horizon.remove(next_node)
+            self.route_lock.release()
             self.unlock_all()
             self.lock_all()
             self.graph.lock.release()
 
         else:
+            self.route_lock.acquire()
             self.graph.lock.acquire()
             # We will now try to lock the entire critical path
             for node in critical_nodes:
@@ -191,6 +214,7 @@ class Order:
                     success = False
                     break
             if success:
+
                 for node in self.horizon:
                     co_lock = self.graph.find_nodes_for_colocking(node.buffer)
                     stop = False
@@ -206,6 +230,7 @@ class Order:
                         self.horizon.remove(node)
                     else:
                         break
+            self.route_lock.release()
             self.unlock_all()
             self.lock_all()
             self.graph.lock.release()
@@ -237,9 +262,7 @@ class Order:
             #         if node in self.horizon:
             #             self.horizon.remove(node)
 
-
-        # if success:
-        if False:
+        if success and self.status == OrderStatus.ACTIVE:
             mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                                 self.create_vda5050_message(self.agv).json(), 2)
 

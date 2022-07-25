@@ -23,40 +23,6 @@ class AGV:
         self.pending_orders = Queue()
         self.lock = threading.Lock()
 
-    def order_executor_thread(self):
-        while True:
-            if self.charging_status == "Charging":
-                time.sleep(10)
-                continue
-
-            # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
-            next_order = self.pending_orders.get()
-            # print("AGV is now starting on new order")
-            if next_order.status != 'CREATED':
-                continue
-
-            self.lock.acquire()
-            # print("AGV has gotten lock")
-            self.order = next_order
-            self.order.agv = self
-            # print("AGV " + str(self.aid) + " has a new order, executing now...")
-            throttle = 0
-            while self.order.extension_required(self.x, self.y):
-                if self.order.try_extension(self.x, self.y):
-                    throttle = 0
-                else:
-                    throttle += 1
-                    if throttle > 20:
-                        time.sleep(0.1)
-                    if throttle > 100:
-                        time.sleep(1)
-                        print("Throttling active")
-            self.lock.release()
-
-            self.order.sem.acquire()
-            # print("AGV " + str(self.aid) + " has finished order")
-            time.sleep(1)
-
     def has_order(self):
         # Indicates if an AGV is currently executing an order
         return self.order is not None
