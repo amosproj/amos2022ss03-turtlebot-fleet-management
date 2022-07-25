@@ -1,8 +1,9 @@
 import math
-from astar import AStar  # https://github.com/jrialland/python-astar
+from astar import AStar
 
 
 class GraphSearch(AStar):
+    """ Uses A* search in order to calculate the shortest paths from a start node to an end node. """
 
     def __init__(self, graph):
         self.graph = graph

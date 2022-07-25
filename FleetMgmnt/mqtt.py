@@ -34,7 +34,6 @@ def on_message_thread(client, userdata, msg):
     elif topic == "connection":
         update_connection_state(pr.packet_receiver_for_connection(msg.payload))
         update_agv_connection_state(pr.packet_receiver_for_connection(msg.payload))
-    # TODO Handling all the other information and topics
 
 
 def update_agv_position(state_msg):
@@ -73,7 +72,7 @@ def update_connection_state(state_msg):
 
 def update_agv_last_node_id(state_msg):
     last_node_id = state_msg.lastNodeId
-    graph.get_agv_by_id(int(state_msg.serialNumber)).update_last_nodeid(last_node_id)
+    graph.get_agv_by_id(int(state_msg.serialNumber)).update_last_node_id(last_node_id)
 
 
 def update_agv_driving_status(state_msg):

@@ -10,7 +10,7 @@ class Edge:
         self.end = end
         self.length = length
 
-    def json(self):
+    def json(self) -> str:
         return json.dumps(
             {
                 "eid": self.eid,

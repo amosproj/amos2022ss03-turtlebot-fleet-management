@@ -1,11 +1,9 @@
 import json
 import os
-import sys
 import threading
 import time
 
 import autorecharge
-import shapeltest
 import worker
 import mqtt
 from models import TurtleGraph
@@ -51,9 +49,9 @@ def main():
 
 def placeholder():
     while 1:
-        #print("Global pending orders: " + str(graph.pending_orders.qsize()))
-        #print("AGV 1 pending orders: " + str(graph.agvs[0].pending_orders.qsize()))
-        #print("AGV 2 pending orders: " + str(graph.agvs[1].pending_orders.qsize()))
+        # print("Global pending orders: " + str(graph.pending_orders.qsize()))
+        # print("AGV 1 pending orders: " + str(graph.agvs[0].pending_orders.qsize()))
+        # print("AGV 2 pending orders: " + str(graph.agvs[1].pending_orders.qsize()))
         time.sleep(1)
 
 

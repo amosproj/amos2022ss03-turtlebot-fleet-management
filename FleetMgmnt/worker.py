@@ -3,17 +3,17 @@ import json
 import math
 import random
 import time
-import mqtt
-import vda5050
 
 from flask import Response
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use("Agg")
 
+import mqtt
+import vda5050
 from models import TurtleGraph, AGV
 from models.Order import Order
 
+matplotlib.use("Agg")
 
 graph: TurtleGraph.Graph
 
@@ -45,7 +45,7 @@ def send_robot_to_node(serial, source_node, target_node):
     return "Success"
 
 
-def get_path_image(serial, source_node, target_node):#
+def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
     for edge in graph.edges:
