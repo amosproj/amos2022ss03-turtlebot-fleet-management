@@ -1,11 +1,11 @@
 import math
 import threading
 from enum import Enum
-
-from matplotlib import pyplot as plt
+from typing import List
 
 import collavoid
 import mqtt
+import shapely.geometry
 import vda5050
 from models.Node import Node
 
@@ -64,11 +64,11 @@ class Order:
             ))
             # print(n.actions)
         vda5050_order = vda5050.OrderMessage(
-            headerid=0,
+            header_id=0,
             timestamp='',
             version='',
             manufacturer='',  # All more general information, probably should not be set here
-            serialnumber=str(agv.aid),
+            serial_number=str(agv.aid),
             order_id=str(self.order_id),
             order_update_id=self.order_update_id,
             nodes=vda5050_nodes,
@@ -111,11 +111,12 @@ class Order:
         self.lock_all()
         self.graph.lock.release()
 
-    # COSP = Current Order Safety Polygon
-    # AGV position + Base
-    def get_cosp(self, virtual_ext=list()):
+    def get_cosp(self, virtual_ext: List[Node] = None) -> shapely.geometry.Polygon:
+        # COSP = Current Order Safety Polygon
+        # AGV position + Base
         base_copy = self.base.copy()
-        base_copy.extend(virtual_ext)
+        if virtual_ext is not None:
+            base_copy.extend(virtual_ext)
         if self.agv is not None:
             return collavoid.get_path_safety_buffer_polygon((self.agv.x, self.agv.y), base_copy)
         else:
@@ -157,7 +158,8 @@ class Order:
                         node.release(order)
                 if not node.try_lock(self.order_id):
                     print(
-                        "Order " + str(self.order_id) + " tried to lock crit " + str(node.nid) + " but is locked by " + str(
+                        "Order " + str(self.order_id) + " tried to lock crit " + str(
+                            node.nid) + " but is locked by " + str(
                             node.lock))
                     # raise Exception
 
@@ -268,12 +270,12 @@ class Order:
 
         return success
 
-    def get_nodes_to_drive(self):
+    def get_nodes_to_drive(self) -> List[Node]:
         # Should return all nodes that are not passed yet.
         all_nodes = self.base + self.horizon
         return list(set(all_nodes) - set(self.completed))
 
-    def serialize(self):
+    def serialize(self) -> dict:
         output = {}
         output['id'] = self.order_id
         output['update_id'] = self.order_update_id
@@ -305,18 +307,17 @@ class Order:
 
     def cancel(self):
         # Order Cancellation
-        # ToDo: Send MQTT message so the order actually stops
         self.unlock_all()
         self.status = OrderStatus.CANCELLED
         self.sem.release()
 
         if self.agv is not None:
             vda5050_order = vda5050.OrderMessage(
-                headerid=0,
+                header_id=0,
                 timestamp='',
                 version='',
                 manufacturer='',  # All more general information, probably should not be set here
-                serialnumber=str(self.agv.aid),
+                serial_number=str(self.agv.aid),
                 order_id=str(self.order_id),
                 order_update_id=self.order_update_id + 1,
                 nodes=[],

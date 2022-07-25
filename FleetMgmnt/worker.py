@@ -44,7 +44,7 @@ def send_robot_to_node(serial, source_node, target_node):
     return "Success"
 
 
-def get_path_image(serial, source_node, target_node):#
+def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
     for edge in graph.edges:

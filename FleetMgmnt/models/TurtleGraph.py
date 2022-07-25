@@ -11,13 +11,10 @@ import matplotlib
 import matplotlib.style as mpls
 
 import shapely.geometry
-
-# TODO Fix import paths
 from shapely.geometry import Polygon
 
 import vmap_importer
 import graph_search as gs
-import vda5050
 import collavoid
 
 from models.Order import Order, OrderType, OrderStatus
@@ -27,6 +24,7 @@ from models.AGV import AGV
 
 matplotlib.use("Agg")
 mpls.use("fast")
+
 
 class Graph:
     def __init__(self):
@@ -87,43 +85,43 @@ class Graph:
             # print("Order assigned directly to agv")
         return "Success"
 
-    def new_node(self, x: float, y: float, name: str = None):
+    def new_node(self, x: float, y: float, name: str = None) -> Node:
         n_node = Node(self.node_id, x, y, name)
         self.node_id += 1
         self.nodes.append(n_node)
         return n_node
 
-    def new_edge(self, start: Node, end: Node, length: float):
+    def new_edge(self, start: Node, end: Node, length: float) -> Edge:
         n_edge = Edge(self.edge_id, start, end, length)
         self.edge_id += 1
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None, connection_status=None):
-        n_agv = AGV(self, serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
+    def new_agv(self, serial: int, color: str, x: float = None, y: float = None, heading: float = None) -> AGV:
+        n_agv = AGV(self, serial, color, x, y, heading)
         self.agvs.append(n_agv)
         return n_agv
 
-    def find_node_by_id(self, nid: int):
+    def find_node_by_id(self, nid: int) -> Node:
         for node in self.nodes:
             if node.nid == nid:
                 return node
         raise Exception("Node not found, FATAL")
 
-    def find_node_by_coords(self, x: float, y: float):
+    def find_node_by_coords(self, x: float, y: float) -> Node:
         for node in self.nodes:
             if node.x == x and node.y == y:
                 return node
         raise Exception("Node not found, FATAL")
 
-    def get_agv_by_id(self, aid: int):
+    def get_agv_by_id(self, aid: int) -> AGV:
         # print("Our agvs " + str(self.agvs))
         for agv in self.agvs:
             if agv.aid == aid:
                 return agv
         raise Exception("AGV not found, FATAL")
 
-    def get_order_by_id(self, order_id: int):
+    def get_order_by_id(self, order_id: int) -> Order:
         for order in self.all_orders:
             if order.order_id == order_id:
                 return order
@@ -205,7 +203,7 @@ class Graph:
 
         return result, critical_path_buffer
 
-    def bfs(self, start: Node):
+    def bfs(self, start: Node) -> List[Node]:
         q = [start]
         visited = [start]
         while len(q) > 0:
@@ -217,35 +215,35 @@ class Graph:
                     visited.append(edge.end)
         return visited
 
-    def is_strongly_connected(self):
+    def is_strongly_connected(self) -> bool:
         num_of_nodes = len(self.nodes)
         for node in self.nodes:
             if num_of_nodes != len(self.bfs(node)):
                 return False
         return True
 
-    def get_node_edges(self, node: Node):
+    def get_node_edges(self, node: Node) -> List[Edge]:
         node_edges = list()
         for e in self.edges:
             if e.start == node:
                 node_edges.append(e)
         return node_edges
 
-    def get_stations(self):
+    def get_stations(self) -> List[Node]:
         stations = list()
         for n in self.nodes:
             if n.name is not None:
                 stations.append(n)
         return stations
 
-    def get_agvs(self):
+    def get_agvs(self) -> List[AGV]:
         agvs = list()
         for agv in self.agvs:
             if agv.aid is not None:
                 agvs.append(agv)
         return agvs
 
-    def get_active_orders(self):
+    def get_active_orders(self) -> List[Order]:
         # return []
         orders = list()
         # Alternative: Iterate over agvs and get the orders, more efficient but probably higher error potential
@@ -254,7 +252,7 @@ class Graph:
                 orders.append(order)
         return orders
 
-    def create_image(self):
+    def create_image(self) -> io.BytesIO:
         # drawing the edeges and saving fig to png takes most of the time
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
@@ -335,7 +333,7 @@ class Graph:
             time.sleep(0.1)
             # print("Map rendered in " + str(end-start))
 
-    def create_json(self):
+    def create_json(self) -> str:
         n = list()
         for node in self.nodes:
             n.append(json.loads(node.json()))

@@ -41,8 +41,8 @@ def generate_recharge_orders(graph):
                            timestamp='',
                            version='',
                            manufacturer='',
-                           serialnumber=str(agv.aid),
-                           instantActions=action_list
+                           serial_number=str(agv.aid),
+                           instant_actions=action_list
                         )
                         mqtt.client.publish(vda5050.get_mqtt_topic(str(agv.aid), vda5050.Topic.INSTANT_ACTIONS),
                                             vda5050_instant_action.json(), 2)
