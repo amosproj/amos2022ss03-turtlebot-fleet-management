@@ -1,10 +1,11 @@
-import unittest
 import random
+import unittest
 
-import main  # Needed to prevent circular imports
-from models import TurtleGraph, Order
-import vmap_importer
 import matplotlib.pyplot as plt
+
+import main  # Somehow needed to prevent circular imports
+import vmap_importer
+from models import TurtleGraph, Order
 
 
 # ---- Some helper functions ---
@@ -109,16 +110,18 @@ class TestGraphSearch(unittest.TestCase):
 class TestGraphSearch2(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
-        self.graph.vmap_lines_to_graph("maps/room_04.150_options.vmap")
+        self.graph.vmap_lines_to_graph("maps/room_04.150_curved.vmap")
 
     def test1(self):
-        # self.assertTrue(self.graph.is_strongly_connected())
-        # 191 and 192 not strongly connected -> buggy
+        output = False
+        self.assertTrue(self.graph.is_strongly_connected())
         samples = 100
-        print('-- Calculating the shortest route for', samples, 'random samples --')
+        if output:
+            print('-- Calculating the shortest route for', samples, 'random samples --')
         for _ in range(samples):
             start_node, end_node = random.choices(self.graph.nodes, k=2)
-            print(start_node.nid, '->', end_node.nid)
+            if output:
+                print(start_node.nid, '->', end_node.nid)
             nodes, edges = self.graph.get_shortest_route(start_node, end_node)
             self.assertTrue(len(nodes) > 0, 'No route found!')
             self.assertEqual(nodes[0], start_node)
@@ -168,7 +171,7 @@ class TestAlternativeGraphSearch(unittest.TestCase):
         self.assertTrue(self.graph.find_node_by_id(5) in nodes2)
 
 
-class TestNextNodeCriticalPathMembership(unittest.TestCase):
+class TestCriticalPath(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
         self.graph.vmap_lines_to_graph("maps/demo.vmap")
@@ -185,66 +188,56 @@ class TestNextNodeCriticalPathMembership(unittest.TestCase):
 
     def test_no_critical_path(self):
         self.graph.all_orders = [self.order0, self.order1]
-        critical_path = self.graph.next_node_critical_path_membership(self.nodes[1], self.order1)
-        self.assertEqual(len(critical_path), 1)
-        self.assertTrue(self.nodes[1] in critical_path)
+        critical_path = self.graph.order_critical_path_membership(self.order1)[0]
+        self.assertEqual(len(critical_path), 0)
 
     def test_critical_path(self):
         self.graph.all_orders = [self.order1, self.order2]
-        critical_path = self.graph.next_node_critical_path_membership(self.nodes[0], self.order1)
+        critical_path = self.graph.order_critical_path_membership(self.order1)[0]
         self.assertEqual(len(critical_path), 2)
         self.assertTrue(self.nodes[0] in critical_path)
         self.assertTrue(self.nodes[4] in critical_path)
 
     def test_three_orders(self):
         self.graph.all_orders = [self.order0, self.order1, self.order2]
-        # No critical path
-        cp1 = self.graph.next_node_critical_path_membership(self.nodes[1], self.order1)
-        self.assertEqual(len(cp1), 1)
-        self.assertTrue(self.nodes[1] in cp1)
-        # Critical path
-        cp2 = self.graph.next_node_critical_path_membership(self.nodes[5], self.order2)
-        self.assertTrue(self.nodes[5] in cp2)
-        self.assertTrue(self.nodes[11] in cp2)
-        self.assertFalse(self.nodes[0] in cp2)
-        self.assertEqual(len(cp2), 2)
+        critical_path = self.graph.order_critical_path_membership(self.order2)[0]
+        self.assertTrue(self.nodes[5] in critical_path)
+        self.assertTrue(self.nodes[0] in critical_path)
+        self.assertFalse(self.nodes[14] in critical_path)
+        self.assertTrue(len(critical_path) >= 4)
 
 
 class TestNextNodeCriticalPathMembershipCurvedGraph(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
-        self.graph.vmap_lines_to_graph("maps/room_04.150_curved_old.vmap")
-        self.nodes = {}
+        self.graph.vmap_lines_to_graph("maps/room_04.150_curved.vmap")
         # Create dict with nodes for easier access
+        self.nodes = {}
         for n in self.graph.nodes:
             self.nodes[n.nid] = n
-        self.order0 = create_mock_order(self.graph, self.nodes[62], self.nodes[53])
+        # charge_2 -> pick_up
+        self.order0 = create_mock_order(self.graph, self.nodes[61], self.nodes[52])
+        # idle_2 -> dropoff
         self.order1 = create_mock_order(self.graph, self.nodes[138], self.nodes[127])
-        self.order2 = create_mock_order(self.graph, self.nodes[53], self.nodes[111])
-
-    def test_no_critical_path(self):
-        self.graph.all_orders = [self.order1, self.order2]
-        critical_path = self.graph.next_node_critical_path_membership(self.nodes[138], self.order1)
-        self.assertEqual(len(critical_path), 1)
-        self.assertTrue(self.nodes[138] in critical_path)
+        # pick_up -> charge_1
+        self.order2 = create_mock_order(self.graph, self.nodes[52], self.nodes[118])
 
     def test_critical_path(self):
         self.graph.all_orders = [self.order0, self.order1]
-        critical_path = self.graph.next_node_critical_path_membership(self.nodes[2], self.order1)
+        critical_path = self.graph.order_critical_path_membership(self.order1)[0]
         # Visualization of critical path for debug and understanding issues
         # visualize_path(self.graph, critical_path, [self.nodes[2]])
         self.assertTrue(len(critical_path) > 5)
-        self.assertTrue(self.nodes[2] in critical_path)
+        self.assertTrue(self.nodes[44] in critical_path)
 
     def test_critical_path2(self):
-        self.graph.all_orders = [self.order0, self.order1]
-        critical_path = self.graph.next_node_critical_path_membership(self.nodes[53], self.order2)
+        self.graph.all_orders = [self.order0, self.order1, self.order2]
+        critical_path = self.graph.order_critical_path_membership(self.order2)[0]
         # visualize_path(self.graph, critical_path)
         self.assertTrue(len(critical_path) > 1)
-        self.assertTrue(self.nodes[53] in critical_path)
-        self.assertFalse(self.nodes[111] in critical_path)
+        self.assertTrue(self.nodes[52] in critical_path)
+        self.assertFalse(self.nodes[118] in critical_path)
 
 
 if __name__ == '__main__':
-    # Tests somehow doesn't pass when executing all at once. But if you run it one by one all the tests pass
     unittest.main()

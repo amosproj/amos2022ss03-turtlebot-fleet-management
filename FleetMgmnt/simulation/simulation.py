@@ -1,4 +1,3 @@
-import json
 import sys
 import threading
 import time
@@ -7,6 +6,11 @@ import paho.mqtt.client as mqtt
 
 client = mqtt.Client()
 
+""" Replays recorded MQTT messages to simulate a robot. """
+
+
+
+""" Replays recorded MQTT messages to simulate a robot. """
 
 def read_input():
     x = len("AMOS/v1/TurtleBot/1/state b'")

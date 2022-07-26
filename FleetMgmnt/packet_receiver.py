@@ -1,15 +1,20 @@
-import vda5050
 import json
+from typing import List
+
+import vda5050
+
+""" Functions for converting received messages from json into an VDA5050 object. """
 
 
+""" Converts a received message from json into an VDA5050 object """
 def key_for_value(d, key):
-    """Return a key in `d` having a value of `value`."""
+    """ Return a key in `d` having a value of `value`. """
     for k, v in d.items():
         if k == key:
             return v
 
 
-def packet_receiver_for_connection(json_string: str):
+def packet_receiver_for_connection(json_string: str) -> vda5050.ConnectionMessage:
     connection_dict = json.loads(json_string)
     header_id_value = key_for_value(connection_dict, "headerId")
     timestamp_value = key_for_value(connection_dict, "timestamp")
@@ -23,7 +28,7 @@ def packet_receiver_for_connection(json_string: str):
     return connection
 
 
-def packet_receiver_for_state(json_string: str):
+def packet_receiver_for_state(json_string: str) -> vda5050.StateMessage:
     state_dict = json.loads(json_string)
     header_id_value = key_for_value(state_dict, "headerId")
     timestamp_value = key_for_value(state_dict, "timestamp")
@@ -66,7 +71,7 @@ def packet_receiver_for_state(json_string: str):
                                 distance_since_last_node=distance_since_last_node_value)
 
 
-def packet_receiver_for_battery_state(json_battery_state: str):
+def packet_receiver_for_battery_state(json_battery_state: str) -> vda5050.BatteryState:
     battery_charge_value = key_for_value(json_battery_state, "batteryCharge")
     battery_voltage_value = key_for_value(json_battery_state, "batteryVoltage")
     battery_health_value = key_for_value(json_battery_state, "batteryHealth")
@@ -77,7 +82,7 @@ def packet_receiver_for_battery_state(json_battery_state: str):
                                 battery_health_value)
 
 
-def packet_receiver_for_velocity(json_velocity: str):
+def packet_receiver_for_velocity(json_velocity: str) -> vda5050.Velocity:
     vx_value = key_for_value(json_velocity, "vx")
     vy_value = key_for_value(json_velocity, "vy")
     omega_value = key_for_value(json_velocity, "omega")
@@ -85,21 +90,21 @@ def packet_receiver_for_velocity(json_velocity: str):
     return vda5050.Velocity(vx_value, vy_value, omega_value)
 
 
-def packet_receiver_for_agv_position(json_avg_position: str):
+def packet_receiver_for_agv_position(json_avg_position: str) -> vda5050.AgvPosition:
     x_value = key_for_value(json_avg_position, "x")
     y_value = key_for_value(json_avg_position, "y")
     theta_value = key_for_value(json_avg_position, "theta")
     map_id_value = key_for_value(json_avg_position, "mapId")
     map_desc_value = key_for_value(json_avg_position, "mapDescription")
     pos_init_value = key_for_value(json_avg_position, "positionInitialized")
-    locscore_value = key_for_value(json_avg_position, "localizationScore")
+    loc_score_value = key_for_value(json_avg_position, "localizationScore")
     deviation_range_value = key_for_value(json_avg_position, "deviationRange")
 
     return vda5050.AgvPosition(pos_init_value, x_value, y_value, theta_value, map_id_value, map_desc_value,
-                               locscore_value, deviation_range_value)
+                               loc_score_value, deviation_range_value)
 
 
-def packet_receiver_for_edge_states(json_list):
+def packet_receiver_for_edge_states(json_list: List[str]) -> List[vda5050.EdgeState]:
     edge_states = []
     for edges in json_list:
         edge_id_value = key_for_value(edges, "edgeId")
@@ -107,30 +112,14 @@ def packet_receiver_for_edge_states(json_list):
         edge_description_value = key_for_value(edges, "edgeDescription")
         released_value = key_for_value(edges, "released")
         trajectory_str = key_for_value(edges, "trajectory")
-        trajectory_value = packet_receiver_for_trajectory(trajectory_str)
+        trajectory_value = None
         edge_states_temp = vda5050.EdgeState(edge_id_value, sequence_id_value, released_value, edge_description_value,
                                              trajectory_value)
         edge_states.append(edge_states_temp)
     return edge_states
 
 
-def packet_receiver_for_trajectory(json_trajectory: str):
-    degree_value = key_for_value(json_trajectory, "degree")
-    knot_vector_value = key_for_value(json_trajectory, "knotVector")
-    control_points_str = key_for_value(json_trajectory, "controlPoints")
-    controlPoints_value = packet_receiver_for_control_points(control_points_str)
-    return None
-
-
-def packet_receiver_for_control_points(json_list_control_points):
-    for points in json_list_control_points:
-        x_value = key_for_value(points, "x")
-        y_value = key_for_value(points, "y")
-        weight_value = key_for_value(points, "weight")
-    return None
-
-
-def packet_receiver_for_node_states(json_list):
+def packet_receiver_for_node_states(json_list: List[str]) -> List[vda5050.NodeState]:
     node_states = []
     for nodes in json_list:
         node_id_value = key_for_value(nodes, "nodeId")
@@ -146,22 +135,10 @@ def packet_receiver_for_node_states(json_list):
     return node_states
 
 
-def packet_receiver_for_node_position(json_node_position: str):
+def packet_receiver_for_node_position(json_node_position: str) -> vda5050.NodePosition:
     x_value = key_for_value(json_node_position, "x")
     y_value = key_for_value(json_node_position, "y")
     theta_value = key_for_value(json_node_position, "theta")
     map_id_value = key_for_value(json_node_position, "mapId")
     node_position = vda5050.NodePosition(x_value, y_value, map_id_value, theta=theta_value)
     return node_position
-
-
-# Below comments are for test purpose : Removed before the Release
-
-#with open('VADA5050_State.json', 'r') as file:
- #   connection_data= json.load(file)
-#json_string = json.dumps(connection_data)
-
-#state=packet_receiver_for_state(json_string)
-
-
-

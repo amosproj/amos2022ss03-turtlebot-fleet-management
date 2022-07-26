@@ -9,6 +9,8 @@ from models import TurtleGraph
 app = Flask(__name__)
 graph = TurtleGraph.Graph()
 
+""" Starts a webserver using Flask and forwards the requests from the frontend to the designated modules. """
+
 
 def start(real_graph):
     global graph
@@ -49,12 +51,17 @@ def graph_json():
     return Response(graph.create_json(), mimetype="application/json")
 
 
+@app.route("/api/graph/edges")
+def graph_edges_json():
+    return Response(json.dumps(worker.get_node_for_graph()), mimetype="application/json")
+
+
 @app.route("/api/graph/stations")
 def graph_stations():
     return Response(json.dumps(worker.get_stations()), mimetype="application/json")
 
 
-@app.route("/api/agvs")
+@app.route("/api/agv")
 def get_agv_info():
     return Response(json.dumps(worker.get_agv_info()), mimetype="application/json")
 
@@ -87,16 +94,13 @@ def resend_order(order_id):
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
 def robot_send_to(robot_serial, source_node_id, target_node_id):
-    # ToDo: This is a legacy API endpoint and should be removed or changed before final release
-    # return worker.send_robot_to_node(robot_serial, source_node_id, target_node_id)
     return graph.append_new_order(source_node_id, target_node_id, robot_serial)
 
 
 @app.get("/api/agv/<robot_serial>/pathDisplay/<source_node_id>/<target_node_id>")
 def robot_send_to_path(robot_serial, source_node_id, target_node_id):
-    # ToDo: This is a legacy API endpoint and should be removed or changed before final release
     return worker.get_path_image(robot_serial, source_node_id, target_node_id)
-    # return str(robot_serial) + " " + str(target_node_id)
+
 
 
 @app.route("/")
