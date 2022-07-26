@@ -4,6 +4,7 @@ from threading import Lock
 from typing import Any, List, Union
 
 
+""" Implements VDA5050 spec. """
 class Topic(str, Enum):
     CONNECTION = "connection"
     FACTSHEET = "factsheet"

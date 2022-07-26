@@ -5,6 +5,7 @@ import mqtt
 import vda5050
 
 
+""" Handels automatic recharging of the turtlebots. """
 def add_start_charging_action(node):
     node.actions.append(vda5050.Action("startCharging", "0", "SOFT"))
 

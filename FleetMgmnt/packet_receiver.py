@@ -4,6 +4,7 @@ import json
 import vda5050
 
 
+""" Converts a received message from json into an VDA5050 object """
 def key_for_value(d, key):
     """Return a key in `d` having a value of `value`."""
     for k, v in d.items():

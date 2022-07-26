@@ -12,19 +12,7 @@ def get_path_safety_buffer_polygon(agv_pos: (float, float), path: List[Node]) ->
         return path[0].buffer
 
     coordinates = list()
-    if agv_pos[0] is not None:
-        pass
-        # coordinates.append(agv_pos)
     for node in path:
         coordinates.append((node.x, node.y))
     linestring = LineString(coordinates)
     return linestring.buffer(SAFETY_BUFFER_NODE)
-
-
-def get_nodes_colliding_with_polygon(polygon: Polygon) -> List[Node]:
-    raise Exception
-    positive = list()
-    for node in main.graph.nodes:
-        if node.buffer.intersects(polygon):
-            positive.append(node)
-    return positive

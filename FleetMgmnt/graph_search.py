@@ -38,13 +38,13 @@ class GraphSearch(AStar):
         return route_nodes, route_edges
 
     def neighbors(self, node):
-        """ [Override] For a given node, returns the list of its neighbors. """
+        """ Returns the list of neighbors for a given node. """
         edges = self.graph.get_node_edges(node)
         neighbors = [e.end for e in edges if e.end not in self.excluded_nodes]
         return neighbors
 
     def distance_between(self, n1, n2):
-        """ [Override] Gives the real distance/cost between two adjacent nodes n1 and n2. """
+        """ Gives the real distance/cost between two adjacent nodes n1 and n2. """
         edges = self.graph.get_node_edges(n1)
         for e in edges:
             if e.end.nid == n2.nid:
@@ -52,9 +52,9 @@ class GraphSearch(AStar):
         return math.inf
 
     def heuristic_cost_estimate(self, current, goal):
-        """ [Override] Computes the estimated distance/cost between a node and the goal. """
+        """ Computes the estimated distance/cost between a node and the goal. """
         return math.sqrt((current.x - goal.x) ** 2 + (current.y - goal.y) ** 2)
 
     def is_goal_reached(self, current, goal):
-        """ [Override] This method shall return a truthy value when the goal is 'reached'. """
+        """ Returns a truthy value when the goal is 'reached'. """
         return current.nid == goal.nid
