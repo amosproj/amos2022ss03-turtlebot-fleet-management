@@ -17,33 +17,7 @@ from models.Order import Order, OrderType
 graph: TurtleGraph.Graph
 
 
-def send_robot_to_node(serial, source_node, target_node):
-    source = graph.find_node_by_id(int(source_node))
-    target = graph.find_node_by_id(int(target_node))
-    nodes, edges = graph.get_shortest_route(source, target)
-
-    # order3 = main.graph.create_vda5050_order(nodes, edges, serial)
-    agv = graph.get_agv_by_id(int(serial))
-
-    new_order = Order(graph, source, target)
-    agv.order = new_order
-    new_order.agv = agv
-    print(new_order.completed)
-    print(new_order.base)
-    print(new_order.horizon)
-
-    new_order.try_extension(0, 0)
-
-    print(new_order.completed)
-    print(new_order.base)
-    print(new_order.horizon)
-
-    msg = new_order.create_vda5050_message(agv)
-    mqtt.client.publish(vda5050.get_mqtt_topic(str(serial), vda5050.Topic.ORDER), msg.json(), 2)
-
-    return "Success"
-
-
+""" Handels api requests. """
 def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()

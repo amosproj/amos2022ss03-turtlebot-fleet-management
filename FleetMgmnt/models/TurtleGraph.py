@@ -27,6 +27,7 @@ matplotlib.use("Agg")
 mpls.use("fast")
 
 
+""" Contains the state of the graph. """
 class Graph:
     def __init__(self):
         self.nodes = list()
@@ -170,12 +171,7 @@ class Graph:
         result = list()
         for node in self.nodes:
             if polygon.intersects(node.buffer):
-            # if polygon.contains(node.spoint):
                 result.append(node)
-        #if order is not None:
-        #    for node in result:
-        #        critical = self.next_node_critical_path_membership(node, order)
-        #        result = critical + result
         return result
 
     def order_critical_path_membership(self, order: Order) -> (List[Node], Polygon):
@@ -254,7 +250,6 @@ class Graph:
         return agvs
 
     def get_active_orders(self) -> List[Order]:
-        # return []
         orders = list()
         # Alternative: Iterate over agvs and get the orders, more efficient but probably higher error potential
         for order in self.all_orders:

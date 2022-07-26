@@ -26,6 +26,7 @@ class OrderType(str, Enum):
     RECHARGE = 'RECHARGE'
 
 
+""" Contains the state of a order. """
 class Order:
 
     def __init__(self, graph, start: Node, end: Node, order_type: OrderType = OrderType.NORMAL):
@@ -112,8 +113,6 @@ class Order:
         self.graph.lock.release()
 
     def get_cosp(self, virtual_ext: List[Node] = None) -> shapely.geometry.Polygon:
-        # COSP = Current Order Safety Polygon
-        # AGV position + Base
         base_copy = self.base.copy()
         if virtual_ext is not None:
             base_copy.extend(virtual_ext)
@@ -236,33 +235,6 @@ class Order:
             self.unlock_all()
             self.lock_all()
             self.graph.lock.release()
-
-            # base_append = list()
-            # print(set(critical_nodes) & set(self.horizon))
-            # initial = True
-            # for node in self.horizon:
-            #     if initial or node in critical_nodes:
-            #         print("Appending " + str(node) + " is  next")
-            #         initial = False
-            #         base_append.append(node)
-            #     else:
-            #         print("Node " + str(node) + " is not next")
-            #         break
-            # virtual_cosp = self.get_cosp(base_append)
-            # colocking_nodes = self.graph.find_nodes_for_colocking(virtual_cosp)
-            #
-            #
-            # for node in colocking_nodes:
-            #     if not node.try_lock(self.order_id):
-            #         success = False
-            #         print("Extension error crit")
-            #         break
-            # if success:
-            #     print("We are appending " + str(base_append))
-            #     for node in base_append:
-            #         self.base.append(node)
-            #         if node in self.horizon:
-            #             self.horizon.remove(node)
 
         if success and self.status == OrderStatus.ACTIVE:
             mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),

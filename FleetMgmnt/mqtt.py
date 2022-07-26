@@ -11,6 +11,7 @@ graph: TurtleGraph.Graph
 map_name = ""
 
 
+""" Connects to MQTT broker and handels incoming messages from turtlebot. """
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")

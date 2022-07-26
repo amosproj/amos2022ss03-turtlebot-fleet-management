@@ -3,6 +3,7 @@ import json
 from models.Node import Node
 
 
+""" Contains the state of a edge between two nodes. """
 class Edge:
     def __init__(self, eid: int, start: Node, end: Node, length: float):
         self.eid = eid
