@@ -103,11 +103,6 @@ def robot_send_to_path(robot_serial, source_node_id, target_node_id):
     return worker.get_path_image(robot_serial, source_node_id, target_node_id)
 
 
-@app.get("/api/agv/<robot_serial>/coordinate_pathDisplay/<source_node_id>/<target_node_id>")
-def robot_send_to_coordinate(robot_serial, source_node_id, target_node_id):
-    return worker.get_path_coordinate(robot_serial, source_node_id, target_node_id)
-
-
 @app.route("/")
 def serve_index():
     return send_from_directory("./WebUI", "index.html")

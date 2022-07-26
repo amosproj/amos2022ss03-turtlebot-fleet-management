@@ -11,9 +11,11 @@ import matplotlib
 import mqtt
 import vda5050
 from models import TurtleGraph, AGV
-from models.Order import Order
+
 
 matplotlib.use("Agg")
+from models.Order import Order, OrderType
+
 
 graph: TurtleGraph.Graph
 
@@ -128,17 +130,60 @@ def order_distributor(real_graph):
             selected_agv = graph.get_agv_by_id(target)
             print('Random choose of agv')
 
-        distance = 0
-        if selected_agv.x is not None:
-            distance = math.dist((selected_agv.x, selected_agv.y), (next_order.start.x, next_order.start.y))
-        if distance > 1:
-            nearest = graph.get_nearest_node_from_agv(selected_agv)
-            reloc_order = Order(graph, nearest, next_order.start)
-            selected_agv.pending_orders.put(reloc_order)
-            # print("Relocation order also created")
         selected_agv.pending_orders.put(next_order)
         # print("Put order into queue for  " + str(selected_agv.aid) + ' ' + str(selected_agv) + ' ' + str(
         #    selected_agv.pending_orders))
+        time.sleep(1)
+
+
+def create_order_helper(start, end):
+    return Order(graph, start, end, OrderType.RELOCATION)
+
+
+def agv_order_executor_thread(agv):
+    while True:
+        if agv.charging_status == "Charging":
+            time.sleep(10)
+            continue
+
+        # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
+        next_order = agv.pending_orders.get()
+        # print("AGV is now starting on new order")
+        if next_order.status != 'CREATED':
+            continue
+
+        agv.lock.acquire()
+
+        distance = 0
+        if agv.x is not None:
+            distance = math.dist((agv.x, agv.y), (next_order.start.x, next_order.start.y))
+        if distance > 1:
+            nearest = agv.graph.get_nearest_node_from_agv(agv)
+            reloc_order = create_order_helper(nearest, next_order.start)
+            agv.pending_orders.put(reloc_order)
+            agv.pending_orders.put(next_order)
+            agv.lock.release()
+            continue
+
+        # print("AGV has gotten lock")
+        agv.order = next_order
+        agv.order.agv = agv
+        # print("AGV " + str(self.aid) + " has a new order, executing now...")
+        throttle = 0
+        while agv.order.extension_required(agv.x, agv.y):
+            if agv.order.try_extension(agv.x, agv.y):
+                throttle = 0
+            else:
+                throttle += 1
+                if throttle > 20:
+                    time.sleep(0.1)
+                if throttle > 100:
+                    time.sleep(1)
+                    print("Throttling active")
+        agv.lock.release()
+
+        agv.order.sem.acquire()
+        # print("AGV " + str(self.aid) + " has finished order")
         time.sleep(1)
 
 
