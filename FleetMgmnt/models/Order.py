@@ -202,7 +202,7 @@ class Order:
         else:
             self.route_lock.acquire()
             self.graph.lock.acquire()
-            # We will now try to lock the entire critical path
+            """ We will now try to lock the entire critical path """
             for node in critical_nodes:
                 if not node.try_lock(self.order_id):
                     success = False
