@@ -24,6 +24,7 @@ matplotlib.use("Agg")
 mpls.use("fast")
 
 
+""" Contains the state of the graph. """
 class Graph:
     """ Contains the state of the graph which represents the driving course. """
 

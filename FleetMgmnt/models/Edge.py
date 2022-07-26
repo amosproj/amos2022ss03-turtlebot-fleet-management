@@ -3,6 +3,7 @@ import json
 from models.Node import Node
 
 
+""" Contains the state of a edge between two nodes. """
 class Edge:
     """ Represents an edge between two nodes in the graph. """
 

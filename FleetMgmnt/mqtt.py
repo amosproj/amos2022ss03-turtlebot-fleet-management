@@ -14,6 +14,7 @@ map_name = ""
 """ Connects to MQTT broker and handles incoming messages from turtlebot. """
 
 
+""" Connects to MQTT broker and handels incoming messages from turtlebot. """
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")
