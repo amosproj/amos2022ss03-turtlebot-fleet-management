@@ -1,32 +1,32 @@
 import io
 import json
 import math
-import time
 import threading
+import time
 from queue import Queue
 from typing import List
 
-import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.style as mpls
-
-import shapely.geometry
-
-# TODO Fix import paths
-import vmap_importer
-import graph_search as gs
-import vda5050
 import collavoid
-
-from models.Order import Order, OrderType, OrderStatus
+import graph_search as gs
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.style as mpls
+import recharge
+import shapely.geometry
+import vmap_importer
+from models.AGV import AGV
 from models.Edge import Edge
 from models.Node import Node
-from models.AGV import AGV
+from models.Order import Order, OrderType, OrderStatus
+from shapely.geometry import Polygon
 
 matplotlib.use("Agg")
 mpls.use("fast")
 
+
 class Graph:
+    """ Contains the state of the graph which represents the driving course. """
+
     def __init__(self):
         self.nodes = list()
         self.edges = list()
@@ -58,15 +58,24 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
-    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
+    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None,
+                         order_type: OrderType = OrderType.NORMAL):
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
-        order = Order(self, start, end)
+
+        order = Order(self, start, end, order_type)
         if agv_id is None:
             order.agv = None
             self.pending_orders.put(order)
         elif 'AUTO' in agv_id:
             order.agv = self.get_agv_by_id(int(agv_id[-1]))
+
+            if start.name is not None and "charge" in start.name:
+                recharge.generate_stop_charging_action(order.agv)
+
+            if end.name is not None and "charge" in end.name:
+                recharge.add_start_charging_action(end)
+
             self.pending_orders.put(order)
         else:
             # If an agv is already assigned to the order, set this field in order
@@ -80,55 +89,52 @@ class Graph:
                 nearest = self.get_nearest_node_from_agv(agv)
                 reloc_order = Order(self, nearest, order.start, OrderType.RELOCATION)
                 agv.pending_orders.put(reloc_order)
-                # print("Relocation order also created")
             agv.pending_orders.put(order)
-            # print("Order assigned directly to agv")
         return "Success"
 
-    def new_node(self, x: float, y: float, name: str = None):
+    def new_node(self, x: float, y: float, name: str = None) -> Node:
         n_node = Node(self.node_id, x, y, name)
         self.node_id += 1
         self.nodes.append(n_node)
         return n_node
 
-    def new_edge(self, start: Node, end: Node, length: float):
+    def new_edge(self, start: Node, end: Node, length: float) -> Edge:
         n_edge = Edge(self.edge_id, start, end, length)
         self.edge_id += 1
         self.edges.append(n_edge)
         return n_edge
 
-    def new_agv(self, serial: int, color: str, x=None, y=None, heading=None, agv_status=None, battery_level=None, charging_status=None, velocity=None, last_node_id=None, driving_status=None, connection_status=None):
-        n_agv = AGV(self, serial, color, x, y, heading, battery_level, charging_status, velocity, last_node_id, driving_status, connection_status)
+    def new_agv(self, serial: int, color: str, x: float = None, y: float = None, heading: float = None) -> AGV:
+        n_agv = AGV(self, serial, color, x, y, heading)
         self.agvs.append(n_agv)
         return n_agv
 
-    def find_node_by_id(self, nid: int):
+    def find_node_by_id(self, nid: int) -> Node:
         for node in self.nodes:
             if node.nid == nid:
                 return node
         raise Exception("Node not found, FATAL")
 
-    def find_node_by_coords(self, x: float, y: float):
+    def find_node_by_coords(self, x: float, y: float) -> Node:
         for node in self.nodes:
             if node.x == x and node.y == y:
                 return node
         raise Exception("Node not found, FATAL")
 
-    def get_agv_by_id(self, aid: int):
-        # print("Our agvs " + str(self.agvs))
+    def get_agv_by_id(self, aid: int) -> AGV:
         for agv in self.agvs:
             if agv.aid == aid:
                 return agv
         raise Exception("AGV not found, FATAL")
 
-    def get_order_by_id(self, order_id: int):
+    def get_order_by_id(self, order_id: int) -> Order:
         for order in self.all_orders:
             if order.order_id == order_id:
                 return order
         raise Exception("Order not found, FATAL")
 
     def get_free_agvs(self) -> List[AGV]:
-        # Returns a list of all agvs, which are currently not executing an order
+        """ Returns a list of all agvs, which are currently not executing an order. """
         free_agvs = []
         for agv in self.agvs:
             if agv.connection_status == 'ONLINE' and not agv.has_order():
@@ -136,42 +142,43 @@ class Graph:
         return free_agvs
 
     def get_nearest_free_agv(self, node: Node) -> AGV:
+        """ Return the nearest free agv from the given node. """
         min_dist = math.inf
         nearest_agv = None
         for agv in self.get_free_agvs():
-            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            dist = math.sqrt((agv.x - node.x) ** 2 + (agv.y - node.y) ** 2)
             if dist < min_dist:
                 min_dist = dist
                 nearest_agv = agv
         return nearest_agv
 
     def get_nearest_node_from_agv(self, agv: AGV) -> Node:
+        """ Returns the nearest node from the given agv. """
         min_dist = math.inf
         nearest_node = None
-        # Is there a more efficient way than iterating over all the nodes?
         for node in self.nodes:
-            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            dist = math.sqrt((agv.x - node.x) ** 2 + (agv.y - node.y) ** 2)
             if dist < min_dist:
                 min_dist = dist
                 nearest_node = node
         return nearest_node
 
-    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon, order: Order = None) -> List[Node]:
+    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
         result = list()
         for node in self.nodes:
-            #if polygon.intersects(node.buffer):
-            if polygon.contains(node.spoint):
+            if polygon.intersects(node.buffer):
                 result.append(node)
-        #if order is not None:
-        #    for node in result:
-        #        critical = self.next_node_critical_path_membership(node, order)
-        #        result = critical + result
         return result
 
-    def next_node_critical_path_membership(self, node: Node, order: Order) -> List[Node]:
-        # return [node]
-        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.agv.x, order.agv.y),
+    def order_critical_path_membership(self, order: Order) -> (List[Node], Polygon):
+        result = []
+        order_path_buffer = collavoid.get_path_safety_buffer_polygon((order.start.x, order.start.y),
                                                                      order.get_nodes_to_drive())
+        order_locklist = self.find_nodes_for_colocking(order_path_buffer)
+
+        for node in order_locklist:
+            order_path_buffer = order_path_buffer.union(node.buffer)
+
         critical_path_buffer = None
 
         for order2 in self.all_orders:
@@ -182,28 +189,23 @@ class Graph:
                 # Order shouldn't have critical path with itself
                 continue
 
-            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.agv.x, order2.agv.y),
+            order2_path_buffer = collavoid.get_path_safety_buffer_polygon((order2.start.x, order2.start.y),
                                                                           order2.get_nodes_to_drive())
+            order2_locklist = self.find_nodes_for_colocking(order2_path_buffer)
+
+            for node in order2_locklist:
+                order2_path_buffer = order2_path_buffer.union(node.buffer)
 
             intersection = order_path_buffer.intersection(order2_path_buffer)
+            critical_path_buffer = intersection
 
-            if intersection.contains(node.spoint):
-                if critical_path_buffer is None:
-                    critical_path_buffer = intersection
-                else:
-                    critical_path_buffer = critical_path_buffer.union(intersection)
+            for node in self.nodes:
+                if intersection.contains(node.spoint):
+                    result.append(node)
 
-        if critical_path_buffer is None:
-            return [node]
+        return result, critical_path_buffer
 
-        critical_path = []
-        for n in self.nodes:
-            if n.buffer.intersects(critical_path_buffer):
-                critical_path.append(n)
-
-        return critical_path
-
-    def bfs(self, start: Node):
+    def bfs(self, start: Node) -> List[Node]:
         q = [start]
         visited = [start]
         while len(q) > 0:
@@ -215,36 +217,35 @@ class Graph:
                     visited.append(edge.end)
         return visited
 
-    def is_strongly_connected(self):
+    def is_strongly_connected(self) -> bool:
         num_of_nodes = len(self.nodes)
         for node in self.nodes:
             if num_of_nodes != len(self.bfs(node)):
                 return False
         return True
 
-    def get_node_edges(self, node: Node):
+    def get_node_edges(self, node: Node) -> List[Edge]:
         node_edges = list()
         for e in self.edges:
             if e.start == node:
                 node_edges.append(e)
         return node_edges
 
-    def get_stations(self):
+    def get_stations(self) -> List[Node]:
         stations = list()
         for n in self.nodes:
             if n.name is not None:
                 stations.append(n)
         return stations
 
-    def get_agvs(self):
+    def get_agvs(self) -> List[AGV]:
         agvs = list()
         for agv in self.agvs:
             if agv.aid is not None:
                 agvs.append(agv)
         return agvs
 
-    def get_active_orders(self):
-        # return []
+    def get_active_orders(self) -> List[Order]:
         orders = list()
         # Alternative: Iterate over agvs and get the orders, more efficient but probably higher error potential
         for order in self.all_orders:
@@ -252,7 +253,7 @@ class Graph:
                 orders.append(order)
         return orders
 
-    def create_image(self):
+    def create_image(self) -> io.BytesIO:
         # drawing the edeges and saving fig to png takes most of the time
         fig1, ax1 = plt.subplots()
         plt_io = io.BytesIO()
@@ -296,29 +297,8 @@ class Graph:
                     color=agv.color
                 )
             if agv.order is not None:
-                x1, y1 = agv.order.lastCosp.exterior.xy
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
-                ax1.plot(x1, y1, color='black')
-        for cur_order in self.get_active_orders():
-            color = cur_order.agv.color
-            # for edge in cur_order.edges:
-            #     start = self.find_node_by_id(int(edge.startNodeId))
-            #     end = self.find_node_by_id(int(edge.endNodeId))
-            #     if edge.released:
-            #         ax1.plot(
-            #             [start.x, end.x],
-            #             [start.y, end.y],
-            #             color=color,
-            #         )
-            #     else:
-            #         ax1.plot(
-            #             [start.x, end.x],
-            #             [start.y, end.y],
-            #             color=color,
-            #             linestyle="--",
-            #             alpha=0.5
-            #         )
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
@@ -327,13 +307,10 @@ class Graph:
 
     def create_map_thread(self):
         while True:
-            start = time.time()
             self.image = self.create_image()
-            end = time.time()
-            time.sleep(1)
-            # print("Map rendered in " + str(end-start))
+            time.sleep(0.1)
 
-    def create_json(self):
+    def create_json(self) -> str:
         n = list()
         for node in self.nodes:
             n.append(json.loads(node.json()))

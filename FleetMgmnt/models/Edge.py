@@ -4,13 +4,15 @@ from models.Node import Node
 
 
 class Edge:
+    """ Represents an edge between two nodes in the graph. """
+
     def __init__(self, eid: int, start: Node, end: Node, length: float):
         self.eid = eid
         self.start = start
         self.end = end
         self.length = length
 
-    def json(self):
+    def json(self) -> str:
         return json.dumps(
             {
                 "eid": self.eid,
