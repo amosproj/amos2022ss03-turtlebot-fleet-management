@@ -1,13 +1,12 @@
 import json
 import os
 import threading
-import time
 
-import recharge
-import worker
 import mqtt
-from models import TurtleGraph
+import recharge
 import webserver
+import worker
+from models import TurtleGraph
 
 
 def launch_thread(target_function, args):
@@ -36,23 +35,14 @@ def main():
 
     for agv in config['agvs']:
         n_agv = graph.new_agv(int(agv['serial']), agv['color'])
-        launch_thread(worker.agv_order_executor_thread, (n_agv, ))
+        launch_thread(worker.agv_order_executor_thread, (n_agv,))
 
-    launch_thread(webserver.start, (graph, ))
+    launch_thread(webserver.start, (graph,))
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
                                  config['mqtt']['username'], config['mqtt']['password'], config['map'], graph))
-    launch_thread(worker.order_distributor, (graph, ))
-    launch_thread(recharge.generate_recharge_orders, (graph, ))
+    launch_thread(worker.order_distributor, (graph,))
+    launch_thread(recharge.generate_recharge_orders, (graph,))
     launch_thread(graph.create_map_thread, ())
-    launch_thread(placeholder, ())  # Example
-
-
-def placeholder():
-    while 1:
-        # print("Global pending orders: " + str(graph.pending_orders.qsize()))
-        # print("AGV 1 pending orders: " + str(graph.agvs[0].pending_orders.qsize()))
-        # print("AGV 2 pending orders: " + str(graph.agvs[1].pending_orders.qsize()))
-        time.sleep(1)
 
 
 if __name__ == "__main__":

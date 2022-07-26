@@ -1,12 +1,13 @@
-from typing import List
 import json
+from typing import List
 
 import vda5050
 
+""" Functions for converting received messages from json into an VDA5050 object. """
 
-""" Converts a received message from json into an VDA5050 object """
+
 def key_for_value(d, key):
-    """Return a key in `d` having a value of `value`."""
+    """ Return a key in `d` having a value of `value`. """
     for k, v in d.items():
         if k == key:
             return v
@@ -110,27 +111,11 @@ def packet_receiver_for_edge_states(json_list: List[str]) -> List[vda5050.EdgeSt
         edge_description_value = key_for_value(edges, "edgeDescription")
         released_value = key_for_value(edges, "released")
         trajectory_str = key_for_value(edges, "trajectory")
-        trajectory_value = packet_receiver_for_trajectory(trajectory_str)
+        trajectory_value = None
         edge_states_temp = vda5050.EdgeState(edge_id_value, sequence_id_value, released_value, edge_description_value,
                                              trajectory_value)
         edge_states.append(edge_states_temp)
     return edge_states
-
-
-def packet_receiver_for_trajectory(json_trajectory: str):
-    degree_value = key_for_value(json_trajectory, "degree")
-    knot_vector_value = key_for_value(json_trajectory, "knotVector")
-    control_points_str = key_for_value(json_trajectory, "controlPoints")
-    controlPoints_value = packet_receiver_for_control_points(control_points_str)
-    return None
-
-
-def packet_receiver_for_control_points(json_list_control_points):
-    for points in json_list_control_points:
-        x_value = key_for_value(points, "x")
-        y_value = key_for_value(points, "y")
-        weight_value = key_for_value(points, "weight")
-    return None
 
 
 def packet_receiver_for_node_states(json_list: List[str]) -> List[vda5050.NodeState]:

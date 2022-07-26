@@ -498,7 +498,7 @@ class StateMessage(Message, JsonSerializable):
         self.safetyState = safety_state
 
 
-def get_mqtt_topic(serial_number: int, topic: Topic) -> str:
+def get_mqtt_topic(serial_number: int | str, topic: Topic) -> str:
     return (
         "AMOS"
         + "/v"

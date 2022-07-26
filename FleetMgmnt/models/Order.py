@@ -7,7 +7,7 @@ import collavoid
 import mqtt
 import shapely.geometry
 import vda5050
-from models.Node import Node
+from models.Node import Node, node_list_to_id_list
 
 order_id_counter = 0
 order_id_lock = threading.Lock()
@@ -26,8 +26,8 @@ class OrderType(str, Enum):
     RECHARGE = 'RECHARGE'
 
 
-""" Contains the state of a order. """
 class Order:
+    """ Represents an order which an agv has to execute and also handles the collision avoidance between orders. """
 
     def __init__(self, graph, start: Node, end: Node, order_type: OrderType = OrderType.NORMAL):
         global order_id_counter
@@ -43,11 +43,10 @@ class Order:
         self.completed = list()
         self.base = list()
         self.horizon, _ = self.graph.get_shortest_route(start, end)
-        print(self.horizon)
         self.route_lock = threading.Lock()
         self.sem = threading.Semaphore(0)
         self.agv = None
-        self.lastCosp = start.buffer
+        self.last_cosp = start.buffer
         graph.all_orders.append(self)
 
     def create_vda5050_message(self, agv):
@@ -79,8 +78,6 @@ class Order:
         return vda5050_order
 
     def update_last_node(self, nid: str, pos: (float, float)):
-        # print("Last node in order " + str(self.order_id) + " - " + str(nid))
-
         last_node = self.graph.find_node_by_id(int(nid))
         if last_node is None or \
                 last_node in self.completed or \
@@ -134,9 +131,6 @@ class Order:
                 order = self.graph.get_order_by_id(node.lock)
                 if order.status != OrderStatus.ACTIVE:
                     node.release(order)
-            if not node.try_lock(self.order_id):
-                # raise Exception
-                pass
         critical_nodes, _ = self.graph.order_critical_path_membership(self)
         in_crit_path = False
         for node in self.graph.find_nodes_for_colocking(self.get_cosp()):
@@ -147,8 +141,8 @@ class Order:
                 if order.status != OrderStatus.ACTIVE:
                     node.release(order)
             if not node.try_lock(self.order_id):
-                print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " + str(node.lock))
-                # raise Exception
+                print("Order " + str(self.order_id) + " tried to lock " + str(node.nid) + " but is locked by " +
+                      str(node.lock))
         if in_crit_path:
             for node in critical_nodes:
                 if node.lock != -1:
@@ -160,7 +154,6 @@ class Order:
                         "Order " + str(self.order_id) + " tried to lock crit " + str(
                             node.nid) + " but is locked by " + str(
                             node.lock))
-                    # raise Exception
 
     def extension_required(self, x: float, y: float) -> bool:
         if self.status == OrderStatus.CANCELLED:
@@ -243,7 +236,7 @@ class Order:
         return success
 
     def get_nodes_to_drive(self) -> List[Node]:
-        # Should return all nodes that are not passed yet.
+        """ Returns all nodes that are not passed yet. """
         all_nodes = self.base + self.horizon
         return list(set(all_nodes) - set(self.completed))
 
@@ -259,9 +252,9 @@ class Order:
         output['type'] = self.order_type
         output['start'] = self.start.nid
         output['end'] = self.end.nid
-        output['completed'] = Node.node_list_to_id_list(self.completed)
-        output['base'] = Node.node_list_to_id_list(self.base)
-        output['horizon'] = Node.node_list_to_id_list(self.horizon)
+        output['completed'] = node_list_to_id_list(self.completed)
+        output['base'] = node_list_to_id_list(self.base)
+        output['horizon'] = node_list_to_id_list(self.horizon)
         output['cosp'] = []
         try:
             x_coords = self.get_cosp().exterior.xy[0].tolist()
@@ -273,33 +266,35 @@ class Order:
         return output
 
     def complete(self):
-        # This function completes the order. The next order assigned to this AGV will start.
+        """ This function completes the order. The next order assigned to this AGV will start. """
         self.status = OrderStatus.COMPLETED
         self.sem.release()
 
     def cancel(self):
-        # Order Cancellation
+        """ Order Cancellation """
         self.unlock_all()
         self.status = OrderStatus.CANCELLED
         self.sem.release()
 
-        if self.agv is not None:
-            vda5050_order = vda5050.OrderMessage(
-                header_id=0,
-                timestamp='',
-                version=self.agv.version,
-                manufacturer=self.agv.manufacturer,
-                serial_number=str(self.agv.aid),
-                order_id=str(self.order_id),
-                order_update_id=self.order_update_id + 1,
-                nodes=[],
-                edges=[]
-            )
+        if self.agv is None:
+            return
+
+        vda5050_order = vda5050.OrderMessage(
+            header_id=0,
+            timestamp='',
+            version=self.agv.version,
+            manufacturer=self.agv.manufacturer,
+            serial_number=str(self.agv.aid),
+            order_id=str(self.order_id),
+            order_update_id=self.order_update_id + 1,
+            nodes=[],
+            edges=[]
+        )
 
         mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                             vda5050_order.json(), 2)
 
     def resend(self):
-        # This will just resend the latest update in case of crash
+        """ This will just resend the latest update in case of crash. """
         mqtt.client.publish(vda5050.get_mqtt_topic(str(self.agv.aid), vda5050.Topic.ORDER),
                             self.create_vda5050_message(self.agv).json(), 2)

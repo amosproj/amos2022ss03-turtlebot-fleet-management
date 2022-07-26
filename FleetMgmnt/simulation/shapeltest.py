@@ -2,8 +2,9 @@ import sys
 
 from matplotlib import pyplot as plt
 
-import collavoid
 from models.Order import Order, OrderStatus
+
+""" This was just just for testing and visualizing the critical path calculation. """
 
 
 def plot(graph):
@@ -34,7 +35,6 @@ def plot(graph):
             color="gray"
         )
 
-
     for i in range(60):
         order1.try_extension(0, 0)
     for i in range(30):
@@ -45,8 +45,7 @@ def plot(graph):
     print(order2.base)
     # print(order2.horizon)
 
-    critnodes, _ = graph.order_critical_path_membership(order1)
-
+    crit_nodes, _ = graph.order_critical_path_membership(order1)
 
     x, y = order1.get_cosp().exterior.xy
     ax1.plot(x, y, color='blue')
@@ -68,7 +67,7 @@ def plot(graph):
                 color="orange"
             )
 
-    for node in critnodes:
+    for node in crit_nodes:
         ax1.plot(
             node.x, node.y,
             marker='.',
@@ -78,9 +77,6 @@ def plot(graph):
     for node in graph.nodes:
         if node.nid == 84:
             ax1.annotate(str(node.nid), (node.x, node.y))
-
-
-
 
     # start1 = graph.find_node_by_id(139)
     # end1 = graph.find_node_by_id(128)
@@ -134,8 +130,6 @@ def plot(graph):
     #             marker='.',
     #             color="green"
     #         )
-
-
 
     fig1.savefig("shapeltest.png", format="png", dpi=300, bbox_inches='tight')
     print("Done")

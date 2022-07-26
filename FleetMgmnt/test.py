@@ -1,10 +1,11 @@
-import unittest
 import random
+import unittest
 
-import main  # Needed to prevent circular imports
-from models import TurtleGraph, Order
-import vmap_importer
 import matplotlib.pyplot as plt
+
+import main  # Somehow needed to prevent circular imports
+import vmap_importer
+from models import TurtleGraph, Order
 
 
 # ---- Some helper functions ---
@@ -109,7 +110,7 @@ class TestGraphSearch(unittest.TestCase):
 class TestGraphSearch2(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
-        self.graph.vmap_lines_to_graph("maps/room_04.150.vmap")
+        self.graph.vmap_lines_to_graph("maps/room_04.150_curved.vmap")
 
     def test1(self):
         output = False
@@ -209,19 +210,17 @@ class TestCriticalPath(unittest.TestCase):
 class TestNextNodeCriticalPathMembershipCurvedGraph(unittest.TestCase):
     def setUp(self):
         self.graph = TurtleGraph.Graph()
-        self.graph.vmap_lines_to_graph("maps/room_04.150_curved_old.vmap")
+        self.graph.vmap_lines_to_graph("maps/room_04.150_curved.vmap")
         # Create dict with nodes for easier access
         self.nodes = {}
         for n in self.graph.nodes:
             self.nodes[n.nid] = n
-        self.order0 = create_mock_order(self.graph, self.nodes[62], self.nodes[53])
+        # charge_2 -> pick_up
+        self.order0 = create_mock_order(self.graph, self.nodes[61], self.nodes[52])
+        # idle_2 -> dropoff
         self.order1 = create_mock_order(self.graph, self.nodes[138], self.nodes[127])
-        self.order2 = create_mock_order(self.graph, self.nodes[53], self.nodes[111])
-
-    def test_no_critical_path(self):
-        self.graph.all_orders = [self.order1, self.order2]
-        critical_path = self.graph.order_critical_path_membership(self.order1)[0]
-        self.assertEqual(len(critical_path), 0)
+        # pick_up -> charge_1
+        self.order2 = create_mock_order(self.graph, self.nodes[52], self.nodes[118])
 
     def test_critical_path(self):
         self.graph.all_orders = [self.order0, self.order1]
@@ -229,15 +228,15 @@ class TestNextNodeCriticalPathMembershipCurvedGraph(unittest.TestCase):
         # Visualization of critical path for debug and understanding issues
         # visualize_path(self.graph, critical_path, [self.nodes[2]])
         self.assertTrue(len(critical_path) > 5)
-        self.assertTrue(self.nodes[2] in critical_path)
+        self.assertTrue(self.nodes[44] in critical_path)
 
     def test_critical_path2(self):
-        self.graph.all_orders = [self.order0, self.order1]
+        self.graph.all_orders = [self.order0, self.order1, self.order2]
         critical_path = self.graph.order_critical_path_membership(self.order2)[0]
         # visualize_path(self.graph, critical_path)
         self.assertTrue(len(critical_path) > 1)
-        self.assertTrue(self.nodes[53] in critical_path)
-        self.assertFalse(self.nodes[111] in critical_path)
+        self.assertTrue(self.nodes[52] in critical_path)
+        self.assertFalse(self.nodes[118] in critical_path)
 
 
 if __name__ == '__main__':
