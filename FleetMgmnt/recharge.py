@@ -7,8 +7,6 @@ from models.Order import OrderType
 
 """ Handles automatic recharging of the turtlebots. """
 
-
-""" Handels automatic recharging of the turtlebots. """
 def add_start_charging_action(node):
     node.actions.append(vda5050.Action("startCharging", "0", vda5050.BlockingType.SOFT))
 

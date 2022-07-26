@@ -9,7 +9,9 @@ client = mqtt.Client()
 """ Replays recorded MQTT messages to simulate a robot. """
 
 
+
 """ Replays recorded MQTT messages to simulate a robot. """
+
 def read_input():
     x = len("AMOS/v1/TurtleBot/1/state b'")
     with open('simulation1.txt', 'r') as f:

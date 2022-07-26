@@ -4,25 +4,16 @@ import random
 import time
 
 import matplotlib
-
 import matplotlib.pyplot as plt
 from flask import Response
 
-import mqtt
-import vda5050
 from models import TurtleGraph, AGV
-
-
-matplotlib.use("Agg")
 from models.Order import Order, OrderType
 
-
 matplotlib.use("Agg")
-
 graph: TurtleGraph.Graph
 
 """ Handles api requests. """
-
 
 def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
@@ -142,13 +133,6 @@ def get_node_for_graph():
         nodes_edges.append(temp)
     return nodes_edges
 
-
-def get_orders():
-    return []
-    orders = list()
-    for order in graph.get_active_orders():
-        orders.append(json.loads(order.json()))
-    return orders
 
 def order_distributor(real_graph):
     global graph
