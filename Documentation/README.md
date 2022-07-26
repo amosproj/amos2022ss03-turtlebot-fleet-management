@@ -1,10 +1,8 @@
-## Build documentation
-https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki#builddeploy-documentation
+## Build Documentation
+https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki/Build-Documentation
 
-## User documentation
-https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki#user-documentation
+## Design Documentation
+https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki/Design-Documentation
 
-## Design documentation
-https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki#design-documentation
-
-
+## User Documentation
+https://github.com/amosproj/amos2022ss03-turtlebot-fleet-management/wiki/User-Documentation
