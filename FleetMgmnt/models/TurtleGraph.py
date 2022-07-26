@@ -16,6 +16,7 @@ from shapely.geometry import Polygon
 import vmap_importer
 import graph_search as gs
 import collavoid
+import recharge
 
 from models.Order import Order, OrderType, OrderStatus
 from models.Edge import Edge
@@ -58,15 +59,24 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
-    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None):
+    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None, order_type: OrderType = OrderType.NORMAL):
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
-        order = Order(self, start, end)
+
+        order = Order(self, start, end, order_type)
         if agv_id is None:
             order.agv = None
             self.pending_orders.put(order)
         elif 'AUTO' in agv_id:
             order.agv = self.get_agv_by_id(int(agv_id[-1]))
+
+            if start.name is not None and "charge" in start.name:
+                recharge.generate_stop_charging_action(order.agv)
+
+            if end.name is not None and "charge" in end.name:
+                recharge.add_start_charging_action(end)
+                order_type = OrderType.RECHARGE
+
             self.pending_orders.put(order)
         else:
             # If an agv is already assigned to the order, set this field in order

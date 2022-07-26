@@ -24,6 +24,7 @@ class OrderStatus(str, Enum):
 class OrderType(str, Enum):
     NORMAL = 'NORMAL'
     RELOCATION = 'RELOCATION'
+    RECHARGE = 'RECHARGE'
 
 
 class Order:
@@ -61,12 +62,11 @@ class Order:
                 actions=n.actions,
                 node_position=vda5050.NodePosition(x=n.x, y=n.y, map_id='0')
             ))
-            # print(n.actions)
         vda5050_order = vda5050.OrderMessage(
             header_id=0,
             timestamp='',
-            version='',
-            manufacturer='',  # All more general information, probably should not be set here
+            version=agv.version,
+            manufacturer=agv.manufacturer,
             serial_number=str(agv.aid),
             order_id=str(self.order_id),
             order_update_id=self.order_update_id,
@@ -292,8 +292,8 @@ class Order:
             vda5050_order = vda5050.OrderMessage(
                 header_id=0,
                 timestamp='',
-                version='',
-                manufacturer='',  # All more general information, probably should not be set here
+                version=self.agv.version,
+                manufacturer=self.agv.manufacturer,
                 serial_number=str(self.agv.aid),
                 order_id=str(self.order_id),
                 order_update_id=self.order_update_id + 1,

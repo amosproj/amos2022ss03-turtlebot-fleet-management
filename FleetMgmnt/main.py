@@ -3,7 +3,7 @@ import os
 import threading
 import time
 
-import autorecharge
+import recharge
 import worker
 import mqtt
 from models import TurtleGraph
@@ -42,7 +42,7 @@ def main():
     launch_thread(mqtt.connect, (config['mqtt']['host'], config['mqtt']['port'],
                                  config['mqtt']['username'], config['mqtt']['password'], config['map'], graph))
     launch_thread(worker.order_distributor, (graph, ))
-    launch_thread(autorecharge.generate_recharge_orders, (graph, ))
+    launch_thread(recharge.generate_recharge_orders, (graph, ))
     launch_thread(graph.create_map_thread, ())
     launch_thread(placeholder, ())  # Example
 

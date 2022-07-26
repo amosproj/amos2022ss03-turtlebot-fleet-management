@@ -7,6 +7,8 @@ class AGV:
     def __init__(self, graph, aid: int, color: str, x: float = None, y: float = None, heading: float = None):
         self.graph = graph
         self.aid = aid
+        self.manufacturer = "Turtlebot"
+        self.version = "2"
         self.color = color
         self.x = x
         self.y = y
