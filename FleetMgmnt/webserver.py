@@ -9,8 +9,9 @@ from models import TurtleGraph
 app = Flask(__name__)
 graph = TurtleGraph.Graph()
 
+""" Starts a webserver using Flask and forwards the requests from the frontend to the designated modules. """
 
-""" Spawns a web interface using Flask. """
+
 def start(real_graph):
     global graph
     graph = real_graph
@@ -93,13 +94,11 @@ def resend_order(order_id):
 
 @app.post("/api/agv/<robot_serial>/sendFromTo/<source_node_id>/<target_node_id>")
 def robot_send_to(robot_serial, source_node_id, target_node_id):
-    # ToDo: This is a legacy API endpoint and should be removed or changed before final release
     return graph.append_new_order(source_node_id, target_node_id, robot_serial)
 
 
 @app.get("/api/agv/<robot_serial>/pathDisplay/<source_node_id>/<target_node_id>")
 def robot_send_to_path(robot_serial, source_node_id, target_node_id):
-    # ToDo: This is a legacy API endpoint and should be removed or changed before final release
     return worker.get_path_image(robot_serial, source_node_id, target_node_id)
 
 

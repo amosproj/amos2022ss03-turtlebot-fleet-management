@@ -1,8 +1,9 @@
-import math
 import base64
+import math
 import threading
 
 import paho.mqtt.client as mqtt
+
 import packet_receiver as pr
 from models import TurtleGraph
 
@@ -10,15 +11,15 @@ client: mqtt.Client
 graph: TurtleGraph.Graph
 map_name = ""
 
+""" Connects to MQTT broker and handles incoming messages from turtlebot. """
 
-""" Connects to MQTT broker and handels incoming messages from turtlebot. """
+
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     client.subscribe("AMOS/#")
 
 
 def on_message(client, userdata, msg):
-    # print(msg.topic + " " + str(msg.payload))
     thread = threading.Thread(target=on_message_thread, args=(client, userdata, msg))
     thread.start()
 

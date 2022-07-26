@@ -1,34 +1,32 @@
 import io
 import json
 import math
-import time
 import threading
+import time
 from queue import Queue
 from typing import List
 
-import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.style as mpls
-
-import shapely.geometry
-from shapely.geometry import Polygon
-
-import vmap_importer
-import graph_search as gs
 import collavoid
+import graph_search as gs
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.style as mpls
 import recharge
-
-from models.Order import Order, OrderType, OrderStatus
+import shapely.geometry
+import vmap_importer
+from models.AGV import AGV
 from models.Edge import Edge
 from models.Node import Node
-from models.AGV import AGV
+from models.Order import Order, OrderType, OrderStatus
+from shapely.geometry import Polygon
 
 matplotlib.use("Agg")
 mpls.use("fast")
 
 
-""" Contains the state of the graph. """
 class Graph:
+    """ Contains the state of the graph which represents the driving course. """
+
     def __init__(self):
         self.nodes = list()
         self.edges = list()
@@ -60,7 +58,8 @@ class Graph:
                 end, start, math.dist(line.start.get_coords(), line.end.get_coords())
             )
 
-    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None, order_type: OrderType = OrderType.NORMAL):
+    def append_new_order(self, start_node_id: str, end_node_id: str, agv_id: str = None,
+                         order_type: OrderType = OrderType.NORMAL):
         start = self.find_node_by_id(int(start_node_id))
         end = self.find_node_by_id(int(end_node_id))
 
@@ -76,7 +75,6 @@ class Graph:
 
             if end.name is not None and "charge" in end.name:
                 recharge.add_start_charging_action(end)
-                order_type = OrderType.RECHARGE
 
             self.pending_orders.put(order)
         else:
@@ -91,9 +89,7 @@ class Graph:
                 nearest = self.get_nearest_node_from_agv(agv)
                 reloc_order = Order(self, nearest, order.start, OrderType.RELOCATION)
                 agv.pending_orders.put(reloc_order)
-                # print("Relocation order also created")
             agv.pending_orders.put(order)
-            # print("Order assigned directly to agv")
         return "Success"
 
     def new_node(self, x: float, y: float, name: str = None) -> Node:
@@ -126,7 +122,6 @@ class Graph:
         raise Exception("Node not found, FATAL")
 
     def get_agv_by_id(self, aid: int) -> AGV:
-        # print("Our agvs " + str(self.agvs))
         for agv in self.agvs:
             if agv.aid == aid:
                 return agv
@@ -139,7 +134,7 @@ class Graph:
         raise Exception("Order not found, FATAL")
 
     def get_free_agvs(self) -> List[AGV]:
-        # Returns a list of all agvs, which are currently not executing an order
+        """ Returns a list of all agvs, which are currently not executing an order. """
         free_agvs = []
         for agv in self.agvs:
             if agv.connection_status == 'ONLINE' and not agv.has_order():
@@ -147,27 +142,28 @@ class Graph:
         return free_agvs
 
     def get_nearest_free_agv(self, node: Node) -> AGV:
+        """ Return the nearest free agv from the given node. """
         min_dist = math.inf
         nearest_agv = None
         for agv in self.get_free_agvs():
-            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            dist = math.sqrt((agv.x - node.x) ** 2 + (agv.y - node.y) ** 2)
             if dist < min_dist:
                 min_dist = dist
                 nearest_agv = agv
         return nearest_agv
 
     def get_nearest_node_from_agv(self, agv: AGV) -> Node:
+        """ Returns the nearest node from the given agv. """
         min_dist = math.inf
         nearest_node = None
-        # Is there a more efficient way than iterating over all the nodes?
         for node in self.nodes:
-            dist = math.sqrt((agv.x - node.x)**2 + (agv.y - node.y)**2)
+            dist = math.sqrt((agv.x - node.x) ** 2 + (agv.y - node.y) ** 2)
             if dist < min_dist:
                 min_dist = dist
                 nearest_node = node
         return nearest_node
 
-    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon, order: Order = None) -> List[Node]:
+    def find_nodes_for_colocking(self, polygon: shapely.geometry.Polygon) -> List[Node]:
         result = list()
         for node in self.nodes:
             if polygon.intersects(node.buffer):
@@ -301,29 +297,8 @@ class Graph:
                     color=agv.color
                 )
             if agv.order is not None:
-                # x1, y1 = agv.order.lastCosp.exterior.xy
                 x, y = agv.order.get_cosp().exterior.xy
                 ax1.plot(x, y, color=agv.color)
-                # ax1.plot(x1, y1, color='black')
-        for cur_order in self.get_active_orders():
-            color = cur_order.agv.color
-            # for edge in cur_order.edges:
-            #     start = self.find_node_by_id(int(edge.startNodeId))
-            #     end = self.find_node_by_id(int(edge.endNodeId))
-            #     if edge.released:
-            #         ax1.plot(
-            #             [start.x, end.x],
-            #             [start.y, end.y],
-            #             color=color,
-            #         )
-            #     else:
-            #         ax1.plot(
-            #             [start.x, end.x],
-            #             [start.y, end.y],
-            #             color=color,
-            #             linestyle="--",
-            #             alpha=0.5
-            #         )
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         fig1.savefig(plt_io, format="png", dpi=300, bbox_inches='tight')
@@ -332,11 +307,8 @@ class Graph:
 
     def create_map_thread(self):
         while True:
-            start = time.time()
             self.image = self.create_image()
-            end = time.time()
             time.sleep(0.1)
-            # print("Map rendered in " + str(end-start))
 
     def create_json(self) -> str:
         n = list()

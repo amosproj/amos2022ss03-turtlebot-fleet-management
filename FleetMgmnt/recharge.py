@@ -1,21 +1,23 @@
-import time
 import sys
+import time
 
 import mqtt
 import vda5050
+from models.Order import OrderType
+
+""" Handles automatic recharging of the turtlebots. """
 
 
-""" Handels automatic recharging of the turtlebots. """
 def add_start_charging_action(node):
-    node.actions.append(vda5050.Action("startCharging", "0", "SOFT"))
+    node.actions.append(vda5050.Action("startCharging", "0", vda5050.BlockingType.SOFT))
+
 
 def generate_stop_charging_action(agv):
-    action_list = []
-    action_list.append(vda5050.Action(
+    action_list = [vda5050.Action(
         action_type='stopCharging',
         action_id='0',
         blocking_type=vda5050.BlockingType.SOFT,
-    ))
+    )]
     vda5050_instant_action = vda5050.InstantAction(
         header_id=0,
         timestamp='',
@@ -55,6 +57,4 @@ def generate_recharge_orders(graph):
                         print("Stop charging for agv " + str(agv.aid))
                         generate_stop_charging_action(agv)
                         agv.charging_prepare = False
-
         time.sleep(1)
-

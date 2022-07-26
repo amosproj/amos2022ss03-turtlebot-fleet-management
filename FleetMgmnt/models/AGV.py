@@ -1,10 +1,10 @@
 import threading
-import time
 from queue import Queue
 
 
-""" Contains the state of a turtlebot. """
 class AGV:
+    """ Represents an agv (in our case a turtlebot) with all its information. """
+
     def __init__(self, graph, aid: int, color: str, x: float = None, y: float = None, heading: float = None):
         self.graph = graph
         self.aid = aid
@@ -26,7 +26,7 @@ class AGV:
         self.lock = threading.Lock()
 
     def has_order(self):
-        # Indicates if an AGV is currently executing an order
+        """ Indicates if an AGV is currently executing an order """
         return self.order is not None
 
     # on state change

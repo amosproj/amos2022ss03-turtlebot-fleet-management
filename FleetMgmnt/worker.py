@@ -1,12 +1,12 @@
 import io
-import json
 import math
 import random
 import time
 
-from flask import Response
-import matplotlib.pyplot as plt
 import matplotlib
+
+import matplotlib.pyplot as plt
+from flask import Response
 
 import mqtt
 import vda5050
@@ -17,10 +17,13 @@ matplotlib.use("Agg")
 from models.Order import Order, OrderType
 
 
+matplotlib.use("Agg")
+
 graph: TurtleGraph.Graph
 
+""" Handles api requests. """
 
-""" Handels api requests. """
+
 def get_path_image(serial, source_node, target_node):
     fig1, ax1 = plt.subplots()
     plt_io = io.BytesIO()
@@ -88,6 +91,7 @@ def get_agv_info():
     return agv_and_info
 
 
+
 def get_node_for_graph():
     nodes_edges = list()
     for edges in graph.edges:
@@ -105,7 +109,6 @@ def get_orders():
         orders.append(json.loads(order.json()))
     return orders
 
-
 def order_distributor(real_graph):
     global graph
     graph = real_graph
@@ -116,7 +119,7 @@ def order_distributor(real_graph):
         if type(next_order.agv) is AGV.AGV:
             selected_agv = next_order.agv
         elif type(next_order.agv) is str:
-            # Actually shouldn't be a String
+            # Actually shouldn't be a String, but just for safety reasons
             if next_order.agv == 'AUTO1':
                 target = 1
             elif next_order.agv == 'AUTO2':
@@ -146,7 +149,8 @@ def agv_order_executor_thread(agv):
             time.sleep(10)
             continue
 
-        # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' + str(self.pending_orders))
+        # print("AGV " + str(self.aid) + " order executor thread is online " + str(self) + ' ' +
+        # str(self.pending_orders))
         next_order = agv.pending_orders.get()
         # print("AGV is now starting on new order")
         if next_order.status != 'CREATED':
@@ -185,48 +189,3 @@ def agv_order_executor_thread(agv):
         agv.order.sem.acquire()
         # print("AGV " + str(self.aid) + " has finished order")
         time.sleep(1)
-
-
-def order_executor(order: Order):
-    node_id = 0
-    edge_id = 0
-
-    locked_by_us = list()
-    while True:
-        graph.lock.acquire()
-        success = True
-        for node in order.nodes:
-            n = graph.find_node_by_id(int(node.nodeId))
-            success = n.try_lock()
-            if success:
-                locked_by_us.append(n)
-            else:
-                break
-        graph.lock.release()
-        time.sleep(3)
-        if success:
-            print("All locks acquired successfully ")
-            break
-        for node in locked_by_us:
-            node.release()
-        locked_by_us.clear()
-
-    while True:
-        if node_id < len(order.nodes):
-            order.nodes[node_id].released = True
-        if edge_id < len(order.edges):
-            order.edges[edge_id].released = True
-        mqtt.client.publish(vda5050.get_mqtt_topic(order.serialNumber, vda5050.Topic.ORDER), order.json(), 2)
-        if order.is_fully_released():
-            break
-        time.sleep(3)
-        order.orderUpdateId += 1
-        node_id += 1
-        edge_id += 1
-    print("Order is fully released")
-    graph.lock.acquire()
-    for node in order.nodes:
-        graph.find_node_by_id(int(node.nodeId)).release()
-    graph.lock.release()
-    graph.current_orders.remove(order)
-    graph.completed_orders.append(order)
