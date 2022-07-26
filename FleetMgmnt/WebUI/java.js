@@ -59,9 +59,7 @@ createApp({
         }
     },
     methods: {
-        refreshMap() {
-           /*document.getElementById('graphmap').src = 'graph?' + Math.random() */
-        },
+        //Creating BaseGraph with Edges and Nodes & Stations
         async initialGraphDataSetting(){
             const graph_data_promise = axios.get('/api/graph')
             const graph_data_edges = axios.get('/api/graph/edges')
@@ -119,20 +117,23 @@ createApp({
                                       }};
 
                  for(let i=0;i<this.agvs.length;i++){
-                     points.push({
-                          type: 'point',
-                          backgroundColor: this.agvs[i].color,
-                          borderColor: 'blue',
-                          borderWidth: 1,
-                          pointStyle: 'rectRot',
-                          scaleID: 'y',
-                          xValue:  this.agvs[i].x,
-                          yValue:  this.agvs[i].y
-                        });
-                 };
+                    if (this.agvs[i].x != null && this.agvs[i].y != null){
+                         points.push({
+                              type: 'point',
+                              backgroundColor: this.agvs[i].color,
+                              borderColor: 'blue',
+                              borderWidth: 1,
+                              pointStyle: 'rectRot',
+                              scaleID: 'y',
+                              xValue:  this.agvs[i].x,
+                              yValue:  this.agvs[i].y
+                            });
+                            }
+                     };
                  mainChart.update();
 
         },
+        // Highlighting The Nodes of Horizon array
         highlightPathOrderHorizon(graph_orders,order_nodes) {
 
             var Horizons_orders= new Array()
@@ -187,6 +188,7 @@ createApp({
 
 
         },
+        // Highlighting the nodes of Base array
         highlightPathOrderBase(graph_orders,order_nodes) {
 
                     var Base_orders= new Array()
@@ -239,6 +241,7 @@ createApp({
 
 
         },
+        // Drawing the safety Polygon around the base nodes
         highlightPathOrderPolygon(graph_orders) {
 
         var datasets_chart = mainChart.data.datasets
@@ -281,7 +284,6 @@ createApp({
             // This is kind of a quick and dirty function, refreshing everything every second
             // An update like this is better done via WebSockets
 
-            this.refreshMap()
             const agv_states_promise = axios.get('/api/agv')
             const graph_data_promise = axios.get('/api/graph')
             const order_data_promise = axios.get('/api/orders')
@@ -290,9 +292,12 @@ createApp({
             this.graph = (await graph_data_promise).data
             this.orders = (await order_data_promise).data
 
+            // Updating the Position of AGV
             for (let i=0;i<this.agvs.length;i++){
-            points[points.length-(this.agvs.length-i)].xValue = this.agvs[i].x
-            points[points.length-(this.agvs.length-i)].yValue = this.agvs[i].y
+                if (this.agvs[i].x != null && this.agvs[i].y != null){
+                    points[points.length-(this.agvs.length-i)].xValue = this.agvs[i].x
+                    points[points.length-(this.agvs.length-i)].yValue = this.agvs[i].y
+                    }
             };
 
             var graph_orders = this.graph.orders

@@ -16,8 +16,8 @@ def start(real_graph):
     global graph
     graph = real_graph
 
-    #log = logging.getLogger('werkzeug')
-    #log.setLevel(logging.ERROR)
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     app.run(host="0.0.0.0", port=8080)
 
 
