@@ -3,8 +3,9 @@ from enum import Enum
 from threading import Lock
 from typing import Any, List, Union
 
-
 """ Implements VDA5050 spec. """
+
+
 class Topic(str, Enum):
     CONNECTION = "connection"
     FACTSHEET = "factsheet"
@@ -66,12 +67,12 @@ class ActionParameter(JsonSerializable):
 
 class Action(JsonSerializable):
     def __init__(
-        self,
-        action_type: str,
-        action_id: str,
-        blocking_type: BlockingType,
-        action_description: str = None,
-        action_parameters: List[str] = None,
+            self,
+            action_type: str,
+            action_id: str,
+            blocking_type: BlockingType,
+            action_description: str = None,
+            action_parameters: List[str] = None,
     ):
         self.actionType = action_type
         self.actionId = action_id
@@ -82,14 +83,14 @@ class Action(JsonSerializable):
 
 class NodePosition(JsonSerializable):
     def __init__(
-        self,
-        x: float,
-        y: float,
-        map_id: str,
-        map_description: str = None,
-        theta: float = None,
-        allowed_deviation_xy: float = None,
-        allowed_deviation_theta: float = None,
+            self,
+            x: float,
+            y: float,
+            map_id: str,
+            map_description: str = None,
+            theta: float = None,
+            allowed_deviation_xy: float = None,
+            allowed_deviation_theta: float = None,
     ):
         self.x = x
         self.y = y
@@ -102,13 +103,13 @@ class NodePosition(JsonSerializable):
 
 class Node(JsonSerializable):
     def __init__(
-        self,
-        node_id: str,
-        sequence_id: int,
-        released: bool,
-        actions: List[str],
-        node_description: str = None,
-        node_position: NodePosition = None,
+            self,
+            node_id: str,
+            sequence_id: int,
+            released: bool,
+            actions: List[str],
+            node_description: str = None,
+            node_position: NodePosition = None,
     ):
         self.nodeId = node_id
         self.sequenceId = sequence_id
@@ -120,24 +121,24 @@ class Node(JsonSerializable):
 
 class Edge(JsonSerializable):
     def __init__(
-        self,
-        edge_id: str,
-        sequence_id: int,
-        released: bool,
-        start_node_id: str,
-        end_node_id: str,
-        actions: List[Action],
-        edge_description: str = None,
-        max_speed: float = None,
-        max_height: float = None,
-        min_height: float = None,
-        orientation: float = None,
-        orientation_type: str = "TANGENTIAL",
-        direction: str = None,
-        rotation_allowed: bool = None,
-        max_rotation_speed: float = None,
-        length: float = None,
-        trajectory: dict = None,
+            self,
+            edge_id: str,
+            sequence_id: int,
+            released: bool,
+            start_node_id: str,
+            end_node_id: str,
+            actions: List[Action],
+            edge_description: str = None,
+            max_speed: float = None,
+            max_height: float = None,
+            min_height: float = None,
+            orientation: float = None,
+            orientation_type: str = "TANGENTIAL",
+            direction: str = None,
+            rotation_allowed: bool = None,
+            max_rotation_speed: float = None,
+            length: float = None,
+            trajectory: dict = None,
     ):
         self.edgeId = edge_id
         self.sequenceId = sequence_id
@@ -160,12 +161,12 @@ class Edge(JsonSerializable):
 
 class Message(JsonSerializable):
     def __init__(
-        self,
-        header_id: int,
-        timestamp: str,
-        version: str,
-        manufacturer: str,
-        serial_number: str,
+            self,
+            header_id: int,
+            timestamp: str,
+            version: str,
+            manufacturer: str,
+            serial_number: str,
     ):
         self.headerId = header_id
         self.timestamp = timestamp
@@ -179,13 +180,13 @@ class Message(JsonSerializable):
 
 class ConnectionMessage(Message, JsonSerializable):
     def __init__(
-        self,
-        header_id: int,
-        timestamp: str,
-        version: str,
-        manufacturer: str,
-        serial_number: str,
-        connection_state: ConnectionState,
+            self,
+            header_id: int,
+            timestamp: str,
+            version: str,
+            manufacturer: str,
+            serial_number: str,
+            connection_state: ConnectionState,
     ):
         Message.__init__(self, header_id, timestamp, version, manufacturer, serial_number)
         self.connectionState = connection_state
@@ -193,17 +194,17 @@ class ConnectionMessage(Message, JsonSerializable):
 
 class OrderMessage(Message, JsonSerializable):
     def __init__(
-        self,
-        header_id: int,
-        timestamp: str,
-        version: str,
-        manufacturer: str,
-        serial_number: str,
-        order_id: str,
-        order_update_id: int,
-        nodes: List[Node],
-        edges: List[Edge],
-        zone_set_id: str = None,
+            self,
+            header_id: int,
+            timestamp: str,
+            version: str,
+            manufacturer: str,
+            serial_number: str,
+            order_id: str,
+            order_update_id: int,
+            nodes: List[Node],
+            edges: List[Edge],
+            zone_set_id: str = None,
     ):
         Message.__init__(self, header_id, timestamp, version, manufacturer, serial_number)
         self.orderId = order_id
@@ -224,13 +225,13 @@ class OrderMessage(Message, JsonSerializable):
 
 class InstantAction(Message, JsonSerializable):
     def __init__(
-        self,
-        header_id: int,
-        timestamp: str,
-        version: str,
-        manufacturer: str,
-        serial_number: str,
-        instant_actions: List[Action],
+            self,
+            header_id: int,
+            timestamp: str,
+            version: str,
+            manufacturer: str,
+            serial_number: str,
+            instant_actions: List[Action],
     ):
         Message.__init__(
             self, header_id, timestamp, version, manufacturer, serial_number
@@ -240,12 +241,12 @@ class InstantAction(Message, JsonSerializable):
 
 class NodeState(JsonSerializable):
     def __init__(
-        self,
-        node_id: str,
-        sequence_id: int,
-        released: bool,
-        node_description: str = None,
-        node_position: NodePosition = None,
+            self,
+            node_id: str,
+            sequence_id: int,
+            released: bool,
+            node_description: str = None,
+            node_position: NodePosition = None,
     ):
         self.nodeId = node_id
         self.sequenceId = sequence_id
@@ -256,12 +257,12 @@ class NodeState(JsonSerializable):
 
 class EdgeState(JsonSerializable):
     def __init__(
-        self,
-        edge_id: str,
-        sequence_id: int,
-        released: bool,
-        edge_description: str = None,
-        trajectory: dict = None,
+            self,
+            edge_id: str,
+            sequence_id: int,
+            released: bool,
+            edge_description: str = None,
+            trajectory: dict = None,
     ):
         self.edgeId = edge_id
         self.sequenceId = sequence_id
@@ -272,15 +273,15 @@ class EdgeState(JsonSerializable):
 
 class AgvPosition(JsonSerializable):
     def __init__(
-        self,
-        position_initialized: bool,
-        x: float,
-        y: float,
-        theta: float,
-        map_id: str,
-        map_description: str = None,
-        localization_score: float = None,
-        deviation_range: float = None,
+            self,
+            position_initialized: bool,
+            x: float,
+            y: float,
+            theta: float,
+            map_id: str,
+            map_description: str = None,
+            localization_score: float = None,
+            deviation_range: float = None,
     ):
         self.positionInitialized = position_initialized
         self.localizationScore = localization_score
@@ -316,13 +317,13 @@ class LoadDimensions(JsonSerializable):
 
 class Load(JsonSerializable):
     def __init__(
-        self,
-        load_id: str = None,
-        load_type: str = None,
-        load_position: str = None,
-        bounding_box_ref: BoundingBoxReference = None,
-        load_dimension: LoadDimensions = None,
-        weight: float = None,
+            self,
+            load_id: str = None,
+            load_type: str = None,
+            load_position: str = None,
+            bounding_box_ref: BoundingBoxReference = None,
+            load_dimension: LoadDimensions = None,
+            weight: float = None,
     ):
         self.loadId = load_id
         self.loadType = load_type
@@ -343,12 +344,12 @@ class ActionStatus(str, Enum):
 
 class ActionState(JsonSerializable):
     def __init__(
-        self,
-        action_id: str,
-        action_status: ActionStatus,
-        result_description: str = None,
-        action_type: str = None,
-        action_description: str = None,
+            self,
+            action_id: str,
+            action_status: ActionStatus,
+            result_description: str = None,
+            action_type: str = None,
+            action_description: str = None,
     ):
         self.actionId = action_id
         self.actionType = action_type
@@ -359,12 +360,12 @@ class ActionState(JsonSerializable):
 
 class BatteryState(JsonSerializable):
     def __init__(
-        self,
-        batterycharge: float,
-        charging: bool,
-        reach: int = None,
-        battery_voltage: float = None,
-        battery_health: float = None,
+            self,
+            batterycharge: float,
+            charging: bool,
+            reach: int = None,
+            battery_voltage: float = None,
+            battery_health: float = None,
     ):
         self.batteryCharge = batterycharge
         self.batteryVoltage = battery_voltage
@@ -386,11 +387,11 @@ class ErrorLevel(str, Enum):
 
 class Error(JsonSerializable):
     def __init__(
-        self,
-        error_type: str,
-        error_level: ErrorLevel,
-        error_reference: List[ErrorReference] = None,
-        error_description: str = None,
+            self,
+            error_type: str,
+            error_level: ErrorLevel,
+            error_reference: List[ErrorReference] = None,
+            error_description: str = None,
     ):
         self.errorType = error_type
         self.errorReferences = error_reference
@@ -411,11 +412,11 @@ class InfoReference(JsonSerializable):
 
 class Info(JsonSerializable):
     def __init__(
-        self,
-        info_type: str,
-        info_level: InfoLevel,
-        info_reference: List[InfoReference] = None,
-        info_description: str = None,
+            self,
+            info_type: str,
+            info_level: InfoLevel,
+            info_reference: List[InfoReference] = None,
+            info_description: str = None,
     ):
         self.infoType = info_type
         self.infoReferences = info_reference
@@ -446,32 +447,32 @@ class OperatingMode(str, Enum):
 
 class StateMessage(Message, JsonSerializable):
     def __init__(
-        self,
-        header_id: int,
-        timestamp: str,
-        version: str,
-        manufacturer: str,
-        serial_number: str,
-        order_id: str,
-        order_update_id: int,
-        zone_set_id: str,
-        last_node_id: str,
-        last_node_sequence_id: int,
-        action_states: List[ActionState],
-        safety_state: SafetyState,
-        battery_state: BatteryState,
-        operation_mode: OperatingMode,
-        errors: List[Error],
-        node_states: List[NodeState],
-        edge_state: List[EdgeState],
-        driving: bool,
-        agv_position: AgvPosition = None,
-        velocity: Velocity = None,
-        loads: List[Load] = None,
-        paused: bool = None,
-        new_base_request: bool = None,
-        distance_since_last_node: float = None,
-        information: List[Info] = None,
+            self,
+            header_id: int,
+            timestamp: str,
+            version: str,
+            manufacturer: str,
+            serial_number: str,
+            order_id: str,
+            order_update_id: int,
+            zone_set_id: str,
+            last_node_id: str,
+            last_node_sequence_id: int,
+            action_states: List[ActionState],
+            safety_state: SafetyState,
+            battery_state: BatteryState,
+            operation_mode: OperatingMode,
+            errors: List[Error],
+            node_states: List[NodeState],
+            edge_state: List[EdgeState],
+            driving: bool,
+            agv_position: AgvPosition = None,
+            velocity: Velocity = None,
+            loads: List[Load] = None,
+            paused: bool = None,
+            new_base_request: bool = None,
+            distance_since_last_node: float = None,
+            information: List[Info] = None,
     ):
         Message.__init__(
             self, header_id, timestamp, version, manufacturer, serial_number
@@ -500,15 +501,15 @@ class StateMessage(Message, JsonSerializable):
 
 def get_mqtt_topic(serial_number: int or str, topic: Topic) -> str:
     return (
-        "AMOS"
-        + "/v"
-        + PROTOCOL_VERSION
-        + "/"
-        + MANUFACTURER
-        + "/"
-        + str(serial_number)
-        + "/"
-        + topic.value
+            "AMOS"
+            + "/v"
+            + PROTOCOL_VERSION
+            + "/"
+            + MANUFACTURER
+            + "/"
+            + str(serial_number)
+            + "/"
+            + topic.value
     )
 
 

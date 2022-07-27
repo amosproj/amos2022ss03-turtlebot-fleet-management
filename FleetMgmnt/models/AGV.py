@@ -2,7 +2,6 @@ import threading
 from queue import Queue
 
 
-""" Contains the state of a turtlebot. """
 class AGV:
     """ Represents an agv (in our case a turtlebot) with all its information. """
 
